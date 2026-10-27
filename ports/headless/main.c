@@ -1,35 +1,35 @@
 /**
- *    Name:        main.c
- *    Description: runs the game with no screen or sound, with the controls a script drives, and writes a
- *                 hash of the board state (and of the frame the video draws) after every frame, in the
- *                 format tools/reference/s32ref uses
- *    Version:     0.1.0
- *    Created:     11-10-2026
- *    Modified:    25-10-2026
- *    Author:      Sebastian Toyos
- *
- *    license:BSD-3-Clause
- *    Usage: sonic_headless [--frames N] [--hashes FILE] [--script FILE]
- *                          [--dump-frame N --dump-dir DIR] [--video-hashes FILE] [--video-dump N ... --video-dir DIR]
- *                          [--sound-hashes FILE] [--sound-levels FILE] [--wide] [--assets FILE] [--extract ROM_SET]
- *                          [--actions FILE]
- *    The game's data is its assets pack (game/data.h): --assets, or segasonic.assets beside the executable.
- *    --extract first writes that pack from the player's ROM set (a .zip or a folder), as the first run does
- *    (runtime/src/extract.c). The scaffold (SEGASONIC_SCAFFOLD) runs the original code, so it reads the ROM
- *    set from rom/ instead.
- *    --dump-frame saves the board's memories at the end of that frame, in the files tools/reference/s32ref
- *    writes, so the two compare byte by byte. --video-hashes and --video-dump draw every frame with the
- *    board's video (runtime/src/video.c): the hash of each frame, and frames as BMP. --sound-hashes runs the
- *    sound board too (the decompiled sound program and the chips, runtime/src/sound_cpu.c and
- *    sound_chips.c), and writes for each frame the hash of its samples and of the sound board's memories.
- *    --sound-levels runs it too, and writes for each frame how loud each chip and the window port's mix of
- *    them are, and how many of the mix's samples pass 16 bits (write_levels). SEGASONIC_VIDEO_WORKERS=N in
- *    the environment draws the video's rows on N threads beside this one (runtime/src/workers.c), as the
- *    ports do: the frames are the same, which the checks show.
- *    --actions (the console build) presses the console's actions in the frames a file names, as the window
- *    port's keys do: the menus, OPTIONS, the map (tools/make_screenshots.py); and section+ and section-, the
- *    window's F8 and F7, move the camera to the stage's section after or before.
- */
+*    Name:        main.c
+*    Description: runs the game with no screen or sound, with the controls a script drives, and writes a
+*                 hash of the board state (and of the frame the video draws) after every frame, in the
+*                 format tools/reference/s32ref uses
+*    Version:     0.1.0
+*    Created:     11-10-2026
+*    Modified:    25-10-2026
+*    Author:      Sebastian Toyos
+*
+*    license:BSD-3-Clause
+*    Usage: sonic_headless [--frames N] [--hashes FILE] [--script FILE]
+*                          [--dump-frame N --dump-dir DIR] [--video-hashes FILE] [--video-dump N ... --video-dir DIR]
+*                          [--sound-hashes FILE] [--sound-levels FILE] [--wide] [--assets FILE] [--extract ROM_SET]
+*                          [--actions FILE]
+*    The game's data is its assets pack (game/data.h): --assets, or segasonic.assets beside the executable.
+*    --extract first writes that pack from the player's ROM set (a .zip or a folder), as the first run does
+*    (runtime/src/extract.c). The scaffold (SEGASONIC_SCAFFOLD) runs the original code, so it reads the ROM
+*    set from rom/ instead.
+*    --dump-frame saves the board's memories at the end of that frame, in the files tools/reference/s32ref
+*    writes, so the two compare byte by byte. --video-hashes and --video-dump draw every frame with the
+*    board's video (runtime/src/video.c): the hash of each frame, and frames as BMP. --sound-hashes runs the
+*    sound board too (the decompiled sound program and the chips, runtime/src/sound_cpu.c and
+*    sound_chips.c), and writes for each frame the hash of its samples and of the sound board's memories.
+*    --sound-levels runs it too, and writes for each frame how loud each chip and the window port's mix of
+*    them are, and how many of the mix's samples pass 16 bits (write_levels). SEGASONIC_VIDEO_WORKERS=N in
+*    the environment draws the video's rows on N threads beside this one (runtime/src/workers.c), as the
+*    ports do: the frames are the same, which the checks show.
+*    --actions (the console build) presses the console's actions in the frames a file names, as the window
+*    port's keys do: the menus, OPTIONS, the map (tools/make_screenshots.py); and section+ and section-, the
+*    window's F8 and F7, move the camera to the stage's section after or before.
+*/
 #include "s32/machine.h"
 #include "s32/program.h"
 #include "s32/script.h"
@@ -86,8 +86,8 @@ static FILE *sprite_census;
 static uint64_t *census_seen;    /* hashes of the sprite and color sets written, open addressing (0 = free) */
 
 /* --sprite-census: every sprite of the ROM the list draws, with the colors its pens show, once per set of
-   colors and way of drawing it: "ADDRESS WORDS ROWS BITS OPAQUE COLOR..." (hex; OPAQUE 1 when it draws the
-   end code and goes on past it, else 0; colors RGB555, one a pen) */
+colors and way of drawing it: "ADDRESS WORDS ROWS BITS OPAQUE COLOR..." (hex; OPAQUE 1 when it draws the
+end code and goes on past it, else 0; colors RGB555, one a pen) */
 static void on_sprite_drawn(uint32_t address, int words, int rows, bool bits8, bool opaque, const uint16_t *pixels)
 {
 	const int pens = bits8 ? 256 : 16;
@@ -105,8 +105,8 @@ static void on_sprite_drawn(uint32_t address, int words, int rows, bool bits8, b
 	if (hash == 0)
 		hash = 1;
 	for (slot = (uint32_t)hash & (CENSUS_SLOTS - 1); census_seen[slot] != 0; slot = (slot + 1) & (CENSUS_SLOTS - 1))
-		if (census_seen[slot] == hash)
-			return;
+	if (census_seen[slot] == hash)
+		return;
 	census_seen[slot] = hash;
 	fprintf(sprite_census, "%06X %d %d %d %d", address, words, rows, bits8 ? 8 : 4, opaque ? 1 : 0);
 	for (int pen = 0; pen < pens; pen++)
@@ -115,7 +115,7 @@ static void on_sprite_drawn(uint32_t address, int words, int rows, bool bits8, b
 }
 
 /* --tile-census: every tile the tilemaps that are on show (every TILE_CENSUS_EVERY frames), with the colors
-   its pens show, once per set of colors: "TILE COLOR TILEMAP COLOR..." (hex; colors RGB555, one a pen) */
+its pens show, once per set of colors: "TILE COLOR TILEMAP COLOR..." (hex; colors RGB555, one a pen) */
 #define TILE_CENSUS_EVERY 30
 static FILE *tile_census;
 static uint64_t *tile_census_seen;
@@ -136,8 +136,8 @@ static void on_tile_shown(int tilemap, uint32_t tile, uint16_t color)
 	if (hash == 0)
 		hash = 1;
 	for (slot = (uint32_t)hash & (CENSUS_SLOTS - 1); tile_census_seen[slot] != 0; slot = (slot + 1) & (CENSUS_SLOTS - 1))
-		if (tile_census_seen[slot] == hash)
-			return;
+	if (tile_census_seen[slot] == hash)
+		return;
 	tile_census_seen[slot] = hash;
 	fprintf(tile_census, "%04X %03X %d", tile, color, tilemap);
 	for (int pen = 0; pen < 16; pen++)
@@ -197,15 +197,15 @@ static void write_bmp(const char *path)
 	file[26] = 1;
 	file[28] = 24;
 	for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
-		for (int x = 0; x < width; x++)
-		{
-			const uint32_t pixel = pixels[y * S32_VIDEO_MAX_WIDTH + x];
-			uint8_t *out = &file[54 + (uint32_t)(S32_VIDEO_HEIGHT - 1 - y) * row + (uint32_t)x * 3];
+	for (int x = 0; x < width; x++)
+	{
+		const uint32_t pixel = pixels[y * S32_VIDEO_MAX_WIDTH + x];
+		uint8_t *out = &file[54 + (uint32_t)(S32_VIDEO_HEIGHT - 1 - y) * row + (uint32_t)x * 3];
 
-			out[0] = (uint8_t)pixel;
-			out[1] = (uint8_t)(pixel >> 8);
-			out[2] = (uint8_t)(pixel >> 16);
-		}
+		out[0] = (uint8_t)pixel;
+		out[1] = (uint8_t)(pixel >> 8);
+		out[2] = (uint8_t)(pixel >> 16);
+	}
 	output = fopen(path, "wb");
 	if (output)
 	{
@@ -228,9 +228,9 @@ static void on_log(const char *message)
 }
 
 /* --sound-levels: the frame's loudest sample of each chip (FM0, FM1: the YM3438s; PCM: the RF5C68) and of
-   their mix as the window port makes it (each YM3438 at 0.30, the RF5C68 at 0.40, volume 1; the RF5C68's
-   samples taken at the YM3438s' times), how many of the mix's samples pass 16 bits, and how many of the
-   RF5C68's are at its own limit (it sums its channels into 16 bits): "FRAME FM0 FM1 PCM MIX CLIPPED PCM_LIMIT" */
+their mix as the window port makes it (each YM3438 at 0.30, the RF5C68 at 0.40, volume 1; the RF5C68's
+samples taken at the YM3438s' times), how many of the mix's samples pass 16 bits, and how many of the
+RF5C68's are at its own limit (it sums its channels into 16 bits): "FRAME FM0 FM1 PCM MIX CLIPPED PCM_LIMIT" */
 static void write_levels(void)
 {
 	const int32_t *samples[3];
@@ -276,8 +276,173 @@ static PSGLcontext* ps3_context = NULL;
 static GLuint ps3_texture = 0;
 static uint32_t ps3_audio_port = 0xFFFFFFFF;
 static bool ps3_pad_initialized = false;
-static CellPadData last_ps3_pad;
-static uint32_t last_ps3_held = 0;
+static bool ps3_pause_requested = false;
+static CellPadData last_ps3_pads[3];
+static uint32_t last_ps3_held[3] = { 0 };
+
+#define PS3_OUTPUT_RATE 48000
+static const double PS3_FM_RATE = S32_SOUND_CLOCK / 144.0;
+static const double PS3_PCM_RATE = S32_PCM_CLOCK / 384.0;
+
+typedef struct ps3_resampler
+{
+	double step;
+	double position;
+	int32_t *samples;
+	size_t count;
+	size_t capacity;
+} ps3_resampler;
+
+static ps3_resampler ps3_chips[3];
+
+static void ps3_get_save_path(const char *filename, char *out_path, size_t size)
+{
+	FILE *f = fopen("/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets", "rb");
+	if (f)
+	{
+		fclose(f);
+		snprintf(out_path, size, "/dev_hdd0/game/SEGASONIC/USRDIR/%s", filename);
+		return;
+	}
+	snprintf(out_path, size, "USRDIR/%s", filename);
+}
+
+static void ps3_load_eeprom(void)
+{
+	char path[1024];
+	size_t size;
+	FILE *input;
+
+	ps3_get_save_path("segasonic.eeprom", path, sizeof(path));
+	input = fopen(path, "rb");
+	if (!input)
+	{
+		ps3_get_save_path("sonic.eeprom", path, sizeof(path));
+		input = fopen(path, "rb");
+	}
+	if (input)
+	{
+		fseek(input, 0, SEEK_END);
+		size = ftell(input);
+		fseek(input, 0, SEEK_SET);
+		if (size == sizeof(s32_board.eeprom.data))
+			fread(s32_board.eeprom.data, 1, size, input);
+		fclose(input);
+	}
+}
+
+static void ps3_save_eeprom(void)
+{
+	char path[1024];
+	FILE *output;
+
+	if (!s32_board.eeprom.dirty)
+		return;
+	ps3_get_save_path("segasonic.eeprom", path, sizeof(path));
+	output = fopen(path, "wb");
+	if (output)
+	{
+		fwrite(s32_board.eeprom.data, 1, sizeof(s32_board.eeprom.data), output);
+		fclose(output);
+		s32_board.eeprom.dirty = false;
+	}
+}
+
+#ifdef SEGASONIC_CONSOLE
+static void ps3_load_times(void)
+{
+	char path[1024];
+	FILE *input;
+	int level = 0;
+	unsigned long frames = 0;
+	char line[128];
+
+	ps3_get_save_path("segasonic.times", path, sizeof(path));
+	input = fopen(path, "r");
+	if (!input)
+		return;
+	while (fgets(line, sizeof(line), input))
+	{
+		if (sscanf(line, " level %d = %lu", &level, &frames) == 2 && level >= 0 && level < CONSOLE_LEVELS)
+			console_best_times.levels[level] = (uint32_t)frames;
+		else if (sscanf(line, " run %d = %lu", &level, &frames) == 2 && level >= 0 && level < CONSOLE_LEVELS)
+			console_best_times.run[level] = (uint32_t)frames;
+	}
+	fclose(input);
+}
+
+static void ps3_save_times(void)
+{
+	char path[1024];
+	FILE *output;
+
+	if (!console_best_times.changed)
+		return;
+	ps3_get_save_path("segasonic.times", path, sizeof(path));
+	output = fopen(path, "w");
+	console_best_times.changed = false;
+	if (!output)
+		return;
+	fputs("; TIME ATTACK's best times\n", output);
+	for (int level = 0; level < CONSOLE_LEVELS; level++)
+		fprintf(output, "level %d = %lu\n", level, (unsigned long)console_best_times.levels[level]);
+	for (int level = 0; level < CONSOLE_LEVELS; level++)
+		fprintf(output, "run %d = %lu\n", level, (unsigned long)console_best_times.run[level]);
+	fclose(output);
+}
+
+static void ps3_tell_console_settings(void)
+{
+	console_window_settings.window_scale = 2;
+	console_window_settings.full_screen = true;
+	console_window_settings.smooth = true;
+	console_window_settings.bilinear = false;
+	console_window_settings.crt = false;
+	console_window_settings.wide = wide_video;
+	console_window_settings.volume = 5;
+	console_window_settings.title_music = 0;
+	console_window_settings.continues = 3;
+	console_window_settings.changed = false;
+}
+#endif
+
+static void ps3_resampler_keep(ps3_resampler *chip, const int32_t *samples, size_t count)
+{
+	if (chip->count + count > chip->capacity)
+	{
+		chip->capacity = (chip->count + count) * 2;
+		chip->samples = (int32_t *)realloc(chip->samples, chip->capacity * 2 * sizeof(int32_t));
+	}
+	if (chip->samples)
+	{
+		memcpy(chip->samples + chip->count * 2, samples, count * 2 * sizeof(int32_t));
+		chip->count += count;
+	}
+}
+
+static void ps3_resampler_sample_at(const ps3_resampler *chip, double position, double out[2])
+{
+	const size_t index = (size_t)position;
+	const double fraction = position - (double)index;
+
+	for (int side = 0; side < 2; side++)
+	{
+		const double here = chip->samples[index * 2 + side];
+		const double next = chip->samples[(index + 1) * 2 + side];
+		out[side] = here + (next - here) * fraction;
+	}
+}
+
+static void ps3_resampler_drop_used(ps3_resampler *chip)
+{
+	const size_t used = (size_t)chip->position;
+
+	if (!used)
+		return;
+	memmove(chip->samples, chip->samples + used * 2, (chip->count - used) * 2 * sizeof(int32_t));
+	chip->count -= used;
+	chip->position -= (double)used;
+}
 
 static void ps3_graphics_init(void)
 {
@@ -296,7 +461,7 @@ static void ps3_graphics_init(void)
 	params.enable = PSGL_DEVICE_PARAMETERS_COLOR_FORMAT | PSGL_DEVICE_PARAMETERS_DEPTH_FORMAT | PSGL_DEVICE_PARAMETERS_BUFFERING_MODE;
 	params.bufferingMode = PSGL_BUFFERING_MODE_TRIPLE;
 	params.colorFormat = GL_ARGB_SCE;
-	params.depthFormat = GL_DEPTH_COMPONENT24;
+	params.depthFormat = GL_NONE;
 
 	ps3_device = psglCreateDeviceExtended(&params);
 	ps3_context = psglCreateContext();
@@ -324,19 +489,42 @@ static void ps3_audio_init(void)
 			cellAudioSetPortLevel(ps3_audio_port, 1.0f);
 		}
 	}
+	ps3_chips[0].step = ps3_chips[1].step = PS3_FM_RATE / PS3_OUTPUT_RATE;
+	ps3_chips[2].step = PS3_PCM_RATE / PS3_OUTPUT_RATE;
 }
 
 static void ps3_graphics_render_frame(void)
 {
 	int width = 0;
 	const uint32_t *pixels;
+	GLuint deviceWidth = 1280, deviceHeight = 720;
 
 	if (!ps3_graphics_initialized) return;
 	pixels = s32_video_frame(&width);
 	if (!pixels || width <= 0) return;
 
 	glBindTexture(GL_TEXTURE_2D, ps3_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, width, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, S32_VIDEO_MAX_WIDTH, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+
+	psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
+
+	bool is_wide = (width > 320);
+	GLint viewX = 0, viewY = 0, viewW = (GLint)deviceWidth, viewH = (GLint)deviceHeight;
+
+	if (!is_wide)
+	{
+		viewH = (GLint)deviceHeight;
+		viewW = (GLint)(viewH * (4.0f / 3.0f));
+		if (viewW > (GLint)deviceWidth)
+		{
+			viewW = (GLint)deviceWidth;
+			viewH = (GLint)(viewW * (3.0f / 4.0f));
+		}
+		viewX = ((GLint)deviceWidth - viewW) / 2;
+		viewY = ((GLint)deviceHeight - viewH) / 2;
+	}
+
+	glViewport(viewX, viewY, viewW, viewH);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -344,11 +532,14 @@ static void ps3_graphics_render_frame(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 
-	GLfloat vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f,  0.0f, 1.0f };
-	GLfloat texcoords[] = { 0.0f, 1.0f,  1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f };
+	float u1 = (float)width / (float)S32_VIDEO_MAX_WIDTH;
+
+	GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+	GLfloat texcoords[] = { 0.0f, 1.0f, u1, 1.0f, u1, 0.0f, 0.0f, 0.0f };
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -366,10 +557,8 @@ static void ps3_graphics_render_frame(void)
 
 static void ps3_audio_render_frame(void)
 {
-	const int32_t *samples[3];
-	size_t counts[3];
-	static float floatBuffer[1024 * 2];
-	size_t sample_count, at;
+	static float floatBuffer[PS3_OUTPUT_RATE / 60 * 2];
+	size_t made = 0;
 
 	if (ps3_audio_port == 0xFFFFFFFF) return;
 
@@ -377,88 +566,103 @@ static void ps3_audio_render_frame(void)
 	sound_chips_end_frame(s32_board.cycles);
 
 	for (int chip = 0; chip < 3; chip++)
-		samples[chip] = sound_chips_frame_samples(chip, &counts[chip]);
-
-	sample_count = counts[0];
-	if (sample_count == 0) return;
-	if (sample_count > 1024) sample_count = 1024;
-
-	for (at = 0; at < sample_count; at++)
 	{
-		size_t fm1 = (counts[1] > 0) ? (at < counts[1] ? at : counts[1] - 1) : 0;
-		size_t pcm = (counts[2] > 0) ? (at * counts[2] / counts[0]) : 0;
+		size_t count;
+		const int32_t *samples = sound_chips_frame_samples(chip, &count);
+		ps3_resampler_keep(&ps3_chips[chip], samples, count);
+	}
+
+	while (made < PS3_OUTPUT_RATE / 60)
+	{
+		double fm0[2], fm1[2], pcm[2];
+
+		if (ps3_chips[0].position + 1 >= (double)ps3_chips[0].count
+			|| ps3_chips[1].position + 1 >= (double)ps3_chips[1].count
+			|| ps3_chips[2].position + 1 >= (double)ps3_chips[2].count)
+			break;
+
+		ps3_resampler_sample_at(&ps3_chips[0], ps3_chips[0].position, fm0);
+		ps3_resampler_sample_at(&ps3_chips[1], ps3_chips[1].position, fm1);
+		ps3_resampler_sample_at(&ps3_chips[2], ps3_chips[2].position, pcm);
 
 		for (int side = 0; side < 2; side++)
 		{
-			double value = 0.30 * ((samples[0] ? samples[0][at * 2 + side] : 0) + (samples[1] ? samples[1][fm1 * 2 + side] : 0))
-				+ 0.40 * (samples[2] ? samples[2][pcm * 2 + side] : 0);
+			double value = 0.30 * (fm0[side] + fm1[side]) + 0.40 * pcm[side];
 			float fval = (float)(value / 32768.0);
 			if (fval > 1.0f) fval = 1.0f;
 			if (fval < -1.0f) fval = -1.0f;
-			floatBuffer[at * 2 + side] = fval;
+			floatBuffer[made * 2 + side] = fval;
 		}
+
+		for (int chip = 0; chip < 3; chip++)
+			ps3_chips[chip].position += ps3_chips[chip].step;
+		made++;
 	}
-	cellAudioAdd2chData(ps3_audio_port, floatBuffer, (uint32_t)sample_count, 1.0f);
+
+	for (int chip = 0; chip < 3; chip++)
+		ps3_resampler_drop_used(&ps3_chips[chip]);
+
+	if (made > 0)
+		cellAudioAdd2chData(ps3_audio_port, floatBuffer, (uint32_t)made, 1.0f);
 }
 
 static void ps3_pad_update(void)
 {
-	CellPadData padData;
-
 	if (!ps3_pad_initialized)
 	{
 		cellPadInit(7);
 		ps3_pad_initialized = true;
 	}
 
-	if (cellPadGetData(0, &padData) == CELL_PAD_OK && padData.len > 0)
-	{
-		last_ps3_pad = padData;
-	}
+	uint32_t global_pressed = 0;
+	uint32_t global_held = 0;
 
-	if (last_ps3_pad.len > 0)
+	for (int p = 0; p < 3; p++)
 	{
-		uint16_t digital1 = last_ps3_pad.button[CELL_PAD_BTN_OFFSET_DIGITAL1];
-		uint16_t digital2 = last_ps3_pad.button[CELL_PAD_BTN_OFFSET_DIGITAL2];
+		CellPadData padData;
+		if (cellPadGetData(p, &padData) == CELL_PAD_OK && padData.len > 0)
+		{
+			last_ps3_pads[p] = padData;
+		}
+
+		if (last_ps3_pads[p].len <= 0) continue;
+
+		uint16_t digital1 = last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_DIGITAL1];
+		uint16_t digital2 = last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_DIGITAL2];
 		uint32_t held = 0;
 
-		int stickX = (int)(last_ps3_pad.button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_X] & 0xFF) - 128;
-		int stickY = (int)(last_ps3_pad.button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_Y] & 0xFF) - 128;
+		int stickX = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_X] & 0xFF) - 128;
+		int stickY = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_Y] & 0xFF) - 128;
+		int rstickX = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_RIGHT_X] & 0xFF) - 128;
+		int rstickY = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_RIGHT_Y] & 0xFF) - 128;
 
-		if ((digital1 & CELL_PAD_CTRL_UP) || stickY < -50)
-		{
-			held |= ACTION_BIT(ACTION_UP);
-			int roll = (stickY < -50) ? (-stickY / 8) : 8;
-			s32_board.input.trackball_y[0] = (uint16_t)(s32_board.input.trackball_y[0] - roll);
-		}
-		if ((digital1 & CELL_PAD_CTRL_DOWN) || stickY > 50)
-		{
-			held |= ACTION_BIT(ACTION_DOWN);
-			int roll = (stickY > 50) ? (stickY / 8) : 8;
-			s32_board.input.trackball_y[0] = (uint16_t)(s32_board.input.trackball_y[0] + roll);
-		}
-		if ((digital1 & CELL_PAD_CTRL_LEFT) || stickX < -50)
-		{
-			held |= ACTION_BIT(ACTION_LEFT);
-			int roll = (stickX < -50) ? (-stickX / 8) : 8;
-			s32_board.input.trackball_x[0] = (uint16_t)(s32_board.input.trackball_x[0] - roll);
-		}
-		if ((digital1 & CELL_PAD_CTRL_RIGHT) || stickX > 50)
-		{
-			held |= ACTION_BIT(ACTION_RIGHT);
-			int roll = (stickX > 50) ? (stickX / 8) : 8;
-			s32_board.input.trackball_x[0] = (uint16_t)(s32_board.input.trackball_x[0] + roll);
-		}
+		int roll_x = 0, roll_y = 0;
+		if (abs(stickX) > 20) roll_x += (stickX > 0) ? (stickX - 20) / 8 : (stickX + 20) / 8;
+		if (abs(stickY) > 20) roll_y += (stickY > 0) ? (stickY - 20) / 8 : (stickY + 20) / 8;
+		if (abs(rstickX) > 20) roll_x += (rstickX > 0) ? (rstickX - 20) / 8 : (rstickX + 20) / 8;
+		if (abs(rstickY) > 20) roll_y += (rstickY > 0) ? (rstickY - 20) / 8 : (rstickY + 20) / 8;
 
-		if (digital2 & (CELL_PAD_CTRL_CROSS | CELL_PAD_CTRL_CIRCLE | CELL_PAD_CTRL_SQUARE))
+		if (digital1 & CELL_PAD_CTRL_UP) { held |= ACTION_BIT(ACTION_UP); roll_y -= 8; }
+		if (digital1 & CELL_PAD_CTRL_DOWN) { held |= ACTION_BIT(ACTION_DOWN); roll_y += 8; }
+		if (digital1 & CELL_PAD_CTRL_LEFT) { held |= ACTION_BIT(ACTION_LEFT); roll_x -= 8; }
+		if (digital1 & CELL_PAD_CTRL_RIGHT) { held |= ACTION_BIT(ACTION_RIGHT); roll_x += 8; }
+
+		s32_board.input.trackball_x[p] = (uint16_t)(s32_board.input.trackball_x[p] + roll_x);
+		s32_board.input.trackball_y[p] = (uint16_t)(s32_board.input.trackball_y[p] + roll_y);
+
+		bool jump_btn = (digital2 & (CELL_PAD_CTRL_CROSS | CELL_PAD_CTRL_CIRCLE | CELL_PAD_CTRL_SQUARE)) != 0;
+		if (jump_btn)
 		{
-			held |= ACTION_BIT(ACTION_ACCEPT);
-			held |= ACTION_BIT(ACTION_JUMP);
-			s32_board.input.port_a &= (uint8_t)~0x01u;
+			held |= ACTION_BIT(ACTION_ACCEPT) | ACTION_BIT(ACTION_JUMP);
+			if (p == 0) s32_board.input.port_a &= (uint8_t)~0x01u;
+			else if (p == 1) s32_board.input.port_b &= (uint8_t)~0x01u;
+			else if (p == 2) s32_board.input.port_a &= (uint8_t)~0x04u;
 		}
 		else
 		{
-			s32_board.input.port_a |= 0x01u;
+			if (p == 0) s32_board.input.port_a |= 0x01u;
+			else if (p == 1) s32_board.input.port_b |= 0x01u;
+			else if (p == 2) s32_board.input.port_a |= 0x04u;
 		}
 
 		if (digital2 & (CELL_PAD_CTRL_TRIANGLE | CELL_PAD_CTRL_L1 | CELL_PAD_CTRL_R1))
@@ -466,26 +670,187 @@ static void ps3_pad_update(void)
 			held |= ACTION_BIT(ACTION_BACK);
 		}
 
-		if (digital1 & (CELL_PAD_CTRL_START | CELL_PAD_CTRL_SELECT))
+		if (digital1 & CELL_PAD_CTRL_START)
 		{
 			held |= ACTION_BIT(ACTION_START);
-			s32_board.input.port_e &= (uint8_t)~0x10u;
+#ifdef SEGASONIC_CONSOLE
+			if (p == 0 && console_in_game() && !console_start_prompted(0))
+			{
+			}
+			else
+#endif
+			{
+				if (p == 0) s32_board.input.port_e &= (uint8_t)~0x10u;
+				else if (p == 1) s32_board.input.port_e &= (uint8_t)~0x20u;
+				else if (p == 2) s32_board.input.port_e &= (uint8_t)~0x80u;
+			}
 		}
 		else
 		{
-			s32_board.input.port_e |= 0x10u;
+			if (p == 0) s32_board.input.port_e |= 0x10u;
+			else if (p == 1) s32_board.input.port_e |= 0x20u;
+			else if (p == 2) s32_board.input.port_e |= 0x80u;
 		}
 
-		uint32_t pressed = held & ~last_ps3_held;
-		last_ps3_held = held;
+		if (digital1 & CELL_PAD_CTRL_SELECT)
+		{
+			if (p == 0) s32_board.input.port_e &= (uint8_t)~0x04u;
+			else if (p == 1) s32_board.input.port_e &= (uint8_t)~0x08u;
+			else if (p == 2) s32_board.input.port_e &= (uint8_t)~0x40u;
+		}
+		else
+		{
+			if (p == 0) s32_board.input.port_e |= 0x04u;
+			else if (p == 1) s32_board.input.port_e |= 0x08u;
+			else if (p == 2) s32_board.input.port_e |= 0x40u;
+		}
+
+		if (p == 0)
+		{
+			if (digital2 & CELL_PAD_CTRL_L2) s32_board.input.port_e &= (uint8_t)~0x08u;
+			if (digital2 & CELL_PAD_CTRL_R2) s32_board.input.port_e &= (uint8_t)~0x02u;
+			else s32_board.input.port_e |= 0x02u;
+			if (digital2 & (CELL_PAD_CTRL_L3 | CELL_PAD_CTRL_R3)) s32_board.input.port_e &= (uint8_t)~0x01u;
+			else s32_board.input.port_e |= 0x01u;
+		}
+
+		uint32_t pressed = held & ~last_ps3_held[p];
+		last_ps3_held[p] = held;
+
+		if (p == 0)
+		{
+			global_pressed = pressed;
+			global_held = held;
 
 #ifdef SEGASONIC_CONSOLE
-		if (!console_in_game() && (pressed & ACTION_BIT(ACTION_BACK)))
-			console_back();
-		console_actions(pressed, held);
+			if (console_in_game() && !console_start_prompted(0) && (pressed & ACTION_BIT(ACTION_START)))
+			{
+				ps3_pause_requested = true;
+			}
 #endif
+		}
+	}
+
+#ifdef SEGASONIC_CONSOLE
+	if (!console_in_game() && (global_pressed & ACTION_BIT(ACTION_BACK)))
+		console_back();
+	console_actions(global_pressed, global_held);
+	s32_video_set_wide(console_wide_now());
+#endif
+}
+
+#ifdef SEGASONIC_CONSOLE
+static uint32_t ps3_pause_picture[S32_VIDEO_MAX_WIDTH * S32_VIDEO_HEIGHT];
+
+static void ps3_draw_pause_picture(int *width)
+{
+	const uint32_t *pixels;
+
+	console_draw_frame();
+	pixels = s32_video_frame(width);
+	memcpy(ps3_pause_picture, pixels, sizeof(ps3_pause_picture));
+	console_pause_text(true);
+	console_draw_frame();
+	pixels = s32_video_frame(width);
+	for (size_t i = 0; i < sizeof(ps3_pause_picture) / sizeof(ps3_pause_picture[0]); i++)
+	{
+		const uint32_t color = ps3_pause_picture[i];
+		uint32_t grey;
+
+		if (pixels[i] != color)
+		{
+			ps3_pause_picture[i] = pixels[i];
+			continue;
+		}
+		grey = ((((color >> 16) & 0xFF) * 77 + ((color >> 8) & 0xFF) * 150 + (color & 0xFF) * 29) >> 8) * 3 / 4;
+		ps3_pause_picture[i] = 0xFF000000u | (grey << 16) | (grey << 8) | grey;
+	}
+	console_pause_text(false);
+	console_draw_frame();
+}
+
+static void ps3_run_pause(void)
+{
+	int width = 320;
+	bool paused = true;
+
+	ps3_pause_requested = false;
+	ps3_draw_pause_picture(&width);
+
+	while (paused)
+	{
+		CellPadData padData;
+		if (cellPadGetData(0, &padData) == CELL_PAD_OK && padData.len > 0)
+		{
+			uint16_t digital1 = padData.button[CELL_PAD_BTN_OFFSET_DIGITAL1];
+			uint16_t digital2 = padData.button[CELL_PAD_BTN_OFFSET_DIGITAL2];
+			uint32_t held = 0;
+
+			if (digital1 & CELL_PAD_CTRL_START) held |= ACTION_BIT(ACTION_START);
+			if (digital2 & (CELL_PAD_CTRL_CROSS | CELL_PAD_CTRL_CIRCLE | CELL_PAD_CTRL_SQUARE)) held |= ACTION_BIT(ACTION_ACCEPT);
+
+			uint32_t pressed = held & ~last_ps3_held[0];
+			last_ps3_held[0] = held;
+
+			if (pressed & (ACTION_BIT(ACTION_START) | ACTION_BIT(ACTION_ACCEPT)))
+			{
+				paused = false;
+			}
+		}
+
+		if (ps3_graphics_initialized)
+		{
+			GLuint deviceWidth = 1280, deviceHeight = 720;
+			glBindTexture(GL_TEXTURE_2D, ps3_texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, S32_VIDEO_MAX_WIDTH, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, ps3_pause_picture);
+
+			psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
+
+			GLint viewX = 0, viewY = 0, viewW = (GLint)deviceWidth, viewH = (GLint)deviceHeight;
+			if (width <= 320)
+			{
+				viewH = (GLint)deviceHeight;
+				viewW = (GLint)(viewH * (4.0f / 3.0f));
+				if (viewW > (GLint)deviceWidth)
+				{
+					viewW = (GLint)deviceWidth;
+					viewH = (GLint)(viewW * (3.0f / 4.0f));
+				}
+				viewX = ((GLint)deviceWidth - viewW) / 2;
+				viewY = ((GLint)deviceHeight - viewH) / 2;
+			}
+			glViewport(viewX, viewY, viewW, viewH);
+
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrthof(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glEnable(GL_TEXTURE_2D);
+
+			float u1 = (float)width / (float)S32_VIDEO_MAX_WIDTH;
+			GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+			GLfloat texcoords[] = { 0.0f, 1.0f, u1, 1.0f, u1, 0.0f, 0.0f, 0.0f };
+
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glVertexPointer(2, GL_FLOAT, 0, vertices);
+			glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			glDisableClientState(GL_VERTEX_ARRAY);
+			glDisable(GL_TEXTURE_2D);
+
+			psglSwap();
+		}
 	}
 }
+#endif
 #endif
 
 static void on_frame_done(void)
@@ -493,6 +858,23 @@ static void on_frame_done(void)
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
 	ps3_graphics_render_frame();
 	ps3_audio_render_frame();
+#ifdef SEGASONIC_CONSOLE
+	if (console_quit_requested())
+		longjmp(finished, 1);
+	if (console_window_settings.changed)
+	{
+		wide_video = console_window_settings.wide;
+		s32_video_set_wide(wide_video);
+		console_window_settings.changed = false;
+	}
+	ps3_tell_console_settings();
+	if (ps3_pause_requested)
+		ps3_run_pause();
+	if (console_best_times.changed)
+		ps3_save_times();
+#endif
+	if (program_frames() % 600 == 0)
+		ps3_save_eeprom();
 #endif
 	if (hashes)
 		fprintf(hashes, "%" PRIu64 " %016" PRIx64 "\n", program_frames() - 1, s32_state_hash());
@@ -506,26 +888,28 @@ static void on_frame_done(void)
 		sound_chips_end_frame(s32_board.cycles);
 		if (sound_hashes)
 			fprintf(sound_hashes, "%" PRIu64 " %016" PRIx64 " %016" PRIx64 "\n", program_frames() - 1,
-				sound_chips_frame_hash(), sound_board_state_hash());
+			sound_chips_frame_hash(), sound_board_state_hash());
 		if (sound_levels)
 			write_levels();
 	}
 	for (int index = 0; index < video_dump_count && video_dir; index++)
-		if (video_dumps[index] == program_frames() - 1)
-		{
-			char path[1024];
+	if (video_dumps[index] == program_frames() - 1)
+	{
+		char path[1024];
 
-			snprintf(path, sizeof(path), "%s/frame_%" PRIu64 ".bmp", video_dir, video_dumps[index]);
-			write_bmp(path);
-		}
+		snprintf(path, sizeof(path), "%s/frame_%" PRIu64 ".bmp", video_dir, video_dumps[index]);
+		write_bmp(path);
+	}
+#if !defined(__CELLOS_LV2__) && !defined(__SNC__) && !defined(__PS3__)
 	if (program_frames() >= frames_wanted)
 		longjmp(finished, 1);
+#endif
 }
 
 #ifdef SEGASONIC_CONSOLE
 /* --actions: the console's actions (console_actions.h) a file presses, as the window port's keys do, one a
-   line: "FRAME ACTION [FRAMES]", FRAME a frame number or +N for N frames after the previous line, held FRAMES
-   frames (1 by default) and pressed on the first; '#' starts a comment */
+line: "FRAME ACTION [FRAMES]", FRAME a frame number or +N for N frames after the previous line, held FRAMES
+frames (1 by default) and pressed on the first; '#' starts a comment */
 #define MAX_ACTION_EVENTS 1024
 
 static struct
@@ -586,24 +970,24 @@ static bool load_actions(const char *path)
 static bool actions_hold_start, actions_hold_button;    /* player 1's start and button, held by the actions */
 
 /* The frame's actions, as the window port hands them over (ports/sdl2/main.c): start is player 1's start
-   button too outside a game (or with their start prompt up), jump their button */
+button too outside a game (or with their start prompt up), jump their button */
 static void apply_actions(uint64_t frame)
 {
 	uint32_t pressed = 0, held = 0;
 	bool start, button;
 
 	for (int index = 0; index < action_event_count; index++)
-		if (action_events[index].section)
-		{
-			if (frame == action_events[index].frame)
-				console_debug_section(action_events[index].section);
-		}
-		else if (frame >= action_events[index].frame && frame - action_events[index].frame < action_events[index].frames)
-		{
-			held |= ACTION_BIT(action_events[index].action);
-			if (frame == action_events[index].frame)
-				pressed |= ACTION_BIT(action_events[index].action);
-		}
+	if (action_events[index].section)
+	{
+		if (frame == action_events[index].frame)
+			console_debug_section(action_events[index].section);
+	}
+	else if (frame >= action_events[index].frame && frame - action_events[index].frame < action_events[index].frames)
+	{
+		held |= ACTION_BIT(action_events[index].action);
+		if (frame == action_events[index].frame)
+			pressed |= ACTION_BIT(action_events[index].action);
+	}
 	start = (held & ACTION_BIT(ACTION_START)) && (!console_in_game() || console_start_prompted(0));
 	button = (held & ACTION_BIT(ACTION_JUMP)) != 0;
 	/* (the ports are active low; a button the actions held is released when they let go of it) */
@@ -741,27 +1125,27 @@ int main(int argc, char **argv)
 		break;
 	case GAME_DATA_MISSING:
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-		{
-			static const char *const ps3_paths[] = {
-				"/app_home/segasonic.assets",
-				"/app_home/USRDIR/segasonic.assets",
-				"/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets",
-				"USRDIR/segasonic.assets",
-				NULL
-			};
-			int p_idx = 0;
-			while (ps3_paths[p_idx])
-			{
-				if (game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
-				{
-					assets_path = ps3_paths[p_idx];
-					break;
-				}
-				p_idx++;
-			}
-			if (ps3_paths[p_idx])
-				break;
-		}
+	{
+							  static const char *const ps3_paths[] = {
+								  "/app_home/segasonic.assets",
+								  "/app_home/USRDIR/segasonic.assets",
+								  "/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets",
+								  "USRDIR/segasonic.assets",
+								  NULL
+							  };
+							  int p_idx = 0;
+							  while (ps3_paths[p_idx])
+							  {
+								  if (game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
+								  {
+									  assets_path = ps3_paths[p_idx];
+									  break;
+								  }
+								  p_idx++;
+							  }
+							  if (ps3_paths[p_idx])
+								  break;
+	}
 #endif
 		fprintf(stderr, "%s: no game assets\n", assets_path);
 		return 1;
@@ -840,7 +1224,7 @@ int main(int argc, char **argv)
 	s32_board.log = on_log;
 	s32_board.frame_timing = true;
 	/* (the video's rows on that many threads beside this one: the same frames, which the checks show) */
-#if !defined(__CELLOS_LV2__) && !defined(__SNC__)
+#if !defined(__CELLOS_LV2__) && !defined(__SNC__) && !defined(__PS3__)
 	if (getenv("SEGASONIC_VIDEO_WORKERS"))
 		s32_workers_start(atoi(getenv("SEGASONIC_VIDEO_WORKERS")));
 #else
@@ -849,7 +1233,18 @@ int main(int argc, char **argv)
 	s32_board.sound_rom = game_sound;
 	sound_chips_attach();
 	sound_cpu_attach();
+#ifdef SEGASONIC_CONSOLE
+	console_jingle_program(0, -1);
+	console_prepare_sprites(game_sprites, GAME_SPRITES_SIZE, game_program);
 	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
+	s32_board.frame_shown = console_draw_frame;
+	ps3_tell_console_settings();
+	ps3_load_eeprom();
+	ps3_load_times();
+#else
+	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
+	ps3_load_eeprom();
+#endif
 #endif
 	s32_init(game_program);
 	program_reset();
