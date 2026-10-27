@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|PS3">
+      <Configuration>Debug</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|PS3">
+      <Configuration>Release</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCTargetsPath Condition="'$(VCTargetsPath12)' != '' and '$(VSVersion)' == '' and '$(VisualStudioVersion)' == ''">$(VCTargetsPath12)</VCTargetsPath>
+    <ProjectGuid>{135D243B-FC49-48FB-BAD9-6B5ADBD2D9D6}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(DebuggerFlavor)'=='PS3Debugger'" Label="OverrideDebuggerDefaults">
+    <!--LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand-->
+    <!--LocalDebuggerCommandArguments></LocalDebuggerCommandArguments-->
+    <!--LocalDebuggerCommandLine>-r -e -m</LocalDebuggerCommandLine-->
+    <!--LocalRunCommandLine>-r</LocalRunCommandLine-->
+    <!--LocalTunerCommandLine></LocalTunerCommandLine-->
+    <!--LocalDebuggerFileServingDirectory>$(ProjectDir)</LocalDebuggerFileServingDirectory-->
+    <!--LocalDebuggerHomeDirectory>$(ProjectDir)</LocalDebuggerHomeDirectory-->
+    <!--LocalDebuggerProjectFile></LocalDebuggerProjectFile-->
+    <!--LocalDebuggerResetType>Soft</LocalDebuggerResetType-->
+    <!--LocalDebuggerClearTty>False</LocalDebuggerClearTty-->
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>C:\segasonic-port-main\src;C:\segasonic-port-main\runtime\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\console\console.c" />
+    <ClCompile Include="..\..\runtime\src\extract.c" />
+    <ClCompile Include="..\..\runtime\src\game.c" />
+    <ClCompile Include="..\..\runtime\src\game_data.c" />
+    <ClCompile Include="..\..\runtime\src\inflate.c" />
+    <ClCompile Include="..\..\runtime\src\io.c" />
+    <ClCompile Include="..\..\runtime\src\machine.c" />
+    <ClCompile Include="..\..\runtime\src\memory_census.c" />
+    <ClCompile Include="..\..\runtime\src\pack_layout.c" />
+    <ClCompile Include="..\..\runtime\src\rf5c68.c" />
+    <ClCompile Include="..\..\runtime\src\rom_set.c" />
+    <ClCompile Include="..\..\runtime\src\script.c" />
+    <ClCompile Include="..\..\runtime\src\sound.c" />
+    <ClCompile Include="..\..\runtime\src\sound_chips.c" />
+    <ClCompile Include="..\..\runtime\src\sound_cpu.c" />
+    <ClCompile Include="..\..\runtime\src\v60.c" />
+    <ClCompile Include="..\..\runtime\src\video.c" />
+    <ClCompile Include="..\..\runtime\src\workers.c" />
+    <ClCompile Include="..\..\runtime\src\ym3438.c" />
+    <ClCompile Include="..\..\src\engine\contacts.c" />
+    <ClCompile Include="..\..\src\engine\geometry.c" />
+    <ClCompile Include="..\..\src\engine\objects.c" />
+    <ClCompile Include="..\..\src\engine\sprites.c" />
+    <ClCompile Include="..\..\src\objects\eggman.c" />
+    <ClCompile Include="..\..\src\objects\intro.c" />
+    <ClCompile Include="..\..\src\objects\rings.c" />
+    <ClCompile Include="..\..\src\objects\shared.c" />
+    <ClCompile Include="..\..\src\objects\stages_0b_0f.c" />
+    <ClCompile Include="..\..\src\objects\stage_03.c" />
+    <ClCompile Include="..\..\src\objects\stage_04.c" />
+    <ClCompile Include="..\..\src\objects\stage_05.c" />
+    <ClCompile Include="..\..\src\objects\stage_08.c" />
+    <ClCompile Include="..\..\src\objects\stage_09.c" />
+    <ClCompile Include="..\..\src\objects\stage_0a.c" />
+    <ClCompile Include="..\..\src\objects\stage_10.c" />
+    <ClCompile Include="..\..\src\player\carried_states.c" />
+    <ClCompile Include="..\..\src\player\effects.c" />
+    <ClCompile Include="..\..\src\player\player.c" />
+    <ClCompile Include="..\..\src\player\scene_states.c" />
+    <ClCompile Include="..\..\src\player\states.c" />
+    <ClCompile Include="..\..\src\scenes\character_select.c" />
+    <ClCompile Include="..\..\src\scenes\ending.c" />
+    <ClCompile Include="..\..\src\scenes\map.c" />
+    <ClCompile Include="..\..\src\scenes\ranking.c" />
+    <ClCompile Include="..\..\src\scenes\ring_tally.c" />
+    <ClCompile Include="..\..\src\scenes\title.c" />
+    <ClCompile Include="..\..\src\sound\main.c" />
+    <ClCompile Include="..\..\src\sound\midi.c" />
+    <ClCompile Include="..\..\src\sound\sequences.c" />
+    <ClCompile Include="..\..\src\sound\voices.c" />
+    <ClCompile Include="..\..\src\stage\camera.c" />
+    <ClCompile Include="..\..\src\stage\events.c" />
+    <ClCompile Include="..\..\src\stage\game_modes.c" />
+    <ClCompile Include="..\..\src\stage\layers.c" />
+    <ClCompile Include="..\..\src\system\coins.c" />
+    <ClCompile Include="..\..\src\system\main.c" />
+    <ClCompile Include="..\..\src\system\settings.c" />
+    <ClCompile Include="..\..\src\system\sound.c" />
+    <ClCompile Include="..\..\src\system\test_mode.c" />
+    <ClCompile Include="..\..\src\table.c" />
+    <ClCompile Include="..\..\src\video\bitmap.c" />
+    <ClCompile Include="..\..\src\video\shapes.c" />
+    <ClCompile Include="..\..\src\video\text.c" />
+    <ClCompile Include="..\..\src\video\video.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\console\console.h" />
+    <ClInclude Include="..\..\console\console_actions.h" />
+    <ClInclude Include="..\..\runtime\include\game\data.h" />
+    <ClInclude Include="..\..\runtime\include\game\extract.h" />
+    <ClInclude Include="..\..\runtime\include\game\support.h" />
+    <ClInclude Include="..\..\runtime\include\s32\bus.h" />
+    <ClInclude Include="..\..\runtime\include\s32\machine.h" />
+    <ClInclude Include="..\..\runtime\include\s32\program.h" />
+    <ClInclude Include="..\..\runtime\include\s32\rf5c68.h" />
+    <ClInclude Include="..\..\runtime\include\s32\script.h" />
+    <ClInclude Include="..\..\runtime\include\s32\video.h" />
+    <ClInclude Include="..\..\runtime\include\s32\workers.h" />
+    <ClInclude Include="..\..\runtime\include\s32\ym3438.h" />
+    <ClInclude Include="..\..\runtime\include\sound\chips.h" />
+    <ClInclude Include="..\..\runtime\include\sound\support.h" />
+    <ClInclude Include="..\..\runtime\include\v60\arith.h" />
+    <ClInclude Include="..\..\runtime\include\v60\code.h" />
+    <ClInclude Include="..\..\runtime\include\v60\cpu.h" />
+    <ClInclude Include="..\..\runtime\include\v60\ops.h" />
+    <ClInclude Include="..\..\runtime\include\v60\registers.h" />
+    <ClInclude Include="..\..\runtime\src\inflate.h" />
+    <ClInclude Include="..\..\runtime\src\internal.h" />
+    <ClInclude Include="..\..\src\game.h" />
+    <ClInclude Include="..\..\src\ram.h" />
+    <ClInclude Include="..\..\src\sound\sound.h" />
+  </ItemGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
