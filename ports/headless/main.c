@@ -740,6 +740,29 @@ int main(int argc, char **argv)
 	case GAME_DATA_LOADED:
 		break;
 	case GAME_DATA_MISSING:
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+		{
+			static const char *const ps3_paths[] = {
+				"/app_home/segasonic.assets",
+				"/app_home/USRDIR/segasonic.assets",
+				"/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets",
+				"USRDIR/segasonic.assets",
+				NULL
+			};
+			int p_idx = 0;
+			while (ps3_paths[p_idx])
+			{
+				if (game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
+				{
+					assets_path = ps3_paths[p_idx];
+					break;
+				}
+				p_idx++;
+			}
+			if (ps3_paths[p_idx])
+				break;
+		}
+#endif
 		fprintf(stderr, "%s: no game assets\n", assets_path);
 		return 1;
 	default:
