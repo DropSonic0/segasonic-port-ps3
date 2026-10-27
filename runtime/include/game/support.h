@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "game/le.h"
 #include "s32/bus.h"
 #include "s32/machine.h"
 #include "s32/program.h"
@@ -111,18 +112,18 @@ extern "C" {
 	}
 
 #define RAM8(address)   (*(uint8_t *)ram(address))
-#define RAM16(address)  (*(uint16_t *)ram(address))
-#define RAM32(address)  (*(uint32_t *)ram(address))
+#define RAM16(address)  (*(u16le *)ram(address))
+#define RAM32(address)  (*(u32le *)ram(address))
 #define RAM8S(address)  (*(int8_t *)ram(address))
-#define RAM16S(address) (*(int16_t *)ram(address))
-#define RAM32S(address) (*(int32_t *)ram(address))
+#define RAM16S(address) (*(s16le *)ram(address))
+#define RAM32S(address) (*(s32le *)ram(address))
 
 #define ROM8(address)  (*(const uint8_t *)rom(address))
-#define ROM16(address) (*(const uint16_t *)rom(address))
-#define ROM32(address) (*(const uint32_t *)rom(address))
+#define ROM16(address) (*(const u16le *)rom(address))
+#define ROM32(address) (*(const u32le *)rom(address))
 #define ROM8S(address)  (*(const int8_t *)rom(address))
-#define ROM16S(address) (*(const int16_t *)rom(address))
-#define ROM32S(address) (*(const int32_t *)rom(address))
+#define ROM16S(address) (*(const s16le *)rom(address))
+#define ROM32S(address) (*(const s32le *)rom(address))
 
 	/* The game links its objects by the low halfword of their addresses: the object 'link' names, in the
 	page of work RAM 'base' points into */
@@ -145,11 +146,11 @@ extern "C" {
 
 	/* A variable read with another width than its own, or a part of one */
 #define AS8(variable)  (*(uint8_t *)&(variable))
-#define AS16(variable) (*(uint16_t *)&(variable))
-#define AS32(variable) (*(uint32_t *)&(variable))
+#define AS16(variable) (*(u16le *)&(variable))
+#define AS32(variable) (*(u32le *)&(variable))
 #define AT8(variable, offset)  (*(uint8_t *)((uint8_t *)&(variable) + (offset)))
-#define AT16(variable, offset) (*(uint16_t *)((uint8_t *)&(variable) + (offset)))
-#define AT32(variable, offset) (*(uint32_t *)((uint8_t *)&(variable) + (offset)))
+#define AT16(variable, offset) (*(u16le *)((uint8_t *)&(variable) + (offset)))
+#define AT32(variable, offset) (*(u32le *)((uint8_t *)&(variable) + (offset)))
 
 	/* Processor status word: interrupt enable (bit 18), stacks and levels; the flags (bits 0-3) are local
 	variables of the code, merged in when the program reads the whole word */

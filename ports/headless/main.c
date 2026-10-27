@@ -469,8 +469,16 @@ static void ps3_graphics_init(void)
 
 	glGenTextures(1, &ps3_texture);
 	glBindTexture(GL_TEXTURE_2D, ps3_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, 512, 256, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, NULL);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+
 	ps3_graphics_initialized = true;
 }
 
@@ -495,6 +503,7 @@ static void ps3_audio_init(void)
 
 static void ps3_graphics_render_frame(void)
 {
+	static uint32_t ps3_frame_buffer[256][512];
 	int width = 0;
 	const uint32_t *pixels;
 	GLuint deviceWidth = 1280, deviceHeight = 720;
@@ -503,8 +512,13 @@ static void ps3_graphics_render_frame(void)
 	pixels = s32_video_frame(&width);
 	if (!pixels || width <= 0) return;
 
+	for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+	{
+		memcpy(&ps3_frame_buffer[y][0], &pixels[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
+	}
+
 	glBindTexture(GL_TEXTURE_2D, ps3_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, S32_VIDEO_MAX_WIDTH, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, ps3_frame_buffer);
 
 	psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
 
@@ -536,10 +550,11 @@ static void ps3_graphics_render_frame(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 
-	float u1 = (float)width / (float)S32_VIDEO_MAX_WIDTH;
+	float u1 = (float)width / 512.0f;
+	float v1 = (float)S32_VIDEO_HEIGHT / 256.0f;
 
 	GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-	GLfloat texcoords[] = { 0.0f, 1.0f, u1, 1.0f, u1, 0.0f, 0.0f, 0.0f };
+	GLfloat texcoords[] = { 0.0f, v1, u1, v1, u1, 0.0f, 0.0f, 0.0f };
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -800,9 +815,16 @@ static void ps3_run_pause(void)
 
 		if (ps3_graphics_initialized)
 		{
+			static uint32_t ps3_pause_buffer[256][512];
 			GLuint deviceWidth = 1280, deviceHeight = 720;
+
+			for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+			{
+				memcpy(&ps3_pause_buffer[y][0], &ps3_pause_picture[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
+			}
+
 			glBindTexture(GL_TEXTURE_2D, ps3_texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, S32_VIDEO_MAX_WIDTH, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, ps3_pause_picture);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, ps3_pause_buffer);
 
 			psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
 
@@ -831,9 +853,10 @@ static void ps3_run_pause(void)
 			glClear(GL_COLOR_BUFFER_BIT);
 			glEnable(GL_TEXTURE_2D);
 
-			float u1 = (float)width / (float)S32_VIDEO_MAX_WIDTH;
+			float u1 = (float)width / 512.0f;
+			float v1 = (float)S32_VIDEO_HEIGHT / 256.0f;
 			GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-			GLfloat texcoords[] = { 0.0f, 1.0f, u1, 1.0f, u1, 0.0f, 0.0f, 0.0f };
+			GLfloat texcoords[] = { 0.0f, v1, u1, v1, u1, 0.0f, 0.0f, 0.0f };
 
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);

@@ -1,26 +1,26 @@
 /**
- *    Name:        video.c
- *    Description: Sega System 32 video: the tilemaps, text, bitmap and backdrop layers, the sprite frame
- *                 buffers and the mixer, drawing each frame from the board's memories
- *    Version:     0.1.0
- *    Created:     13-10-2026
- *    Modified:    19-10-2026
- *    Author:      Sebastian Toyos
- *
- *    license:BSD-3-Clause
- *    Behavior follows MAME's sega/segas32_v.cpp (Aaron Giles) pixel for pixel: tools/reference/video
- *    builds that file unmodified, and tools/check_scenarios.py --video compares its frames with these.
- *    MAME's terms are in tools/reference/mame/LICENSE.
- *
- *    How a frame is made: every layer draws a palette offset per pixel (0 is transparent) into a buffer
- *    of its own, through its clip windows. The sprites were drawn before, into the hidden one of two
- *    frame buffers, when the board sent the list. The mixer then takes, pixel by pixel, the topmost
- *    layer that is not transparent in the order its priority registers give, maybe blends it with the
- *    one below, and looks the color up in the palette.
- *
- *    Video RAM holds the tilemap pages (32 x 16 cells of a 16x16 tile, 0x400 bytes each), the text cells
- *    and their graphics, the bitmap layer, the line tables, and the registers at 0x31FF00.
- */
+*    Name:        video.c
+*    Description: Sega System 32 video: the tilemaps, text, bitmap and backdrop layers, the sprite frame
+*                 buffers and the mixer, drawing each frame from the board's memories
+*    Version:     0.1.0
+*    Created:     13-10-2026
+*    Modified:    19-10-2026
+*    Author:      Sebastian Toyos
+*
+*    license:BSD-3-Clause
+*    Behavior follows MAME's sega/segas32_v.cpp (Aaron Giles) pixel for pixel: tools/reference/video
+*    builds that file unmodified, and tools/check_scenarios.py --video compares its frames with these.
+*    MAME's terms are in tools/reference/mame/LICENSE.
+*
+*    How a frame is made: every layer draws a palette offset per pixel (0 is transparent) into a buffer
+*    of its own, through its clip windows. The sprites were drawn before, into the hidden one of two
+*    frame buffers, when the board sent the list. The mixer then takes, pixel by pixel, the topmost
+*    layer that is not transparent in the order its priority registers give, maybe blends it with the
+*    one below, and looks the color up in the palette.
+*
+*    Video RAM holds the tilemap pages (32 x 16 cells of a 16x16 tile, 0x400 bytes each), the text cells
+*    and their graphics, the bitmap layer, the line tables, and the registers at 0x31FF00.
+*/
 #include "s32/video.h"
 
 #include "s32/machine.h"
@@ -63,8 +63,8 @@ typedef struct layer
 } layer;
 
 /* Where the clip windows turn a layer on and off along each row: lists of columns that start at the
-   left edge and end one past the right edge, one for each set of windows (0-31) and one for each row
-   whose windows come from the line table (32 + the row) */
+left edge and end one past the right edge, one for each set of windows (0-31) and one for each row
+whose windows come from the line table (32 + the row) */
 typedef struct clip_runs
 {
 	uint8_t list_of_row[256];
@@ -72,7 +72,7 @@ typedef struct clip_runs
 } clip_runs;
 
 /* The source of one row of a layer: its pixel at a screen column */
-typedef uint16_t (*pixel_source)(const void *row, int x);
+typedef uint16_t(*pixel_source)(const void *row, int x);
 
 /* A layer in the mixer's list */
 typedef struct mix_layer
@@ -185,7 +185,7 @@ static void clip_area(area *target, const area *bounds)
 /* ---- tiles and text cells ---- */
 
 /* The pen (0-15) of a pixel of a 16x16 tile: rows of 8 bytes, two pens a byte with the high nibble
-   first, and the byte pairs of each half of the row swapped */
+first, and the byte pairs of each half of the row swapped */
 static int tile_pen(uint32_t tile, int x, int y)
 {
 	static const uint8_t byte_of_column[16] = { 0, 0, 2, 2, 1, 1, 3, 3, 4, 4, 6, 6, 5, 5, 7, 7 };
@@ -195,7 +195,7 @@ static int tile_pen(uint32_t tile, int x, int y)
 }
 
 /* A pixel of a tilemap page (32 x 16 cells, 512 x 256 pixels). A cell is the tile number (13 bits, the
-   bank above them), its color (bits 4-12, over the number) and its flips (bit 14 x, bit 15 y). */
+bank above them), its color (bits 4-12, over the number) and its flips (bit 14 x, bit 15 y). */
 static const uint16_t *own_cell_words;    /* s32_video_set_cells */
 static const uint8_t *own_cell_marks;
 
@@ -212,8 +212,8 @@ static uint16_t page_pixel(int page, int bank, int y, int x)
 }
 
 /* A pixel of the text layer (64 x 32 cells of 8x8, a 512 x 256 map). The cells' page and the bank of
-   their graphics come from register 0x5C; the graphics are in video RAM too, 32 bytes a character,
-   four bytes a row, the high nibble first. */
+their graphics come from register 0x5C; the graphics are in video RAM too, 32 bytes a character,
+four bytes a row, the high nibble first. */
 static uint16_t text_pixel(int y, int x)
 {
 	const uint16_t control = video_register(0x5c);
@@ -274,7 +274,7 @@ static void sort_by_left(const area *windows, int *order)
 }
 
 /* The list for a set of windows: taken from left to right, a window that starts inside the last run
-   stretches it */
+stretches it */
 static void merge_windows(uint16_t *list, const area *windows, const int *order, int set, const area *edges)
 {
 	uint16_t *end = list;
@@ -329,7 +329,7 @@ static void line_window(int number, int line, bool flip, uint32_t table, const a
 }
 
 /* A layer's runs: 'selected' picks windows 0-4. The first run of each row is drawn when the layer draws
-   outside its windows (or has them off), and the runs alternate from there. */
+outside its windows (or has them off), and the runs alternate from there. */
 static bool find_clip_runs(bool enabled, bool outside, int selected, clip_runs *runs)
 {
 	const bool flip = bit(video_register(0x00), 9);
@@ -353,8 +353,8 @@ static bool find_clip_runs(bool enabled, bool outside, int selected, clip_runs *
 	}
 	sort_by_left(windows, order);
 	for (int set = 1; set < 32; set++)
-		if (set & selected)
-			merge_windows(runs->lists[set], windows, order, set, &edges);
+	if (set & selected)
+		merge_windows(runs->lists[set], windows, order, set, &edges);
 
 	for (int y = edges.top; y < edges.bottom; y++)
 	{
@@ -363,8 +363,8 @@ static bool find_clip_runs(bool enabled, bool outside, int selected, clip_runs *
 		int row_order[5];
 
 		for (int number = 0; number < 5; number++)
-			if (bit((uint32_t)selected, number) && y >= windows[number].top && y < windows[number].bottom)
-				crossing |= 1 << number;
+		if (bit((uint32_t)selected, number) && y >= windows[number].top && y < windows[number].bottom)
+			crossing |= 1 << number;
 		if (!line_windows)
 		{
 			runs->list_of_row[y] = (uint8_t)crossing;
@@ -377,9 +377,9 @@ static bool find_clip_runs(bool enabled, bool outside, int selected, clip_runs *
 			row_order[number] = number;
 		}
 		for (int number = 2; number <= 3; number++)
-			if (bit(line_control, number + 2) && bit((uint32_t)selected, number))
-				line_window(number, flip ? video.visible.bottom - y : y, flip, (uint32_t)(line_control >> 10) * 0x400,
-					&edges, &row_windows[number], &crossing);
+		if (bit(line_control, number + 2) && bit((uint32_t)selected, number))
+			line_window(number, flip ? video.visible.bottom - y : y, flip, (uint32_t)(line_control >> 10) * 0x400,
+			&edges, &row_windows[number], &crossing);
 		sort_by_left(row_windows, row_order);
 		merge_windows(runs->lists[32 + y], row_windows, row_order, crossing, &edges);
 		runs->list_of_row[y] = (uint8_t)(32 + y);
@@ -388,7 +388,7 @@ static bool find_clip_runs(bool enabled, bool outside, int selected, clip_runs *
 }
 
 /* One row of a layer through its runs, which alternate between drawn and cleared starting with 'drawn'.
-   Overlapping windows can make a run start before the last one ended: it is drawn again. */
+Overlapping windows can make a run start before the last one ended: it is drawn again. */
 static void draw_row(layer *out, int y, const uint16_t *runs, bool drawn, pixel_source pixel, const void *row)
 {
 	uint16_t *pixels = out->pixels[y];
@@ -432,7 +432,7 @@ static int pages_of(int number, int *pages)
 }
 
 /* Register 0x00 flips tilemap 0-3 against the whole screen's flip (bit 9); bit 8 keeps them from
-   flipping vertically */
+flipping vertically */
 static void flips_of(int number, bool *flip_x, bool *flip_y)
 {
 	const uint16_t control = video_register(0x00);
@@ -492,7 +492,7 @@ static void draw_zoomed_rows(void *context, int first, int last)
 }
 
 /* NBG0 and NBG1: scrolled (with a fraction) and zoomed about a center. The steps are screen pixels per
-   source pixel (0x200 = 1); the source moves by their reciprocal, in 12.20. */
+source pixel (0x200 = 1); the source moves by their reciprocal, in 12.20. */
 static void draw_zoomed(int number)
 {
 	const uint32_t scroll = 0x10 + 8 * (uint32_t)number;
@@ -606,7 +606,7 @@ static void draw_scrolled_rows(void *context, int first, int last)
 }
 
 /* NBG2 and NBG3: scrolled, and row by row the line table can add to the column (row scroll) or pick
-   the source row (row select). Register 0x04 turns those on; its top bits place the table. */
+the source row (row select). Register 0x04 turns those on; its top bits place the table. */
 static void draw_scrolled(int number)
 {
 	const uint16_t line_control = video_register(0x04);
@@ -632,15 +632,15 @@ static void draw_text_rows(void *context, int first, int last)
 	const bool flip = *(const bool *)context;
 
 	for (int y = first; y <= last; y++)
-		for (int x = video.visible.left; x <= video.visible.right; x++)
-		{
-			const int column = x - video.side;
+	for (int x = video.visible.left; x <= video.visible.right; x++)
+	{
+		const int column = x - video.side;
 
-			if (column < 0 || column >= (video.side ? 320 : video.visible.right + 1))
-				video.layers[LAYER_TEXT].pixels[y][x] = 0;
-			else
-				video.layers[LAYER_TEXT].pixels[y][x] = flip ? text_pixel(255 - y, 511 - column) : text_pixel(y, column);
-		}
+		if (column < 0 || column >= (video.side ? 320 : video.visible.right + 1))
+			video.layers[LAYER_TEXT].pixels[y][x] = 0;
+		else
+			video.layers[LAYER_TEXT].pixels[y][x] = flip ? text_pixel(255 - y, 511 - column) : text_pixel(y, column);
+	}
 }
 
 static void draw_text(void)
@@ -700,7 +700,7 @@ static void draw_bitmap_rows(void *context, int first, int last)
 }
 
 /* The bitmap layer: 512 pixels a row from the start of video RAM, 4 or 8 bits each (register 0x00
-   bit 11), scrolled by registers 0x88 and 0x8A, its palette from 0x8C; window 4 clips it */
+bit 11), scrolled by registers 0x88 and 0x8A, its palette from 0x8C; window 4 clips it */
 static void draw_bitmap(void)
 {
 	bitmap_layer bitmap;
@@ -730,7 +730,7 @@ static void draw_backdrop(void)
 }
 
 /* Every layer the registers leave on (0x02 and 0x8E turn them off, 0x00 bits 12-13 too for NBG2-3);
-   the backdrop is always there. The layers drawn, as bits by LAYER_. */
+the backdrop is always there. The layers drawn, as bits by LAYER_. */
 s32_tile_observer s32_video_tile_observer = NULL;
 
 /* Every cell of the pages tilemap 'number' shows, to s32_video_tile_observer */
@@ -844,8 +844,8 @@ static uint32_t sprite_graphics(bool from_ram, uint32_t bank, uint32_t index)
 }
 
 /* One row of a sprite: words of 8 pens (4 bits) or 4 (8 bits), each pen repeated or skipped by the
-   zoom. The first and last pen of a word are transparent at all ones (unless the sprite is opaque),
-   and a word that ends with them ends the row. */
+zoom. The first and last pen of a word are transparent at all ones (unless the sprite is opaque),
+and a word that ends with them ends the row. */
 static void draw_sprite_row(const sprite_drawing *sprite, bool from_ram, uint32_t bank, uint32_t address,
 	int x, int x_end, int x_delta, int x_zoom, int end_pen)
 {
@@ -878,8 +878,8 @@ static void draw_sprite_row(const sprite_drawing *sprite, bool from_ram, uint32_
 }
 
 /* A sprite entry (8 words): flags, source height and width, screen height (and bank bits), screen
-   width, y, x, the graphics' offset in the bank, and the color. Hands back how many more entries it
-   takes: an indirect table kept in the list takes two. */
+width, y, x, the graphics' offset in the bank, and the color. Hands back how many more entries it
+takes: an indirect table kept in the list takes two. */
 static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *inside, const area *outside)
 {
 	static const uint16_t transparent_bits[4][4] = {
@@ -937,7 +937,7 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 
 		for (int index = 0; index < 16; index++)
 			sprite.table[index] = (uint16_t)((sprite_word(table + (uint32_t)index) & (sprite.bits8 ? 0xfff0 : 0xffff)) |
-				(bit(latched[5], 0) ? 0x8000 : 0));
+			(bit(latched[5], 0) ? 0x8000 : 0));
 	}
 
 	if (s32_video_sprite_observer != NULL && !from_ram)
@@ -948,7 +948,7 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 
 		for (int pen = 0; pen < pens; pen++)
 			pixels[pen] = (uint16_t)(!sprite.indirect ? (sprite.color | pen)
-				: (sprite.bits8 ? sprite.table[pen >> 4] | (pen & 0x0f) : sprite.table[pen]));
+			: (sprite.bits8 ? sprite.table[pen >> 4] | (pen & 0x0f) : sprite.table[pen]));
 		s32_video_sprite_observer(bank << 20 | (address & 0xfffff), source_width, source_height, sprite.bits8,
 			end_pen == 0, pixels);
 	}
@@ -961,17 +961,17 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 	y = sign_extend(sprite_word(entry + 4), 12) + (bit(flags, 5) ? y_offset : 0);
 	switch (flags & 3)
 	{
-		case 0:
-		case 3: x -= (width - 1) / 2; break;
-		case 1: x -= width - 1; break;
-		default: break;
+	case 0:
+	case 3: x -= (width - 1) / 2; break;
+	case 1: x -= width - 1; break;
+	default: break;
 	}
 	switch ((flags >> 2) & 3)
 	{
-		case 0:
-		case 3: y -= (height - 1) / 2; break;
-		case 1: y -= height - 1; break;
-		default: break;
+	case 0:
+	case 3: y -= (height - 1) / 2; break;
+	case 1: y -= height - 1; break;
+	default: break;
 	}
 	if (flip_x)
 	{
@@ -987,9 +987,9 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 	y_end = y + y_delta * height;
 
 	/* rows end at the sprite's width, or at the clip. (MAME tests a flipped sprite's end against the clip's
-	   right edge instead of its left one, so the sprite runs on to the left edge reading whatever follows
-	   it in the ROM: an opaque one, which ignores end codes, leaves copies of the next frames there. The
-	   reference, tools/reference/mame/sega/segas32_v.cpp, has the same line fixed.) */
+	right edge instead of its left one, so the sprite runs on to the left edge reading whatever follows
+	it in the ROM: an opaque one, which ignores end codes, leaves copies of the next frames there. The
+	reference, tools/reference/mame/sega/segas32_v.cpp, has the same line fixed.) */
 	if (x_delta > 0 && x_end > inside->right)
 	{
 		x_end = inside->right + 1;
@@ -1020,8 +1020,8 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 }
 
 /* The list in sprite RAM, 16 bytes an entry, its command in the top two bits of the first word: draw a
-   sprite, set the clips (bit 12 the one to draw in, bit 13 the one to leave alone), jump (and with
-   bit 13, set the offset sprites can add), or end. */
+sprite, set the clips (bit 12 the one to draw in, bit 13 the one to leave alone), jump (and with
+bit 13, set the offset sprites can add), or end. */
 static void draw_sprite_list(void)
 {
 	const bool wide = video.wide && !bit(s32_board.sprite_control_latched[6], 0);
@@ -1042,44 +1042,44 @@ static void draw_sprite_list(void)
 
 		switch (command >> 14)
 		{
-			case 0:
-				number += 1 + draw_sprite(entry, x_offset, y_offset, &inside, &outside);
-				break;
-			case 1:
-				if (bit(command, 12))
+		case 0:
+			number += 1 + draw_sprite(entry, x_offset, y_offset, &inside, &outside);
+			break;
+		case 1:
+			if (bit(command, 12))
+			{
+				inside.left = sign_extend(sprite_word(entry + 2), 12);
+				inside.right = sign_extend(sprite_word(entry + 3), 12);
+				inside.top = sign_extend(command, 12);
+				inside.bottom = sign_extend(sprite_word(entry + 1), 12);
+				if (wide && inside.left <= 0 && inside.right >= 319)
+					inside.right = screen.right;    /* (the whole screen: the wide one) */
+				else
 				{
-					inside.left = sign_extend(sprite_word(entry + 2), 12);
-					inside.right = sign_extend(sprite_word(entry + 3), 12);
-					inside.top = sign_extend(command, 12);
-					inside.bottom = sign_extend(sprite_word(entry + 1), 12);
-					if (wide && inside.left <= 0 && inside.right >= 319)
-						inside.right = screen.right;    /* (the whole screen: the wide one) */
-					else
-					{
-						inside.left += side;
-						inside.right += side;
-					}
-					clip_area(&inside, &screen);
+					inside.left += side;
+					inside.right += side;
 				}
-				if (bit(command, 13))
-				{
-					outside.left = sign_extend(sprite_word(entry + 6), 12) + side;
-					outside.right = sign_extend(sprite_word(entry + 7), 12) + side;
-					outside.top = sign_extend(sprite_word(entry + 4), 12);
-					outside.bottom = sign_extend(sprite_word(entry + 5), 12);
-				}
-				number++;
-				break;
-			case 2:
-				if (bit(command, 13))
-				{
-					y_offset = sign_extend(sprite_word(entry + 1), 12);
-					x_offset = sign_extend(sprite_word(entry + 2), 12);
-				}
-				number = command & 0x1fff;
-				break;
-			default:
-				return;
+				clip_area(&inside, &screen);
+			}
+			if (bit(command, 13))
+			{
+				outside.left = sign_extend(sprite_word(entry + 6), 12) + side;
+				outside.right = sign_extend(sprite_word(entry + 7), 12) + side;
+				outside.top = sign_extend(sprite_word(entry + 4), 12);
+				outside.bottom = sign_extend(sprite_word(entry + 5), 12);
+			}
+			number++;
+			break;
+		case 2:
+			if (bit(command, 13))
+			{
+				y_offset = sign_extend(sprite_word(entry + 1), 12);
+				x_offset = sign_extend(sprite_word(entry + 2), 12);
+			}
+			number = command & 0x1fff;
+			break;
+		default:
+			return;
 		}
 	}
 }
@@ -1107,9 +1107,9 @@ static uint8_t color_offsets(bool layer_bit, bool layer_flag)
 {
 	switch ((bit(mixer_register(0x3e), 15) ? 2 : 0) | (layer_bit ? 1 : 0))
 	{
-		case 1: return 2;
-		case 2: return layer_flag ? 0 : 2;
-		default: return layer_flag ? 0 : 1;
+	case 1: return 2;
+	case 2: return layer_flag ? 0 : 2;
+	default: return layer_flag ? 0 : 1;
 	}
 }
 
@@ -1120,10 +1120,10 @@ static uint16_t sprite_blend(int encoding)
 
 	switch ((encoding >> 4) & 3)
 	{
-		case 0: return (uint16_t)(1 << value);
-		case 1: return (uint16_t)((1 << value) | ((1 << value) - 1));
-		case 2: return (uint16_t)(~((1 << value) - 1) & 0xffff);
-		default: return 0xffff;
+	case 0: return (uint16_t)(1 << value);
+	case 1: return (uint16_t)((1 << value) | ((1 << value) - 1));
+	case 2: return (uint16_t)(~((1 << value) - 1) & 0xffff);
+	default: return 0xffff;
 	}
 }
 
@@ -1143,7 +1143,7 @@ static const sprite_grouping groupings[16] = {
 };
 
 /* The first layer down the list that is not transparent there; the backdrop always is. A sprite pixel
-   all ones lets the layers below show, and the shadow pen darkens them. */
+all ones lets the layers below show, and the shadow pen darkens them. */
 static const mix_layer *top_layer(const mix_layer *entry, const uint16_t *const *rows, int x, int sprite_pixel,
 	int shadow_mask, int sprite_bits, int shadow_pen, int *pixel, int *shadow)
 {
@@ -1265,14 +1265,14 @@ static void mix_rows(void *context, int first, int last)
 			red = red > 31 ? 31 : (red > 0 ? red : 0);
 			green = green > 31 ? 31 : (green > 0 ? green : 0);
 			blue = blue > 31 ? 31 : (blue > 0 ? blue : 0);
-			video.frame[y][x] = (uint32_t)red << 19 | (uint32_t)green << 11 | (uint32_t)blue << 3;
+			video.frame[y][x] = 0xFF000000u | (uint32_t)red << 19 | (uint32_t)green << 11 | (uint32_t)blue << 3;
 		}
 	}
 }
 
 /* The frame from the layers: registers 0x00-0x1E give each sprite group its priority and palette, 0x20-0x2C
-   each layer, 0x30-0x3A what each blends with, 0x40-0x4A two color offsets, 0x4C the sprite grouping and
-   shadows, 0x4E blending */
+each layer, 0x30-0x3A what each blends with, 0x40-0x4A two color offsets, 0x4C the sprite grouping and
+shadows, 0x4E blending */
 static void mix(int drawn)
 {
 	const uint16_t blend_control = mixer_register(0x4e);
@@ -1280,8 +1280,8 @@ static void mix(int drawn)
 	const uint16_t sprite_control = mixer_register(0x4c);
 	const sprite_grouping grouping = groupings[sprite_control & 0x0f];
 	static mix_frame frame;
-	int (*offsets)[3] = frame.offsets;
-	mix_layer (*orders)[8] = frame.orders;
+	int(*offsets)[3] = frame.offsets;
+	mix_layer(*orders)[8] = frame.orders;
 	mix_layer sorted[8];
 	int count = 0;
 
@@ -1324,14 +1324,14 @@ static void mix(int drawn)
 	sorted[count].offsets = color_offsets(bit(mixer_register(0x3e), 8), bit(mixer_register(0x3e), 14));
 	count++;
 	for (int index = 0; index < count; index++)
-		for (int other = index + 1; other < count; other++)
-			if (sorted[other].priority > sorted[index].priority)
-			{
-				const mix_layer swap = sorted[other];
+	for (int other = index + 1; other < count; other++)
+	if (sorted[other].priority > sorted[index].priority)
+	{
+		const mix_layer swap = sorted[other];
 
-				sorted[other] = sorted[index];
-				sorted[index] = swap;
-			}
+		sorted[other] = sorted[index];
+		sorted[index] = swap;
+	}
 
 	/* each sprite group goes in above the first layer of a lower priority */
 	for (int group = 0; group <= grouping.mask; group++)
@@ -1447,8 +1447,8 @@ uint64_t s32_video_frame_hash(void)
 	uint64_t hash = 0xcbf29ce484222325ull;
 
 	for (int y = 0; y < HEIGHT; y++)
-		for (int x = 0; x <= video.visible.right; x++)
-			for (int shift = 0; shift < 24; shift += 8)
-				hash = (hash ^ ((video.frame[y][x] >> shift) & 0xff)) * 0x100000001b3ull;
+	for (int x = 0; x <= video.visible.right; x++)
+	for (int shift = 0; shift < 24; shift += 8)
+		hash = (hash ^ ((video.frame[y][x] >> shift) & 0xff)) * 0x100000001b3ull;
 	return hash;
 }

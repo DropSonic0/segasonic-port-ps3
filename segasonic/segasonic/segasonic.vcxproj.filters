@@ -16,7 +16,6 @@
     <ClCompile Include="..\..\runtime\src\sound.c" />
     <ClCompile Include="..\..\runtime\src\sound_chips.c" />
     <ClCompile Include="..\..\runtime\src\sound_cpu.c" />
-    <ClCompile Include="..\..\runtime\src\v60.c" />
     <ClCompile Include="..\..\runtime\src\video.c" />
     <ClCompile Include="..\..\runtime\src\workers.c" />
     <ClCompile Include="..\..\runtime\src\ym3438.c" />
@@ -65,12 +64,52 @@
     <ClCompile Include="..\..\src\video\shapes.c" />
     <ClCompile Include="..\..\src\video\text.c" />
     <ClCompile Include="..\..\src\video\video.c" />
-    <ClCompile Include="..\..\ports\sdl2\actions.c" />
-    <ClCompile Include="..\..\ports\sdl2\first_run.c" />
-    <ClCompile Include="..\..\ports\sdl2\letters.c" />
-    <ClCompile Include="..\..\ports\sdl2\main.c" />
-    <ClCompile Include="..\..\ports\sdl2\settings.c" />
-    <ClCompile Include="..\..\ports\sdl2\touch.c" />
+    <ClCompile Include="..\..\ports\headless\main.c" />
+    <ClCompile Include="cpp_wrappers\engine_contacts.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_geometry.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_objects.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_sprites.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_eggman.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_intro.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_rings.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_shared.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_0a.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_03.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_04.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_05.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_08.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_09.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_10.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stages_0b_0f.cpp" />
+    <ClCompile Include="cpp_wrappers\player_carried_states.cpp" />
+    <ClCompile Include="cpp_wrappers\player_effects.cpp" />
+    <ClCompile Include="cpp_wrappers\player_player.cpp" />
+    <ClCompile Include="cpp_wrappers\player_scene_states.cpp" />
+    <ClCompile Include="cpp_wrappers\player_states.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_character_select.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ending.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_map.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ranking.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ring_tally.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_title.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_main.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_midi.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_sequences.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_voices.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_camera.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_events.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_game_modes.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_layers.cpp" />
+    <ClCompile Include="cpp_wrappers\system_coins.cpp" />
+    <ClCompile Include="cpp_wrappers\system_main.cpp" />
+    <ClCompile Include="cpp_wrappers\system_settings.cpp" />
+    <ClCompile Include="cpp_wrappers\system_sound.cpp" />
+    <ClCompile Include="cpp_wrappers\system_test_mode.cpp" />
+    <ClCompile Include="cpp_wrappers\table.cpp" />
+    <ClCompile Include="cpp_wrappers\video_bitmap.cpp" />
+    <ClCompile Include="cpp_wrappers\video_shapes.cpp" />
+    <ClCompile Include="cpp_wrappers\video_text.cpp" />
+    <ClCompile Include="cpp_wrappers\video_video.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />
@@ -98,20 +137,5 @@
     <ClInclude Include="..\..\src\game.h" />
     <ClInclude Include="..\..\src\ram.h" />
     <ClInclude Include="..\..\src\sound\sound.h" />
-    <ClInclude Include="..\..\ports\sdl2\actions.h" />
-    <ClInclude Include="..\..\ports\sdl2\first_run.h" />
-    <ClInclude Include="..\..\ports\sdl2\letters.h" />
-    <ClInclude Include="..\..\ports\sdl2\settings.h" />
-    <ClInclude Include="..\..\ports\sdl2\touch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\ports\sdl2\font\font.bmp" />
-    <None Include="..\..\ports\sdl2\font\License.txt" />
-    <None Include="..\..\ports\sdl2\icon\segasonic.icns" />
-    <None Include="..\..\ports\sdl2\icon\segasonic.ico" />
-    <None Include="..\..\ports\sdl2\icon\segasonic.png" />
-    <None Include="..\..\ports\sdl2\icon\segasonic.rc" />
-    <None Include="..\..\ports\sdl2\prompts\input_prompts.bmp" />
-    <None Include="..\..\ports\sdl2\prompts\License.txt" />
   </ItemGroup>
 </Project>

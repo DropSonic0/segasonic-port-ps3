@@ -45,7 +45,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <TargetExt>.self</TargetExt>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;SEGASONIC_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
@@ -57,7 +59,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;SEGASONIC_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;SEGASONIC_CONSOLE;S32_BIG_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OptimizationLevel>Level2</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\runtime\include;$(ProjectDir)..\..\console;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -68,13 +70,18 @@
     </Link>
     <Link>
       <AdditionalLibraryDirectories>C:\usr\local\cell\target\ppu\lib\PSGL\RSX\ultra-opt</AdditionalLibraryDirectories>
+      <OutputFormat>FSELFFile</OutputFormat>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\console\console.c" />
+    <ClCompile Include="..\..\console\console.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\ports\headless\main.c" />
     <ClCompile Include="..\..\runtime\src\extract.c" />
-    <ClCompile Include="..\..\runtime\src\game.c" />
+    <ClCompile Include="..\..\runtime\src\game.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\runtime\src\game_data.c" />
     <ClCompile Include="..\..\runtime\src\inflate.c" />
     <ClCompile Include="..\..\runtime\src\io.c" />
@@ -90,51 +97,181 @@
     <ClCompile Include="..\..\runtime\src\video.c" />
     <ClCompile Include="..\..\runtime\src\workers.c" />
     <ClCompile Include="..\..\runtime\src\ym3438.c" />
-    <ClCompile Include="..\..\src\engine\contacts.c" />
-    <ClCompile Include="..\..\src\engine\geometry.c" />
-    <ClCompile Include="..\..\src\engine\objects.c" />
-    <ClCompile Include="..\..\src\engine\sprites.c" />
-    <ClCompile Include="..\..\src\objects\eggman.c" />
-    <ClCompile Include="..\..\src\objects\intro.c" />
-    <ClCompile Include="..\..\src\objects\rings.c" />
-    <ClCompile Include="..\..\src\objects\shared.c" />
-    <ClCompile Include="..\..\src\objects\stages_0b_0f.c" />
-    <ClCompile Include="..\..\src\objects\stage_03.c" />
-    <ClCompile Include="..\..\src\objects\stage_04.c" />
-    <ClCompile Include="..\..\src\objects\stage_05.c" />
-    <ClCompile Include="..\..\src\objects\stage_08.c" />
-    <ClCompile Include="..\..\src\objects\stage_09.c" />
-    <ClCompile Include="..\..\src\objects\stage_0a.c" />
-    <ClCompile Include="..\..\src\objects\stage_10.c" />
-    <ClCompile Include="..\..\src\player\carried_states.c" />
-    <ClCompile Include="..\..\src\player\effects.c" />
-    <ClCompile Include="..\..\src\player\player.c" />
-    <ClCompile Include="..\..\src\player\scene_states.c" />
-    <ClCompile Include="..\..\src\player\states.c" />
-    <ClCompile Include="..\..\src\scenes\character_select.c" />
-    <ClCompile Include="..\..\src\scenes\ending.c" />
-    <ClCompile Include="..\..\src\scenes\map.c" />
-    <ClCompile Include="..\..\src\scenes\ranking.c" />
-    <ClCompile Include="..\..\src\scenes\ring_tally.c" />
-    <ClCompile Include="..\..\src\scenes\title.c" />
-    <ClCompile Include="..\..\src\sound\main.c" />
+    <ClCompile Include="..\..\src\engine\contacts.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\geometry.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\objects.c">
+      <CppLanguageStd Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">Cpp11</CppLanguageStd>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\engine\sprites.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\eggman.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\intro.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\rings.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\shared.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stages_0b_0f.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_03.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_04.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_05.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_08.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_09.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_0a.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\objects\stage_10.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\player\carried_states.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\player\effects.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\player\player.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\player\scene_states.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\player\states.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\character_select.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\ending.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\map.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\ranking.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\ring_tally.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scenes\title.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sound\main.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\sound\midi.c" />
     <ClCompile Include="..\..\src\sound\sequences.c" />
     <ClCompile Include="..\..\src\sound\voices.c" />
-    <ClCompile Include="..\..\src\stage\camera.c" />
-    <ClCompile Include="..\..\src\stage\events.c" />
-    <ClCompile Include="..\..\src\stage\game_modes.c" />
-    <ClCompile Include="..\..\src\stage\layers.c" />
-    <ClCompile Include="..\..\src\system\coins.c" />
-    <ClCompile Include="..\..\src\system\main.c" />
-    <ClCompile Include="..\..\src\system\settings.c" />
-    <ClCompile Include="..\..\src\system\sound.c" />
-    <ClCompile Include="..\..\src\system\test_mode.c" />
-    <ClCompile Include="..\..\src\table.c" />
-    <ClCompile Include="..\..\src\video\bitmap.c" />
-    <ClCompile Include="..\..\src\video\shapes.c" />
-    <ClCompile Include="..\..\src\video\text.c" />
-    <ClCompile Include="..\..\src\video\video.c" />
+    <ClCompile Include="..\..\src\stage\camera.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stage\events.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stage\game_modes.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stage\layers.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system\coins.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system\main.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system\settings.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system\sound.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system\test_mode.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\table.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\bitmap.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\shapes.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\text.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\video.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="cpp_wrappers\engine_contacts.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_geometry.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_objects.cpp" />
+    <ClCompile Include="cpp_wrappers\engine_sprites.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_eggman.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_intro.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_rings.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_shared.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stages_0b_0f.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_03.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_04.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_05.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_08.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_09.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_0a.cpp" />
+    <ClCompile Include="cpp_wrappers\objects_stage_10.cpp" />
+    <ClCompile Include="cpp_wrappers\player_carried_states.cpp" />
+    <ClCompile Include="cpp_wrappers\player_effects.cpp" />
+    <ClCompile Include="cpp_wrappers\player_player.cpp" />
+    <ClCompile Include="cpp_wrappers\player_scene_states.cpp" />
+    <ClCompile Include="cpp_wrappers\player_states.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_character_select.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ending.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_map.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ranking.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_ring_tally.cpp" />
+    <ClCompile Include="cpp_wrappers\scenes_title.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_main.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_midi.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_sequences.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_voices.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_camera.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_events.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_game_modes.cpp" />
+    <ClCompile Include="cpp_wrappers\stage_layers.cpp" />
+    <ClCompile Include="cpp_wrappers\system_coins.cpp" />
+    <ClCompile Include="cpp_wrappers\system_main.cpp" />
+    <ClCompile Include="cpp_wrappers\system_settings.cpp" />
+    <ClCompile Include="cpp_wrappers\system_sound.cpp" />
+    <ClCompile Include="cpp_wrappers\system_test_mode.cpp" />
+    <ClCompile Include="cpp_wrappers\table.cpp" />
+    <ClCompile Include="cpp_wrappers\video_bitmap.cpp" />
+    <ClCompile Include="cpp_wrappers\video_shapes.cpp" />
+    <ClCompile Include="cpp_wrappers\video_text.cpp" />
+    <ClCompile Include="cpp_wrappers\video_video.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />

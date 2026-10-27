@@ -3,7 +3,7 @@
  *    Description: the game's variables, tables, board registers and structures
  *    Version:     0.1.0
  *    Created:     12-10-2026
- *    Modified:    22-10-2026
+ *    Modified:    27-10-2026
  *    Author:      Sebastian Toyos
  *
  *    SegaSonic The Hedgehog (arcade, Sega System 32): the game's V60 program decompiled into C by
@@ -11,6 +11,8 @@
  */
 #ifndef SONIC_RAM_H
 #define SONIC_RAM_H
+
+#include "game/le.h"
 
 #ifndef _Static_assert
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
@@ -40,7 +42,7 @@
 #define last_object_link_ADDRESS 0x207FE6u
 #define last_object_link RAM16(last_object_link_ADDRESS)
 #define type_spawn_cursor_ADDRESS 0x208000u
-#define type_spawn_cursor ((uint32_t *)ram(type_spawn_cursor_ADDRESS))
+#define type_spawn_cursor ((u32le *)ram(type_spawn_cursor_ADDRESS))
 #define type_spawn_stage_ADDRESS 0x208006u
 #define type_spawn_stage RAM16(type_spawn_stage_ADDRESS)
 #define spawn_count_ADDRESS 0x208008u
@@ -368,7 +370,7 @@
 #define wall_editor_arrow_count_ADDRESS 0x209600u
 #define wall_editor_arrow_count RAM16S(wall_editor_arrow_count_ADDRESS)
 #define group_slots_ADDRESS 0x209F00u
-#define group_slots ((uint16_t *)ram(group_slots_ADDRESS))
+#define group_slots ((u16le *)ram(group_slots_ADDRESS))
 #define nearby_floor_block_count_ADDRESS 0x209F80u
 #define nearby_floor_block_count RAM16(nearby_floor_block_count_ADDRESS)
 #define nearby_floor_blocks_ADDRESS 0x209F82u
@@ -644,7 +646,7 @@
 #define group_spawn_cursor_ADDRESS 0x20E55Cu
 #define group_spawn_cursor RAM32(group_spawn_cursor_ADDRESS)
 #define group_leaders_ADDRESS 0x20E562u
-#define group_leaders ((uint16_t *)ram(group_leaders_ADDRESS))
+#define group_leaders ((u16le *)ram(group_leaders_ADDRESS))
 #define group_leader_1_ADDRESS 0x20E564u
 #define group_leader_1 RAM16(group_leader_1_ADDRESS)
 #define current_icicle_dropper_ADDRESS 0x20E566u
@@ -748,7 +750,7 @@
 #define fire_vent_cursor_ADDRESS 0x20E5D8u
 #define fire_vent_cursor RAM32(fire_vent_cursor_ADDRESS)
 #define lava_columns_ADDRESS 0x20E5DCu
-#define lava_columns ((uint16_t *)ram(lava_columns_ADDRESS))
+#define lava_columns ((u16le *)ram(lava_columns_ADDRESS))
 #define players_finished_ADDRESS 0x20E5E0u
 #define players_finished ((uint8_t *)ram(players_finished_ADDRESS))
 #define goal_unlocked_ADDRESS 0x20E5E3u
@@ -838,7 +840,7 @@
 #define scene_object_ADDRESS 0x20E62Eu
 #define scene_object RAM16(scene_object_ADDRESS)
 #define rising_saws_ADDRESS 0x20E632u
-#define rising_saws ((uint16_t *)ram(rising_saws_ADDRESS))
+#define rising_saws ((u16le *)ram(rising_saws_ADDRESS))
 #define rising_saw_1_ADDRESS 0x20E634u
 #define rising_saw_1 RAM16(rising_saw_1_ADDRESS)
 #define rising_saw_2_ADDRESS 0x20E636u
@@ -854,7 +856,7 @@
 #define event_1a_scroll_speed_ADDRESS 0x20E63Eu
 #define event_1a_scroll_speed RAM16(event_1a_scroll_speed_ADDRESS)
 #define player_carriers_ADDRESS 0x20E640u
-#define player_carriers ((uint16_t *)ram(player_carriers_ADDRESS))
+#define player_carriers ((u16le *)ram(player_carriers_ADDRESS))
 #define intro_character_ADDRESS 0x20E646u
 #define intro_character RAM8S(intro_character_ADDRESS)
 #define event_1c_riding_ADDRESS 0x20E647u
@@ -930,7 +932,7 @@
 #define free_object_stack_ADDRESS 0x20E900u
 #define free_object_stack RAM16S(free_object_stack_ADDRESS)
 #define free_object_stack_2_ADDRESS 0x20EA10u
-#define free_object_stack_2 ((int16_t *)ram(free_object_stack_2_ADDRESS))
+#define free_object_stack_2 ((s16le *)ram(free_object_stack_2_ADDRESS))
 #define sound_queue_read_ADDRESS 0x20ED80u
 #define sound_queue_read RAM8(sound_queue_read_ADDRESS)
 #define sound_queue_write_ADDRESS 0x20ED81u
@@ -1076,7 +1078,7 @@
 #define wall_spawn_cursor_ADDRESS 0x20F0B2u
 #define wall_spawn_cursor RAM32(wall_spawn_cursor_ADDRESS)
 #define trackball_step_sums_ADDRESS 0x20F0B6u
-#define trackball_step_sums ((uint16_t *)ram(trackball_step_sums_ADDRESS))
+#define trackball_step_sums ((u16le *)ram(trackball_step_sums_ADDRESS))
 #define stage_init_flags_ADDRESS 0x20F0BCu
 #define stage_init_flags RAM32(stage_init_flags_ADDRESS)
 #define handler_spawn_cursor_ADDRESS 0x20F0DAu
@@ -1222,7 +1224,7 @@
 #define video_registers_latched_ADDRESS 0x20F2C2u
 #define video_registers_latched RAM16(video_registers_latched_ADDRESS)
 #define vram_script_dictionary_ADDRESS 0x20F300u
-#define vram_script_dictionary ((uint16_t *)ram(vram_script_dictionary_ADDRESS))
+#define vram_script_dictionary ((u16le *)ram(vram_script_dictionary_ADDRESS))
 #define video_layer_opaque_latched_ADDRESS 0x20F302u
 #define video_layer_opaque_latched RAM8(video_layer_opaque_latched_ADDRESS)
 #define credit_pool_ADDRESS 0x20F400u
@@ -1580,7 +1582,7 @@
 
 /* data in the program ROM the code reads */
 #define system_mode_handlers_ADDRESS 0x000594u
-#define system_mode_handlers ((const uint32_t *)rom(system_mode_handlers_ADDRESS))
+#define system_mode_handlers ((const u32le *)rom(system_mode_handlers_ADDRESS))
 #define attract_sequence_ADDRESS 0x0005B4u
 #define attract_sequence ((const uint8_t *)rom(attract_sequence_ADDRESS))
 #define mixer_defaults_ADDRESS 0x0005BCu
@@ -1590,19 +1592,19 @@
 #define mixer_default_nbg3_ADDRESS 0x0005E4u
 #define mixer_default_nbg3 ROM16(mixer_default_nbg3_ADDRESS)
 #define stage_events_ADDRESS 0x002492u
-#define stage_events ((const uint16_t *)rom(stage_events_ADDRESS))
+#define stage_events ((const u16le *)rom(stage_events_ADDRESS))
 #define stage_link_points_ADDRESS 0x002520u
-#define stage_link_points ((const uint16_t *)rom(stage_link_points_ADDRESS))
+#define stage_link_points ((const u16le *)rom(stage_link_points_ADDRESS))
 #define stage_order_ADDRESS 0x002639u
 #define stage_order ROM16(stage_order_ADDRESS)
 #define stage_select_cleared_values_ADDRESS 0x00265Bu
-#define stage_select_cleared_values ((const uint16_t *)rom(stage_select_cleared_values_ADDRESS))
+#define stage_select_cleared_values ((const u16le *)rom(stage_select_cleared_values_ADDRESS))
 #define stage_start_sounds_ADDRESS 0x002681u
 #define stage_start_sounds ((const uint8_t *)rom(stage_start_sounds_ADDRESS))
 #define stage_layer_blending_ADDRESS 0x002694u
-#define stage_layer_blending ((const uint16_t *)rom(stage_layer_blending_ADDRESS))
+#define stage_layer_blending ((const u16le *)rom(stage_layer_blending_ADDRESS))
 #define stage_name_banners_ADDRESS 0x0026CFu
-#define stage_name_banners ((const uint16_t *)rom(stage_name_banners_ADDRESS))
+#define stage_name_banners ((const u16le *)rom(stage_name_banners_ADDRESS))
 #define cleared_banner_x_ADDRESS 0x0026F5u
 #define cleared_banner_x ROM16(cleared_banner_x_ADDRESS)
 #define cleared_banner_y_ADDRESS 0x0026F7u
@@ -1610,275 +1612,275 @@
 #define floor_4_slow_run_steps_ADDRESS 0x0050AFu
 #define floor_4_slow_run_steps ((const uint8_t *)rom(floor_4_slow_run_steps_ADDRESS))
 #define hud_name_positions_3p_ADDRESS 0x00CD12u
-#define hud_name_positions_3p ((const uint16_t *)rom(hud_name_positions_3p_ADDRESS))
+#define hud_name_positions_3p ((const u16le *)rom(hud_name_positions_3p_ADDRESS))
 #define hud_name_positions_2p_ADDRESS 0x00CD18u
-#define hud_name_positions_2p ((const uint16_t *)rom(hud_name_positions_2p_ADDRESS))
+#define hud_name_positions_2p ((const u16le *)rom(hud_name_positions_2p_ADDRESS))
 #define sink_depth_limits_ADDRESS 0x00E453u
-#define sink_depth_limits ((const int16_t *)rom(sink_depth_limits_ADDRESS))
+#define sink_depth_limits ((const s16le *)rom(sink_depth_limits_ADDRESS))
 #define vine_scroll_stop_player_blocks_ADDRESS 0x00F07Bu
-#define vine_scroll_stop_player_blocks ((const uint32_t *)rom(vine_scroll_stop_player_blocks_ADDRESS))
+#define vine_scroll_stop_player_blocks ((const u32le *)rom(vine_scroll_stop_player_blocks_ADDRESS))
 #define spike_panel_frame_sequence_ADDRESS 0x00F46Bu
 #define spike_panel_frame_sequence ((const uint8_t *)rom(spike_panel_frame_sequence_ADDRESS))
 #define spike_panel_step_durations_ADDRESS 0x00F474u
-#define spike_panel_step_durations ((const uint16_t *)rom(spike_panel_step_durations_ADDRESS))
+#define spike_panel_step_durations ((const u16le *)rom(spike_panel_step_durations_ADDRESS))
 #define spike_panel_head_sprites_ADDRESS 0x00F49Eu
-#define spike_panel_head_sprites ((const uint16_t *)rom(spike_panel_head_sprites_ADDRESS))
+#define spike_panel_head_sprites ((const u16le *)rom(spike_panel_head_sprites_ADDRESS))
 #define spike_panel_part_1_sprite_flags_ADDRESS 0x00F4FEu
-#define spike_panel_part_1_sprite_flags ((const uint16_t *)rom(spike_panel_part_1_sprite_flags_ADDRESS))
+#define spike_panel_part_1_sprite_flags ((const u16le *)rom(spike_panel_part_1_sprite_flags_ADDRESS))
 #define spike_panel_part_1_sprites_ADDRESS 0x00F50Au
-#define spike_panel_part_1_sprites ((const uint16_t *)rom(spike_panel_part_1_sprites_ADDRESS))
+#define spike_panel_part_1_sprites ((const u16le *)rom(spike_panel_part_1_sprites_ADDRESS))
 #define spike_panel_part_2_sprites_ADDRESS 0x00F52Eu
-#define spike_panel_part_2_sprites ((const uint16_t *)rom(spike_panel_part_2_sprites_ADDRESS))
+#define spike_panel_part_2_sprites ((const u16le *)rom(spike_panel_part_2_sprites_ADDRESS))
 #define electric_pole_rise_frames_ADDRESS 0x00F736u
 #define electric_pole_rise_frames ((const uint8_t *)rom(electric_pole_rise_frames_ADDRESS))
 #define electric_pole_sprites_ADDRESS 0x00F741u
-#define electric_pole_sprites ((const uint16_t *)rom(electric_pole_sprites_ADDRESS))
+#define electric_pole_sprites ((const u16le *)rom(electric_pole_sprites_ADDRESS))
 #define electric_pole_front_spark_sprites_ADDRESS 0x00F751u
-#define electric_pole_front_spark_sprites ((const uint16_t *)rom(electric_pole_front_spark_sprites_ADDRESS))
+#define electric_pole_front_spark_sprites ((const u16le *)rom(electric_pole_front_spark_sprites_ADDRESS))
 #define electric_pole_side_spark_sprites_ADDRESS 0x00F75Fu
-#define electric_pole_side_spark_sprites ((const uint16_t *)rom(electric_pole_side_spark_sprites_ADDRESS))
+#define electric_pole_side_spark_sprites ((const u16le *)rom(electric_pole_side_spark_sprites_ADDRESS))
 #define electric_pole_side_spark_offsets_x_ADDRESS 0x00F779u
-#define electric_pole_side_spark_offsets_x ((const int16_t *)rom(electric_pole_side_spark_offsets_x_ADDRESS))
+#define electric_pole_side_spark_offsets_x ((const s16le *)rom(electric_pole_side_spark_offsets_x_ADDRESS))
 #define metal_wall_part_tables_ADDRESS 0x00FB08u
-#define metal_wall_part_tables ((const uint32_t *)rom(metal_wall_part_tables_ADDRESS))
+#define metal_wall_part_tables ((const u32le *)rom(metal_wall_part_tables_ADDRESS))
 #define metal_wall_sprites_ADDRESS 0x00FB20u
-#define metal_wall_sprites ((const uint16_t *)rom(metal_wall_sprites_ADDRESS))
+#define metal_wall_sprites ((const u16le *)rom(metal_wall_sprites_ADDRESS))
 #define metal_wall_dust_sprites_ADDRESS 0x00FBC0u
-#define metal_wall_dust_sprites ((const uint16_t *)rom(metal_wall_dust_sprites_ADDRESS))
+#define metal_wall_dust_sprites ((const u16le *)rom(metal_wall_dust_sprites_ADDRESS))
 #define metal_wall_damage_frames_ADDRESS 0x00FBE0u
 #define metal_wall_damage_frames ((const uint8_t *)rom(metal_wall_damage_frames_ADDRESS))
 #define flame_machine_capsule_sprites_ADDRESS 0x01002Bu
-#define flame_machine_capsule_sprites ((const uint16_t *)rom(flame_machine_capsule_sprites_ADDRESS))
+#define flame_machine_capsule_sprites ((const u16le *)rom(flame_machine_capsule_sprites_ADDRESS))
 #define flame_machine_hit_palettes_ADDRESS 0x010045u
-#define flame_machine_hit_palettes ((const uint16_t *)rom(flame_machine_hit_palettes_ADDRESS))
+#define flame_machine_hit_palettes ((const u16le *)rom(flame_machine_hit_palettes_ADDRESS))
 #define flame_machine_rod_sprites_ADDRESS 0x010196u
-#define flame_machine_rod_sprites ((const uint16_t *)rom(flame_machine_rod_sprites_ADDRESS))
+#define flame_machine_rod_sprites ((const u16le *)rom(flame_machine_rod_sprites_ADDRESS))
 #define flame_machine_back_wall_frames_ADDRESS 0x0101B8u
 #define flame_machine_back_wall_frames ((const uint8_t *)rom(flame_machine_back_wall_frames_ADDRESS))
 #define flame_machine_arm_sprites_ADDRESS 0x010351u
-#define flame_machine_arm_sprites ((const uint16_t *)rom(flame_machine_arm_sprites_ADDRESS))
+#define flame_machine_arm_sprites ((const u16le *)rom(flame_machine_arm_sprites_ADDRESS))
 #define flame_machine_arm_part_sprites_ADDRESS 0x01036Bu
-#define flame_machine_arm_part_sprites ((const uint16_t *)rom(flame_machine_arm_part_sprites_ADDRESS))
+#define flame_machine_arm_part_sprites ((const u16le *)rom(flame_machine_arm_part_sprites_ADDRESS))
 #define flame_machine_arm_frames_ADDRESS 0x010385u
 #define flame_machine_arm_frames ((const uint8_t *)rom(flame_machine_arm_frames_ADDRESS))
 #define flame_machine_cannon_hit_palettes_ADDRESS 0x01042Du
-#define flame_machine_cannon_hit_palettes ((const uint16_t *)rom(flame_machine_cannon_hit_palettes_ADDRESS))
+#define flame_machine_cannon_hit_palettes ((const u16le *)rom(flame_machine_cannon_hit_palettes_ADDRESS))
 #define flame_machine_flame_frames_ADDRESS 0x01057Du
 #define flame_machine_flame_frames ((const uint8_t *)rom(flame_machine_flame_frames_ADDRESS))
 #define flame_machine_flame_sprites_ADDRESS 0x0105F4u
-#define flame_machine_flame_sprites ((const uint16_t *)rom(flame_machine_flame_sprites_ADDRESS))
+#define flame_machine_flame_sprites ((const u16le *)rom(flame_machine_flame_sprites_ADDRESS))
 #define flame_machine_flame_shadow_sprites_ADDRESS 0x01060Au
-#define flame_machine_flame_shadow_sprites ((const uint16_t *)rom(flame_machine_flame_shadow_sprites_ADDRESS))
+#define flame_machine_flame_shadow_sprites ((const u16le *)rom(flame_machine_flame_shadow_sprites_ADDRESS))
 #define flame_machine_flame_directions_ADDRESS 0x010610u
-#define flame_machine_flame_directions ((const uint16_t *)rom(flame_machine_flame_directions_ADDRESS))
+#define flame_machine_flame_directions ((const u16le *)rom(flame_machine_flame_directions_ADDRESS))
 #define spiked_disc_sprites_ADDRESS 0x0107AFu
-#define spiked_disc_sprites ((const uint16_t *)rom(spiked_disc_sprites_ADDRESS))
+#define spiked_disc_sprites ((const u16le *)rom(spiked_disc_sprites_ADDRESS))
 #define treadmill_belt_sprites_ADDRESS 0x010B84u
-#define treadmill_belt_sprites ((const uint16_t *)rom(treadmill_belt_sprites_ADDRESS))
+#define treadmill_belt_sprites ((const u16le *)rom(treadmill_belt_sprites_ADDRESS))
 #define treadmill_lift_forces_ADDRESS 0x010B94u
-#define treadmill_lift_forces ((const uint32_t *)rom(treadmill_lift_forces_ADDRESS))
+#define treadmill_lift_forces ((const u32le *)rom(treadmill_lift_forces_ADDRESS))
 #define treadmill_player_blocks_ADDRESS 0x010BD0u
-#define treadmill_player_blocks ((const uint32_t *)rom(treadmill_player_blocks_ADDRESS))
+#define treadmill_player_blocks ((const u32le *)rom(treadmill_player_blocks_ADDRESS))
 #define treadmill_roller_sprites_ADDRESS 0x010C43u
-#define treadmill_roller_sprites ((const uint16_t *)rom(treadmill_roller_sprites_ADDRESS))
+#define treadmill_roller_sprites ((const u16le *)rom(treadmill_roller_sprites_ADDRESS))
 #define treadmill_roller_part_sprites_ADDRESS 0x010C4Bu
-#define treadmill_roller_part_sprites ((const uint16_t *)rom(treadmill_roller_part_sprites_ADDRESS))
+#define treadmill_roller_part_sprites ((const u16le *)rom(treadmill_roller_part_sprites_ADDRESS))
 #define flame_jet_nozzle_sprites_ADDRESS 0x010FDAu
-#define flame_jet_nozzle_sprites ((const uint16_t *)rom(flame_jet_nozzle_sprites_ADDRESS))
+#define flame_jet_nozzle_sprites ((const u16le *)rom(flame_jet_nozzle_sprites_ADDRESS))
 #define flame_jet_flame_sprites_ADDRESS 0x0111A5u
-#define flame_jet_flame_sprites ((const uint16_t *)rom(flame_jet_flame_sprites_ADDRESS))
+#define flame_jet_flame_sprites ((const u16le *)rom(flame_jet_flame_sprites_ADDRESS))
 #define push_crate_break_sprites_ADDRESS 0x0113F9u
-#define push_crate_break_sprites ((const uint16_t *)rom(push_crate_break_sprites_ADDRESS))
+#define push_crate_break_sprites ((const u16le *)rom(push_crate_break_sprites_ADDRESS))
 #define push_crate_push_angles_ADDRESS 0x0113FFu
-#define push_crate_push_angles ((const uint32_t *)rom(push_crate_push_angles_ADDRESS))
+#define push_crate_push_angles ((const u32le *)rom(push_crate_push_angles_ADDRESS))
 #define ice_launcher_sprites_ADDRESS 0x011E18u
-#define ice_launcher_sprites ((const uint16_t *)rom(ice_launcher_sprites_ADDRESS))
+#define ice_launcher_sprites ((const u16le *)rom(ice_launcher_sprites_ADDRESS))
 #define ice_launcher_frame_durations_ADDRESS 0x011E34u
-#define ice_launcher_frame_durations ((const uint16_t *)rom(ice_launcher_frame_durations_ADDRESS))
+#define ice_launcher_frame_durations ((const u16le *)rom(ice_launcher_frame_durations_ADDRESS))
 #define ice_cube_speeds_ADDRESS 0x011E3Eu
-#define ice_cube_speeds ((const uint16_t *)rom(ice_cube_speeds_ADDRESS))
+#define ice_cube_speeds ((const u16le *)rom(ice_cube_speeds_ADDRESS))
 #define ice_launcher_frames_ADDRESS 0x011E48u
 #define ice_launcher_frames ((const uint8_t *)rom(ice_launcher_frames_ADDRESS))
 #define wall_pad_frames_ADDRESS 0x01205Bu
 #define wall_pad_frames ((const uint8_t *)rom(wall_pad_frames_ADDRESS))
 #define wall_pad_sprites_ADDRESS 0x012066u
-#define wall_pad_sprites ((const uint16_t *)rom(wall_pad_sprites_ADDRESS))
+#define wall_pad_sprites ((const u16le *)rom(wall_pad_sprites_ADDRESS))
 #define wall_pad_frame_durations_ADDRESS 0x012070u
-#define wall_pad_frame_durations ((const uint16_t *)rom(wall_pad_frame_durations_ADDRESS))
+#define wall_pad_frame_durations ((const u16le *)rom(wall_pad_frame_durations_ADDRESS))
 #define whirlwind_sprites_ADDRESS 0x0122F1u
-#define whirlwind_sprites ((const uint16_t *)rom(whirlwind_sprites_ADDRESS))
+#define whirlwind_sprites ((const u16le *)rom(whirlwind_sprites_ADDRESS))
 #define whirlwind_vanish_sprites_ADDRESS 0x0122F9u
-#define whirlwind_vanish_sprites ((const uint16_t *)rom(whirlwind_vanish_sprites_ADDRESS))
+#define whirlwind_vanish_sprites ((const u16le *)rom(whirlwind_vanish_sprites_ADDRESS))
 #define centipede_head_frames_ADDRESS 0x012726u
-#define centipede_head_frames ((const uint16_t *)rom(centipede_head_frames_ADDRESS))
+#define centipede_head_frames ((const u16le *)rom(centipede_head_frames_ADDRESS))
 #define sand_puff_frames_ADDRESS 0x012736u
-#define sand_puff_frames ((const uint16_t *)rom(sand_puff_frames_ADDRESS))
+#define sand_puff_frames ((const u16le *)rom(sand_puff_frames_ADDRESS))
 #define centipede_tail_frames_ADDRESS 0x01273Cu
-#define centipede_tail_frames ((const uint16_t *)rom(centipede_tail_frames_ADDRESS))
+#define centipede_tail_frames ((const u16le *)rom(centipede_tail_frames_ADDRESS))
 #define crawler_head_frames_ADDRESS 0x012AD0u
-#define crawler_head_frames ((const uint16_t *)rom(crawler_head_frames_ADDRESS))
+#define crawler_head_frames ((const u16le *)rom(crawler_head_frames_ADDRESS))
 #define crawler_tail_frames_ADDRESS 0x012AD4u
-#define crawler_tail_frames ((const uint16_t *)rom(crawler_tail_frames_ADDRESS))
+#define crawler_tail_frames ((const u16le *)rom(crawler_tail_frames_ADDRESS))
 #define crawler_segment_frames_ADDRESS 0x012AE4u
-#define crawler_segment_frames ((const uint16_t *)rom(crawler_segment_frames_ADDRESS))
+#define crawler_segment_frames ((const u16le *)rom(crawler_segment_frames_ADDRESS))
 #define eggman_booth_frames_ADDRESS 0x012C35u
-#define eggman_booth_frames ((const uint16_t *)rom(eggman_booth_frames_ADDRESS))
+#define eggman_booth_frames ((const u16le *)rom(eggman_booth_frames_ADDRESS))
 #define eggman_booth_frame_durations_ADDRESS 0x012C53u
 #define eggman_booth_frame_durations ((const uint8_t *)rom(eggman_booth_frame_durations_ADDRESS))
 #define eggman_booth_steps_ADDRESS 0x012C62u
 #define eggman_booth_steps ((const uint8_t *)rom(eggman_booth_steps_ADDRESS))
 #define wall_piece_frames_ADDRESS 0x012CFCu
-#define wall_piece_frames ((const uint16_t *)rom(wall_piece_frames_ADDRESS))
+#define wall_piece_frames ((const u16le *)rom(wall_piece_frames_ADDRESS))
 #define shaking_block_frames_ADDRESS 0x012E3Cu
-#define shaking_block_frames ((const uint16_t *)rom(shaking_block_frames_ADDRESS))
+#define shaking_block_frames ((const u16le *)rom(shaking_block_frames_ADDRESS))
 #define sand_rock_crumble_frames_ADDRESS 0x012F9Du
-#define sand_rock_crumble_frames ((const uint16_t *)rom(sand_rock_crumble_frames_ADDRESS))
+#define sand_rock_crumble_frames ((const u16le *)rom(sand_rock_crumble_frames_ADDRESS))
 #define snow_mound_burst_frames_ADDRESS 0x0131E9u
-#define snow_mound_burst_frames ((const uint16_t *)rom(snow_mound_burst_frames_ADDRESS))
+#define snow_mound_burst_frames ((const u16le *)rom(snow_mound_burst_frames_ADDRESS))
 #define rock_wall_break_frames_ADDRESS 0x0133AFu
-#define rock_wall_break_frames ((const uint16_t *)rom(rock_wall_break_frames_ADDRESS))
+#define rock_wall_break_frames ((const u16le *)rom(rock_wall_break_frames_ADDRESS))
 #define rock_wall_sparkle_frames_ADDRESS 0x0133CBu
-#define rock_wall_sparkle_frames ((const uint16_t *)rom(rock_wall_sparkle_frames_ADDRESS))
+#define rock_wall_sparkle_frames ((const u16le *)rom(rock_wall_sparkle_frames_ADDRESS))
 #define rock_wall_glint_steps_ADDRESS 0x0133FFu
 #define rock_wall_glint_steps ((const uint8_t *)rom(rock_wall_glint_steps_ADDRESS))
 #define rock_wall_glint_frames_ADDRESS 0x013413u
-#define rock_wall_glint_frames ((const uint16_t *)rom(rock_wall_glint_frames_ADDRESS))
+#define rock_wall_glint_frames ((const u16le *)rom(rock_wall_glint_frames_ADDRESS))
 #define eggman_teleport_steps_ADDRESS 0x0134E5u
 #define eggman_teleport_steps ((const uint8_t *)rom(eggman_teleport_steps_ADDRESS))
 #define eggman_teleport_frames_ADDRESS 0x013541u
-#define eggman_teleport_frames ((const uint16_t *)rom(eggman_teleport_frames_ADDRESS))
+#define eggman_teleport_frames ((const u16le *)rom(eggman_teleport_frames_ADDRESS))
 #define eggman_teleport_durations_ADDRESS 0x013581u
-#define eggman_teleport_durations ((const uint16_t *)rom(eggman_teleport_durations_ADDRESS))
+#define eggman_teleport_durations ((const u16le *)rom(eggman_teleport_durations_ADDRESS))
 #define sand_arch_spray_frames_ADDRESS 0x0138BDu
-#define sand_arch_spray_frames ((const uint16_t *)rom(sand_arch_spray_frames_ADDRESS))
+#define sand_arch_spray_frames ((const u16le *)rom(sand_arch_spray_frames_ADDRESS))
 #define fence_arc_flags_ADDRESS 0x013A8Du
-#define fence_arc_flags ((const uint16_t *)rom(fence_arc_flags_ADDRESS))
+#define fence_arc_flags ((const u16le *)rom(fence_arc_flags_ADDRESS))
 #define fence_arc_frames_ADDRESS 0x013AA5u
-#define fence_arc_frames ((const uint16_t *)rom(fence_arc_frames_ADDRESS))
+#define fence_arc_frames ((const u16le *)rom(fence_arc_frames_ADDRESS))
 #define mine_bubble_frames_ADDRESS 0x013B3Fu
-#define mine_bubble_frames ((const uint16_t *)rom(mine_bubble_frames_ADDRESS))
+#define mine_bubble_frames ((const u16le *)rom(mine_bubble_frames_ADDRESS))
 #define mine_bubble_frames_2_ADDRESS 0x013B67u
-#define mine_bubble_frames_2 ((const uint16_t *)rom(mine_bubble_frames_2_ADDRESS))
+#define mine_bubble_frames_2 ((const u16le *)rom(mine_bubble_frames_2_ADDRESS))
 #define mine_sink_steps_ADDRESS 0x013EC7u
 #define mine_sink_steps ((const uint8_t *)rom(mine_sink_steps_ADDRESS))
 #define mine_frames_ADDRESS 0x013ECFu
-#define mine_frames ((const uint16_t *)rom(mine_frames_ADDRESS))
+#define mine_frames ((const u16le *)rom(mine_frames_ADDRESS))
 #define underwater_explosion_frames_ADDRESS 0x013ED9u
-#define underwater_explosion_frames ((const uint16_t *)rom(underwater_explosion_frames_ADDRESS))
+#define underwater_explosion_frames ((const u16le *)rom(underwater_explosion_frames_ADDRESS))
 #define underwater_explosion_durations_ADDRESS 0x013F05u
 #define underwater_explosion_durations ((const uint8_t *)rom(underwater_explosion_durations_ADDRESS))
 #define mine_flash_steps_ADDRESS 0x013F1Bu
 #define mine_flash_steps ((const uint8_t *)rom(mine_flash_steps_ADDRESS))
 #define mine_flash_palettes_ADDRESS 0x013F27u
-#define mine_flash_palettes ((const uint16_t *)rom(mine_flash_palettes_ADDRESS))
+#define mine_flash_palettes ((const u16le *)rom(mine_flash_palettes_ADDRESS))
 #define mine_splash_frames_ADDRESS 0x013FF8u
-#define mine_splash_frames ((const uint16_t *)rom(mine_splash_frames_ADDRESS))
+#define mine_splash_frames ((const u16le *)rom(mine_splash_frames_ADDRESS))
 #define mine_splash_spray_frames_ADDRESS 0x01402Cu
-#define mine_splash_spray_frames ((const uint16_t *)rom(mine_splash_spray_frames_ADDRESS))
+#define mine_splash_spray_frames ((const u16le *)rom(mine_splash_spray_frames_ADDRESS))
 #define eggman_talk_steps_ADDRESS 0x014255u
 #define eggman_talk_steps ((const uint8_t *)rom(eggman_talk_steps_ADDRESS))
 #define eggman_press_durations_ADDRESS 0x01425Fu
-#define eggman_press_durations ((const uint16_t *)rom(eggman_press_durations_ADDRESS))
+#define eggman_press_durations ((const u16le *)rom(eggman_press_durations_ADDRESS))
 #define eggman_talk_frames_ADDRESS 0x01426Du
-#define eggman_talk_frames ((const uint16_t *)rom(eggman_talk_frames_ADDRESS))
+#define eggman_talk_frames ((const u16le *)rom(eggman_talk_frames_ADDRESS))
 #define eggman_press_frames_ADDRESS 0x014273u
-#define eggman_press_frames ((const uint16_t *)rom(eggman_press_frames_ADDRESS))
+#define eggman_press_frames ((const u16le *)rom(eggman_press_frames_ADDRESS))
 #define eggman_run_frames_ADDRESS 0x014281u
-#define eggman_run_frames ((const uint16_t *)rom(eggman_run_frames_ADDRESS))
+#define eggman_run_frames ((const u16le *)rom(eggman_run_frames_ADDRESS))
 #define eggman_scene_texts_ADDRESS 0x014291u
 #define eggman_scene_texts ((const uint8_t *)rom(eggman_scene_texts_ADDRESS))
 #define eggman_scene_text_durations_ADDRESS 0x014294u
-#define eggman_scene_text_durations ((const uint16_t *)rom(eggman_scene_text_durations_ADDRESS))
+#define eggman_scene_text_durations ((const u16le *)rom(eggman_scene_text_durations_ADDRESS))
 #define eggman_scene_sounds_ADDRESS 0x01429Au
-#define eggman_scene_sounds ((const uint16_t *)rom(eggman_scene_sounds_ADDRESS))
+#define eggman_scene_sounds ((const u16le *)rom(eggman_scene_sounds_ADDRESS))
 #define button_box_steps_ADDRESS 0x014345u
 #define button_box_steps ((const uint8_t *)rom(button_box_steps_ADDRESS))
 #define button_box_durations_ADDRESS 0x014368u
-#define button_box_durations ((const uint16_t *)rom(button_box_durations_ADDRESS))
+#define button_box_durations ((const u16le *)rom(button_box_durations_ADDRESS))
 #define button_box_frames_ADDRESS 0x0143AEu
-#define button_box_frames ((const uint16_t *)rom(button_box_frames_ADDRESS))
+#define button_box_frames ((const u16le *)rom(button_box_frames_ADDRESS))
 #define lid_trap_close_steps_ADDRESS 0x014647u
 #define lid_trap_close_steps ((const uint8_t *)rom(lid_trap_close_steps_ADDRESS))
 #define lid_trap_lid_frames_ADDRESS 0x01464Bu
-#define lid_trap_lid_frames ((const uint16_t *)rom(lid_trap_lid_frames_ADDRESS))
+#define lid_trap_lid_frames ((const u16le *)rom(lid_trap_lid_frames_ADDRESS))
 #define turtle_swim_frames_ADDRESS 0x014917u
-#define turtle_swim_frames ((const uint16_t *)rom(turtle_swim_frames_ADDRESS))
+#define turtle_swim_frames ((const u16le *)rom(turtle_swim_frames_ADDRESS))
 #define turtle_head_steps_ADDRESS 0x014937u
 #define turtle_head_steps ((const uint8_t *)rom(turtle_head_steps_ADDRESS))
 #define turtle_head_frames_ADDRESS 0x014947u
-#define turtle_head_frames ((const uint16_t *)rom(turtle_head_frames_ADDRESS))
+#define turtle_head_frames ((const u16le *)rom(turtle_head_frames_ADDRESS))
 #define turtle_swim_speeds_ADDRESS 0x014951u
-#define turtle_swim_speeds ((const uint16_t *)rom(turtle_swim_speeds_ADDRESS))
+#define turtle_swim_speeds ((const u16le *)rom(turtle_swim_speeds_ADDRESS))
 #define eel_head_frames_ADDRESS 0x014FB8u
-#define eel_head_frames ((const uint16_t *)rom(eel_head_frames_ADDRESS))
+#define eel_head_frames ((const u16le *)rom(eel_head_frames_ADDRESS))
 #define eel_head_retract_frames_ADDRESS 0x014FBEu
-#define eel_head_retract_frames ((const uint16_t *)rom(eel_head_retract_frames_ADDRESS))
+#define eel_head_retract_frames ((const u16le *)rom(eel_head_retract_frames_ADDRESS))
 #define eel_head_extend_frames_ADDRESS 0x014FC6u
-#define eel_head_extend_frames ((const uint16_t *)rom(eel_head_extend_frames_ADDRESS))
+#define eel_head_extend_frames ((const u16le *)rom(eel_head_extend_frames_ADDRESS))
 #define eel_part_frames_ADDRESS 0x014FCCu
-#define eel_part_frames ((const uint16_t *)rom(eel_part_frames_ADDRESS))
+#define eel_part_frames ((const u16le *)rom(eel_part_frames_ADDRESS))
 #define eel_part_steps_ADDRESS 0x01500Au
 #define eel_part_steps ((const uint8_t *)rom(eel_part_steps_ADDRESS))
 #define eel_part_frames_2_ADDRESS 0x015022u
-#define eel_part_frames_2 ((const uint16_t *)rom(eel_part_frames_2_ADDRESS))
+#define eel_part_frames_2 ((const u16le *)rom(eel_part_frames_2_ADDRESS))
 #define breakable_panel_break_frames_ADDRESS 0x015180u
-#define breakable_panel_break_frames ((const uint16_t *)rom(breakable_panel_break_frames_ADDRESS))
+#define breakable_panel_break_frames ((const u16le *)rom(breakable_panel_break_frames_ADDRESS))
 #define breakable_panel_glow_steps_ADDRESS 0x0151A2u
 #define breakable_panel_glow_steps ((const uint8_t *)rom(breakable_panel_glow_steps_ADDRESS))
 #define breakable_panel_glow_palettes_ADDRESS 0x0151BFu
-#define breakable_panel_glow_palettes ((const uint16_t *)rom(breakable_panel_glow_palettes_ADDRESS))
+#define breakable_panel_glow_palettes ((const u16le *)rom(breakable_panel_glow_palettes_ADDRESS))
 #define white_puff_frames_ADDRESS 0x015239u
-#define white_puff_frames ((const uint16_t *)rom(white_puff_frames_ADDRESS))
+#define white_puff_frames ((const u16le *)rom(white_puff_frames_ADDRESS))
 #define checker_pad_frames_ADDRESS 0x0152A0u
-#define checker_pad_frames ((const uint16_t *)rom(checker_pad_frames_ADDRESS))
+#define checker_pad_frames ((const u16le *)rom(checker_pad_frames_ADDRESS))
 #define static_triangle_frames_ADDRESS 0x01533Bu
-#define static_triangle_frames ((const uint16_t *)rom(static_triangle_frames_ADDRESS))
+#define static_triangle_frames ((const u16le *)rom(static_triangle_frames_ADDRESS))
 #define eel_den_collapse_frames_ADDRESS 0x015814u
-#define eel_den_collapse_frames ((const uint16_t *)rom(eel_den_collapse_frames_ADDRESS))
+#define eel_den_collapse_frames ((const u16le *)rom(eel_den_collapse_frames_ADDRESS))
 #define stage_block_map_widths_ADDRESS 0x017C49u
 #define stage_block_map_widths ((const uint8_t *)rom(stage_block_map_widths_ADDRESS))
 #define stage_block_maps_ADDRESS 0x017C5Cu
-#define stage_block_maps ((const uint16_t *)rom(stage_block_maps_ADDRESS))
+#define stage_block_maps ((const u16le *)rom(stage_block_maps_ADDRESS))
 #define stage_section_directions_x_ADDRESS 0x01884Au
-#define stage_section_directions_x ((const uint16_t *)rom(stage_section_directions_x_ADDRESS))
+#define stage_section_directions_x ((const u16le *)rom(stage_section_directions_x_ADDRESS))
 #define stage_section_directions_y_ADDRESS 0x018870u
-#define stage_section_directions_y ((const uint16_t *)rom(stage_section_directions_y_ADDRESS))
+#define stage_section_directions_y ((const u16le *)rom(stage_section_directions_y_ADDRESS))
 #define stage_section_limits_x_ADDRESS 0x018DFAu
-#define stage_section_limits_x ((const uint16_t *)rom(stage_section_limits_x_ADDRESS))
+#define stage_section_limits_x ((const u16le *)rom(stage_section_limits_x_ADDRESS))
 #define stage_section_limits_y_ADDRESS 0x018E20u
-#define stage_section_limits_y ((const uint16_t *)rom(stage_section_limits_y_ADDRESS))
+#define stage_section_limits_y ((const u16le *)rom(stage_section_limits_y_ADDRESS))
 #define stage_section_ends_ADDRESS 0x0193E0u
-#define stage_section_ends ((const uint16_t *)rom(stage_section_ends_ADDRESS))
+#define stage_section_ends ((const u16le *)rom(stage_section_ends_ADDRESS))
 #define stage_scroll_ends_ADDRESS 0x0196ECu
-#define stage_scroll_ends ((const uint16_t *)rom(stage_scroll_ends_ADDRESS))
+#define stage_scroll_ends ((const u16le *)rom(stage_scroll_ends_ADDRESS))
 #define stage_initial_tile_sets_ADDRESS 0x019712u
-#define stage_initial_tile_sets ((const uint16_t *)rom(stage_initial_tile_sets_ADDRESS))
+#define stage_initial_tile_sets ((const u16le *)rom(stage_initial_tile_sets_ADDRESS))
 #define stage_camera_origins_x_ADDRESS 0x01975Au
-#define stage_camera_origins_x ((const int16_t *)rom(stage_camera_origins_x_ADDRESS))
+#define stage_camera_origins_x ((const s16le *)rom(stage_camera_origins_x_ADDRESS))
 #define stage_camera_origins_y_ADDRESS 0x019780u
-#define stage_camera_origins_y ((const int16_t *)rom(stage_camera_origins_y_ADDRESS))
+#define stage_camera_origins_y ((const s16le *)rom(stage_camera_origins_y_ADDRESS))
 #define stage_view_offsets_x_ADDRESS 0x0197A6u
-#define stage_view_offsets_x ((const uint16_t *)rom(stage_view_offsets_x_ADDRESS))
+#define stage_view_offsets_x ((const u16le *)rom(stage_view_offsets_x_ADDRESS))
 #define stage_view_offsets_y_ADDRESS 0x0197CCu
-#define stage_view_offsets_y ((const uint16_t *)rom(stage_view_offsets_y_ADDRESS))
+#define stage_view_offsets_y ((const u16le *)rom(stage_view_offsets_y_ADDRESS))
 #define stage_scroll_modes_ADDRESS 0x0197F2u
-#define stage_scroll_modes ((const uint16_t *)rom(stage_scroll_modes_ADDRESS))
+#define stage_scroll_modes ((const u16le *)rom(stage_scroll_modes_ADDRESS))
 #define stage_fast_scroll_ranges_ADDRESS 0x01A128u
-#define stage_fast_scroll_ranges ((const uint16_t *)rom(stage_fast_scroll_ranges_ADDRESS))
+#define stage_fast_scroll_ranges ((const u16le *)rom(stage_fast_scroll_ranges_ADDRESS))
 #define stage_section_speeds_ADDRESS 0x01A162u
-#define stage_section_speeds ((const uint16_t *)rom(stage_section_speeds_ADDRESS))
+#define stage_section_speeds ((const u16le *)rom(stage_section_speeds_ADDRESS))
 #define stage_section_follow_speeds_ADDRESS 0x01A565u
-#define stage_section_follow_speeds ((const uint16_t *)rom(stage_section_follow_speeds_ADDRESS))
+#define stage_section_follow_speeds ((const u16le *)rom(stage_section_follow_speeds_ADDRESS))
 #define stage_section_unused_ADDRESS 0x01A667u
-#define stage_section_unused ((const uint32_t *)rom(stage_section_unused_ADDRESS))
+#define stage_section_unused ((const u32le *)rom(stage_section_unused_ADDRESS))
 #define stage_tile_sets_ADDRESS 0x01A695u
-#define stage_tile_sets ((const uint32_t *)rom(stage_tile_sets_ADDRESS))
+#define stage_tile_sets ((const u32le *)rom(stage_tile_sets_ADDRESS))
 #define scroll_skip_value_lists_ADDRESS 0x01AD04u
-#define scroll_skip_value_lists ((const uint32_t *)rom(scroll_skip_value_lists_ADDRESS))
+#define scroll_skip_value_lists ((const u32le *)rom(scroll_skip_value_lists_ADDRESS))
 #define scroll_skip_last_points_ADDRESS 0x01AD10u
-#define scroll_skip_last_points ((const uint16_t *)rom(scroll_skip_last_points_ADDRESS))
+#define scroll_skip_last_points ((const u16le *)rom(scroll_skip_last_points_ADDRESS))
 #define stage_palette_sets_ADDRESS 0x01B174u
-#define stage_palette_sets ((const uint32_t *)rom(stage_palette_sets_ADDRESS))
+#define stage_palette_sets ((const u32le *)rom(stage_palette_sets_ADDRESS))
 #define stage_tile_bank_bits_ADDRESS 0x01B1C0u
 #define stage_tile_bank_bits ROM8(stage_tile_bank_bits_ADDRESS)
 #define stage_layer_priorities_ADDRESS 0x01B231u
@@ -1886,15 +1888,15 @@
 #define stage_layer_disables_ADDRESS 0x01B27Du
 #define stage_layer_disables ((const uint8_t *)rom(stage_layer_disables_ADDRESS))
 #define stage_rowscroll_settings_ADDRESS 0x01B290u
-#define stage_rowscroll_settings ((const uint16_t *)rom(stage_rowscroll_settings_ADDRESS))
+#define stage_rowscroll_settings ((const u16le *)rom(stage_rowscroll_settings_ADDRESS))
 #define stage_nbg3_widths_ADDRESS 0x01BADAu
 #define stage_nbg3_widths ((const uint8_t *)rom(stage_nbg3_widths_ADDRESS))
 #define stage_nbg3_block_maps_ADDRESS 0x01BAEDu
-#define stage_nbg3_block_maps ((const uint32_t *)rom(stage_nbg3_block_maps_ADDRESS))
+#define stage_nbg3_block_maps ((const u32le *)rom(stage_nbg3_block_maps_ADDRESS))
 #define ending_road_frames_ADDRESS 0x01C825u
-#define ending_road_frames ((const uint16_t *)rom(ending_road_frames_ADDRESS))
+#define ending_road_frames ((const u16le *)rom(ending_road_frames_ADDRESS))
 #define stage_template_spawns_ADDRESS 0x01F206u
-#define stage_template_spawns ((const uint16_t *)rom(stage_template_spawns_ADDRESS))
+#define stage_template_spawns ((const u16le *)rom(stage_template_spawns_ADDRESS))
 #define stage_object_templates_ADDRESS 0x01F4D2u
 #define stage_object_templates ROM16(stage_object_templates_ADDRESS)
 #define stage_template_0_sprite_frame_ADDRESS 0x01F4D4u
@@ -1922,77 +1924,77 @@
 #define stage_template_0_hitbox_height_ADDRESS 0x01F4EAu
 #define stage_template_0_hitbox_height ROM16(stage_template_0_hitbox_height_ADDRESS)
 #define stage_spawns_by_handler_ADDRESS 0x081224u
-#define stage_spawns_by_handler ((const uint16_t *)rom(stage_spawns_by_handler_ADDRESS))
+#define stage_spawns_by_handler ((const u16le *)rom(stage_spawns_by_handler_ADDRESS))
 #define spiked_roller_kinds_ADDRESS 0x082066u
-#define spiked_roller_kinds ((const uint16_t *)rom(spiked_roller_kinds_ADDRESS))
+#define spiked_roller_kinds ((const u16le *)rom(spiked_roller_kinds_ADDRESS))
 #define spiked_roller_layouts_ADDRESS 0x08219Cu
 #define spiked_roller_layouts ROM8(spiked_roller_layouts_ADDRESS)
 #define spiked_roller_part_frames_ADDRESS 0x0821DCu
 #define spiked_roller_part_frames ROM8(spiked_roller_part_frames_ADDRESS)
 #define catapult_launch_delays_ADDRESS 0x08224Au
-#define catapult_launch_delays ((const uint16_t *)rom(catapult_launch_delays_ADDRESS))
+#define catapult_launch_delays ((const u16le *)rom(catapult_launch_delays_ADDRESS))
 #define spiked_roller_frames_ADDRESS 0x0822D2u
-#define spiked_roller_frames ((const uint16_t *)rom(spiked_roller_frames_ADDRESS))
+#define spiked_roller_frames ((const u16le *)rom(spiked_roller_frames_ADDRESS))
 #define spiked_roller_animation_speeds_ADDRESS 0x0822E4u
 #define spiked_roller_animation_speeds ((const uint8_t *)rom(spiked_roller_animation_speeds_ADDRESS))
 #define spiked_roller_event_coords_ADDRESS 0x082302u
-#define spiked_roller_event_coords ((const uint16_t *)rom(spiked_roller_event_coords_ADDRESS))
+#define spiked_roller_event_coords ((const u16le *)rom(spiked_roller_event_coords_ADDRESS))
 #define spiked_roller_events_ADDRESS 0x082306u
-#define spiked_roller_events ((const uint16_t *)rom(spiked_roller_events_ADDRESS))
+#define spiked_roller_events ((const u16le *)rom(spiked_roller_events_ADDRESS))
 #define roller_wall_fragment_count_ADDRESS 0x08234Cu
 #define roller_wall_fragment_count ROM16(roller_wall_fragment_count_ADDRESS)
 #define spiked_roller_rumble_delays_ADDRESS 0x082396u
 #define spiked_roller_rumble_delays ((const uint8_t *)rom(spiked_roller_rumble_delays_ADDRESS))
 #define fireball_emitter_lists_ADDRESS 0x083185u
-#define fireball_emitter_lists ((const uint16_t *)rom(fireball_emitter_lists_ADDRESS))
+#define fireball_emitter_lists ((const u16le *)rom(fireball_emitter_lists_ADDRESS))
 #define fireball_types_ADDRESS 0x0832B9u
 #define fireball_types ROM16(fireball_types_ADDRESS)
 #define door_fragments_ADDRESS 0x08334Fu
 #define door_fragments ROM16(door_fragments_ADDRESS)
 #define object_steps_ADDRESS 0x08340Du
-#define object_steps ((const uint16_t *)rom(object_steps_ADDRESS))
+#define object_steps ((const u16le *)rom(object_steps_ADDRESS))
 #define floor_sign_sprites_ADDRESS 0x084FA7u
-#define floor_sign_sprites ((const uint16_t *)rom(floor_sign_sprites_ADDRESS))
+#define floor_sign_sprites ((const u16le *)rom(floor_sign_sprites_ADDRESS))
 #define bubble_heights_ADDRESS 0x08518Du
-#define bubble_heights ((const uint16_t *)rom(bubble_heights_ADDRESS))
+#define bubble_heights ((const u16le *)rom(bubble_heights_ADDRESS))
 #define pacer_end_positions_ADDRESS 0x08519Bu
-#define pacer_end_positions ((const uint16_t *)rom(pacer_end_positions_ADDRESS))
+#define pacer_end_positions ((const u16le *)rom(pacer_end_positions_ADDRESS))
 #define spawns_with_next_handler_ADDRESS 0x08530Du
 #define spawns_with_next_handler ROM16(spawns_with_next_handler_ADDRESS)
 #define fire_vent_blast_palettes_ADDRESS 0x085CF7u
-#define fire_vent_blast_palettes ((const uint16_t *)rom(fire_vent_blast_palettes_ADDRESS))
+#define fire_vent_blast_palettes ((const u16le *)rom(fire_vent_blast_palettes_ADDRESS))
 #define scenery_sprite_kinds_ADDRESS 0x085D1Fu
-#define scenery_sprite_kinds ((const uint16_t *)rom(scenery_sprite_kinds_ADDRESS))
+#define scenery_sprite_kinds ((const u16le *)rom(scenery_sprite_kinds_ADDRESS))
 #define eggman_speech_scripts_ADDRESS 0x085DE3u
-#define eggman_speech_scripts ((const uint16_t *)rom(eggman_speech_scripts_ADDRESS))
+#define eggman_speech_scripts ((const u16le *)rom(eggman_speech_scripts_ADDRESS))
 #define ram_target_debris_count_ADDRESS 0x085ED3u
 #define ram_target_debris_count ROM16(ram_target_debris_count_ADDRESS)
 #define group_leader_hold_records_ADDRESS 0x085F4Du
-#define group_leader_hold_records ((const uint16_t *)rom(group_leader_hold_records_ADDRESS))
+#define group_leader_hold_records ((const u16le *)rom(group_leader_hold_records_ADDRESS))
 #define burning_boulder_roll_rates_ADDRESS 0x087B79u
 #define burning_boulder_roll_rates ((const uint8_t *)rom(burning_boulder_roll_rates_ADDRESS))
 #define scene_carrier_records_ADDRESS 0x087BD9u
-#define scene_carrier_records ((const uint16_t *)rom(scene_carrier_records_ADDRESS))
+#define scene_carrier_records ((const u16le *)rom(scene_carrier_records_ADDRESS))
 #define fire_trench_flame_heights_ADDRESS 0x087C43u
-#define fire_trench_flame_heights ((const uint16_t *)rom(fire_trench_flame_heights_ADDRESS))
+#define fire_trench_flame_heights ((const u16le *)rom(fire_trench_flame_heights_ADDRESS))
 #define ember_emitter_end_positions_ADDRESS 0x087CD1u
-#define ember_emitter_end_positions ((const uint16_t *)rom(ember_emitter_end_positions_ADDRESS))
+#define ember_emitter_end_positions ((const u16le *)rom(ember_emitter_end_positions_ADDRESS))
 #define lava_steam_puff_count_ADDRESS 0x087D4Fu
 #define lava_steam_puff_count ROM16(lava_steam_puff_count_ADDRESS)
 #define icicle_dropper_records_ADDRESS 0x088F35u
-#define icicle_dropper_records ((const uint16_t *)rom(icicle_dropper_records_ADDRESS))
+#define icicle_dropper_records ((const u16le *)rom(icicle_dropper_records_ADDRESS))
 #define ice_floor_floors_ADDRESS 0x0890B9u
-#define ice_floor_floors ((const uint32_t *)rom(ice_floor_floors_ADDRESS))
+#define ice_floor_floors ((const u32le *)rom(ice_floor_floors_ADDRESS))
 #define sand_stream_frames_ADDRESS 0x08A612u
-#define sand_stream_frames ((const uint16_t *)rom(sand_stream_frames_ADDRESS))
+#define sand_stream_frames ((const u16le *)rom(sand_stream_frames_ADDRESS))
 #define tornado_column_top_frames_ADDRESS 0x08A6B4u
-#define tornado_column_top_frames ((const uint16_t *)rom(tornado_column_top_frames_ADDRESS))
+#define tornado_column_top_frames ((const u16le *)rom(tornado_column_top_frames_ADDRESS))
 #define tornado_records_ADDRESS 0x08A6C0u
-#define tornado_records ((const uint16_t *)rom(tornado_records_ADDRESS))
+#define tornado_records ((const u16le *)rom(tornado_records_ADDRESS))
 #define fire_front_paths_ADDRESS 0x08BDA1u
-#define fire_front_paths ((const uint16_t *)rom(fire_front_paths_ADDRESS))
+#define fire_front_paths ((const u16le *)rom(fire_front_paths_ADDRESS))
 #define biting_head_paths_ADDRESS 0x08BE25u
-#define biting_head_paths ((const uint16_t *)rom(biting_head_paths_ADDRESS))
+#define biting_head_paths ((const u16le *)rom(biting_head_paths_ADDRESS))
 #define biting_head_frames_ADDRESS 0x08BE5Fu
 #define biting_head_frames ROM16(biting_head_frames_ADDRESS)
 #define biting_head_move_frames_ADDRESS 0x08BE61u
@@ -2006,83 +2008,83 @@
 #define brick_wall_dust_ADDRESS 0x08BFABu
 #define brick_wall_dust ROM16(brick_wall_dust_ADDRESS)
 #define rising_saw_paths_ADDRESS 0x08C001u
-#define rising_saw_paths ((const uint16_t *)rom(rising_saw_paths_ADDRESS))
+#define rising_saw_paths ((const u16le *)rom(rising_saw_paths_ADDRESS))
 #define grate_step_debris_ADDRESS 0x08C0E9u
 #define grate_step_debris ROM16(grate_step_debris_ADDRESS)
 #define geyser_row_patterns_ADDRESS 0x08D862u
-#define geyser_row_patterns ((const uint16_t *)rom(geyser_row_patterns_ADDRESS))
+#define geyser_row_patterns ((const u16le *)rom(geyser_row_patterns_ADDRESS))
 #define geyser_fronts_ADDRESS 0x08D89Au
-#define geyser_fronts ((const uint16_t *)rom(geyser_fronts_ADDRESS))
+#define geyser_fronts ((const u16le *)rom(geyser_fronts_ADDRESS))
 #define river_raft_spawners_ADDRESS 0x08D9AAu
-#define river_raft_spawners ((const uint16_t *)rom(river_raft_spawners_ADDRESS))
+#define river_raft_spawners ((const u16le *)rom(river_raft_spawners_ADDRESS))
 #define river_raft_fall_palettes_ADDRESS 0x08DAE6u
-#define river_raft_fall_palettes ((const uint16_t *)rom(river_raft_fall_palettes_ADDRESS))
+#define river_raft_fall_palettes ((const u16le *)rom(river_raft_fall_palettes_ADDRESS))
 #define player_block_offsets_ADDRESS 0x08E2D5u
-#define player_block_offsets ((const uint32_t *)rom(player_block_offsets_ADDRESS))
+#define player_block_offsets ((const u32le *)rom(player_block_offsets_ADDRESS))
 #define distance_to_player_offsets_ADDRESS 0x08E2E1u
-#define distance_to_player_offsets ((const uint16_t *)rom(distance_to_player_offsets_ADDRESS))
+#define distance_to_player_offsets ((const u16le *)rom(distance_to_player_offsets_ADDRESS))
 #define direction_to_player_offsets_ADDRESS 0x08E2E7u
-#define direction_to_player_offsets ((const uint16_t *)rom(direction_to_player_offsets_ADDRESS))
+#define direction_to_player_offsets ((const u16le *)rom(direction_to_player_offsets_ADDRESS))
 #define explosion_frames_ADDRESS 0x08E4D2u
-#define explosion_frames ((const uint16_t *)rom(explosion_frames_ADDRESS))
+#define explosion_frames ((const u16le *)rom(explosion_frames_ADDRESS))
 #define debris_frames_ADDRESS 0x08E87Eu
-#define debris_frames ((const uint16_t *)rom(debris_frames_ADDRESS))
+#define debris_frames ((const u16le *)rom(debris_frames_ADDRESS))
 #define text_frames_ADDRESS 0x08E9C9u
-#define text_frames ((const uint16_t *)rom(text_frames_ADDRESS))
+#define text_frames ((const u16le *)rom(text_frames_ADDRESS))
 #define ranking_initial_fields_ADDRESS 0x08EF7Fu
-#define ranking_initial_fields ((const uint16_t *)rom(ranking_initial_fields_ADDRESS))
+#define ranking_initial_fields ((const u16le *)rom(ranking_initial_fields_ADDRESS))
 #define ranking_letter_sprites_ADDRESS 0x08EF85u
-#define ranking_letter_sprites ((const uint16_t *)rom(ranking_letter_sprites_ADDRESS))
+#define ranking_letter_sprites ((const u16le *)rom(ranking_letter_sprites_ADDRESS))
 #define ranking_entry_x_ADDRESS 0x08EFDDu
-#define ranking_entry_x ((const uint16_t *)rom(ranking_entry_x_ADDRESS))
+#define ranking_entry_x ((const u16le *)rom(ranking_entry_x_ADDRESS))
 #define ranking_entry_trackballs_ADDRESS 0x08EFE9u
-#define ranking_entry_trackballs ((const uint32_t *)rom(ranking_entry_trackballs_ADDRESS))
+#define ranking_entry_trackballs ((const u32le *)rom(ranking_entry_trackballs_ADDRESS))
 #define ranking_entry_buttons_ADDRESS 0x08EFF5u
 #define ranking_entry_buttons ((const uint8_t *)rom(ranking_entry_buttons_ADDRESS))
 #define ranking_entry_blocks_ADDRESS 0x08F0CFu
-#define ranking_entry_blocks ((const uint32_t *)rom(ranking_entry_blocks_ADDRESS))
+#define ranking_entry_blocks ((const u32le *)rom(ranking_entry_blocks_ADDRESS))
 #define default_ranking_ADDRESS 0x08F1B5u
 #define default_ranking ROM8(default_ranking_ADDRESS)
 #define ranking_portrait_frames_ADDRESS 0x08F876u
-#define ranking_portrait_frames ((const uint32_t *)rom(ranking_portrait_frames_ADDRESS))
+#define ranking_portrait_frames ((const u32le *)rom(ranking_portrait_frames_ADDRESS))
 #define ranking_portrait_palettes_ADDRESS 0x08F972u
-#define ranking_portrait_palettes ((const uint16_t *)rom(ranking_portrait_palettes_ADDRESS))
+#define ranking_portrait_palettes ((const u16le *)rom(ranking_portrait_palettes_ADDRESS))
 #define ranking_name_sprites_ADDRESS 0x08F978u
-#define ranking_name_sprites ((const uint16_t *)rom(ranking_name_sprites_ADDRESS))
+#define ranking_name_sprites ((const u16le *)rom(ranking_name_sprites_ADDRESS))
 #define ranking_stage_sprites_ADDRESS 0x08F984u
-#define ranking_stage_sprites ((const uint16_t *)rom(ranking_stage_sprites_ADDRESS))
+#define ranking_stage_sprites ((const u16le *)rom(ranking_stage_sprites_ADDRESS))
 #define chooser_idle_steps_ADDRESS 0x09031Du
 #define chooser_idle_steps ((const uint8_t *)rom(chooser_idle_steps_ADDRESS))
 #define chooser_portrait_frames_ADDRESS 0x090321u
-#define chooser_portrait_frames ((const uint16_t *)rom(chooser_portrait_frames_ADDRESS))
+#define chooser_portrait_frames ((const u16le *)rom(chooser_portrait_frames_ADDRESS))
 #define chooser_portrait_palettes_ADDRESS 0x090339u
-#define chooser_portrait_palettes ((const uint16_t *)rom(chooser_portrait_palettes_ADDRESS))
+#define chooser_portrait_palettes ((const u16le *)rom(chooser_portrait_palettes_ADDRESS))
 #define chooser_x_by_player_ADDRESS 0x09033Fu
-#define chooser_x_by_player ((const uint16_t *)rom(chooser_x_by_player_ADDRESS))
+#define chooser_x_by_player ((const u16le *)rom(chooser_x_by_player_ADDRESS))
 #define chooser_trackball_offsets_ADDRESS 0x09034Bu
-#define chooser_trackball_offsets ((const uint16_t *)rom(chooser_trackball_offsets_ADDRESS))
+#define chooser_trackball_offsets ((const u16le *)rom(chooser_trackball_offsets_ADDRESS))
 #define chooser_button_bits_ADDRESS 0x090351u
 #define chooser_button_bits ((const uint8_t *)rom(chooser_button_bits_ADDRESS))
 #define chooser_player_labels_ADDRESS 0x090357u
-#define chooser_player_labels ((const uint16_t *)rom(chooser_player_labels_ADDRESS))
+#define chooser_player_labels ((const u16le *)rom(chooser_player_labels_ADDRESS))
 #define character_name_sprites_ADDRESS 0x09035Du
-#define character_name_sprites ((const uint16_t *)rom(character_name_sprites_ADDRESS))
+#define character_name_sprites ((const u16le *)rom(character_name_sprites_ADDRESS))
 #define join_chooser_portraits_ADDRESS 0x090363u
-#define join_chooser_portraits ((const uint16_t *)rom(join_chooser_portraits_ADDRESS))
+#define join_chooser_portraits ((const u16le *)rom(join_chooser_portraits_ADDRESS))
 #define join_chooser_palettes_ADDRESS 0x090369u
-#define join_chooser_palettes ((const uint16_t *)rom(join_chooser_palettes_ADDRESS))
+#define join_chooser_palettes ((const u16le *)rom(join_chooser_palettes_ADDRESS))
 #define player_select_title_palettes_ADDRESS 0x09037Bu
-#define player_select_title_palettes ((const uint16_t *)rom(player_select_title_palettes_ADDRESS))
+#define player_select_title_palettes ((const u16le *)rom(player_select_title_palettes_ADDRESS))
 #define join_chooser_blocks_ADDRESS 0x090395u
-#define join_chooser_blocks ((const uint32_t *)rom(join_chooser_blocks_ADDRESS))
+#define join_chooser_blocks ((const u32le *)rom(join_chooser_blocks_ADDRESS))
 #define wall_spawns_ADDRESS 0x0903A2u
-#define wall_spawns ((const uint16_t *)rom(wall_spawns_ADDRESS))
+#define wall_spawns ((const u16le *)rom(wall_spawns_ADDRESS))
 #define wall_kind_second_sprites_ADDRESS 0x090A84u
-#define wall_kind_second_sprites ((const int16_t *)rom(wall_kind_second_sprites_ADDRESS))
+#define wall_kind_second_sprites ((const s16le *)rom(wall_kind_second_sprites_ADDRESS))
 #define object_group_spawns_ADDRESS 0x0920F9u
-#define object_group_spawns ((const uint16_t *)rom(object_group_spawns_ADDRESS))
+#define object_group_spawns ((const u16le *)rom(object_group_spawns_ADDRESS))
 #define stage_record_spawns_ADDRESS 0x093EC9u
-#define stage_record_spawns ((const uint16_t *)rom(stage_record_spawns_ADDRESS))
+#define stage_record_spawns ((const u16le *)rom(stage_record_spawns_ADDRESS))
 #define stage_object_records_2_ADDRESS 0x093F59u
 #define stage_object_records_2 ROM16(stage_object_records_2_ADDRESS)
 #define rope_plank_frame_ADDRESS 0x093F5Bu
@@ -2108,7 +2110,7 @@
 #define stage_00_rock_count_ADDRESS 0x0955A0u
 #define stage_00_rock_count ROM16(stage_00_rock_count_ADDRESS)
 #define stage_00_geyser_column_sprites_ADDRESS 0x095676u
-#define stage_00_geyser_column_sprites ((const uint16_t *)rom(stage_00_geyser_column_sprites_ADDRESS))
+#define stage_00_geyser_column_sprites ((const u16le *)rom(stage_00_geyser_column_sprites_ADDRESS))
 #define falling_rock_count_ADDRESS 0x0956A8u
 #define falling_rock_count ROM16(falling_rock_count_ADDRESS)
 #define event_1a_first_scroll_mode_ADDRESS 0x095940u
@@ -2116,23 +2118,23 @@
 #define event_1a_first_scroll_speed_ADDRESS 0x095942u
 #define event_1a_first_scroll_speed ROM16(event_1a_first_scroll_speed_ADDRESS)
 #define escape_countdown_digits_ADDRESS 0x095962u
-#define escape_countdown_digits ((const uint16_t *)rom(escape_countdown_digits_ADDRESS))
+#define escape_countdown_digits ((const u16le *)rom(escape_countdown_digits_ADDRESS))
 #define window_wipe_default_left_ADDRESS 0x0967FBu
 #define window_wipe_default_left ROM16(window_wipe_default_left_ADDRESS)
 #define window_wipe_default_top_ADDRESS 0x096804u
 #define window_wipe_default_top ROM16(window_wipe_default_top_ADDRESS)
 #define map_number_badge_sprites_ADDRESS 0x096C21u
-#define map_number_badge_sprites ((const uint16_t *)rom(map_number_badge_sprites_ADDRESS))
+#define map_number_badge_sprites ((const u16le *)rom(map_number_badge_sprites_ADDRESS))
 #define stage_map_markers_ADDRESS 0x096CB5u
 #define stage_map_markers ((const uint8_t *)rom(stage_map_markers_ADDRESS))
 #define stage_map_trails_ADDRESS 0x096CC8u
-#define stage_map_trails ((const uint32_t *)rom(stage_map_trails_ADDRESS))
+#define stage_map_trails ((const u32le *)rom(stage_map_trails_ADDRESS))
 #define map_eggman_gesture_frames_ADDRESS 0x096D78u
 #define map_eggman_gesture_frames ROM8S(map_eggman_gesture_frames_ADDRESS)
 #define stage_map_icons_ADDRESS 0x096D87u
-#define stage_map_icons ((const uint16_t *)rom(stage_map_icons_ADDRESS))
+#define stage_map_icons ((const u16le *)rom(stage_map_icons_ADDRESS))
 #define next_stage_map_icons_ADDRESS 0x096DA9u
-#define next_stage_map_icons ((const uint16_t *)rom(next_stage_map_icons_ADDRESS))
+#define next_stage_map_icons ((const u16le *)rom(next_stage_map_icons_ADDRESS))
 #define stage_map_sounds_1_ADDRESS 0x096DCBu
 #define stage_map_sounds_1 ((const uint8_t *)rom(stage_map_sounds_1_ADDRESS))
 #define stage_map_sounds_2_ADDRESS 0x096DDDu
@@ -2142,37 +2144,37 @@
 #define title_sonic_rise_heights_ADDRESS 0x096E0Fu
 #define title_sonic_rise_heights ((const uint8_t *)rom(title_sonic_rise_heights_ADDRESS))
 #define title_ray_frames_ADDRESS 0x097316u
-#define title_ray_frames ((const uint16_t *)rom(title_ray_frames_ADDRESS))
+#define title_ray_frames ((const u16le *)rom(title_ray_frames_ADDRESS))
 #define title_mighty_frames_ADDRESS 0x097330u
-#define title_mighty_frames ((const uint16_t *)rom(title_mighty_frames_ADDRESS))
+#define title_mighty_frames ((const u16le *)rom(title_mighty_frames_ADDRESS))
 #define stage_ring_bonus_percents_ADDRESS 0x09864Eu
 #define stage_ring_bonus_percents ((const uint8_t *)rom(stage_ring_bonus_percents_ADDRESS))
 #define stage_ring_counts_ADDRESS 0x09865Fu
 #define stage_ring_counts ((const uint8_t *)rom(stage_ring_counts_ADDRESS))
 #define ring_tally_blink_palettes_ADDRESS 0x098900u
-#define ring_tally_blink_palettes ((const uint16_t *)rom(ring_tally_blink_palettes_ADDRESS))
+#define ring_tally_blink_palettes ((const u16le *)rom(ring_tally_blink_palettes_ADDRESS))
 #define percent_digit_sprites_ADDRESS 0x098908u
-#define percent_digit_sprites ((const uint16_t *)rom(percent_digit_sprites_ADDRESS))
+#define percent_digit_sprites ((const u16le *)rom(percent_digit_sprites_ADDRESS))
 #define ring_tally_character_sounds_ADDRESS 0x098E7Du
 #define ring_tally_character_sounds ((const uint8_t *)rom(ring_tally_character_sounds_ADDRESS))
 #define ring_tally_backdrop_palettes_ADDRESS 0x098E80u
-#define ring_tally_backdrop_palettes ((const uint16_t *)rom(ring_tally_backdrop_palettes_ADDRESS))
+#define ring_tally_backdrop_palettes ((const u16le *)rom(ring_tally_backdrop_palettes_ADDRESS))
 #define ring_tally_digits_ADDRESS 0x098E8Eu
-#define ring_tally_digits ((const uint16_t *)rom(ring_tally_digits_ADDRESS))
+#define ring_tally_digits ((const u16le *)rom(ring_tally_digits_ADDRESS))
 #define ring_tally_portraits_ADDRESS 0x098EA2u
-#define ring_tally_portraits ((const uint32_t *)rom(ring_tally_portraits_ADDRESS))
+#define ring_tally_portraits ((const u32le *)rom(ring_tally_portraits_ADDRESS))
 #define picture_chain_step_jumps_ADDRESS 0x099C6Au
-#define picture_chain_step_jumps ((const uint32_t *)rom(picture_chain_step_jumps_ADDRESS))
+#define picture_chain_step_jumps ((const u32le *)rom(picture_chain_step_jumps_ADDRESS))
 #define angle_octants_ADDRESS 0x09A666u
-#define angle_octants ((const uint16_t *)rom(angle_octants_ADDRESS))
+#define angle_octants ((const u16le *)rom(angle_octants_ADDRESS))
 #define video_register_defaults_ADDRESS 0x09A676u
 #define video_register_defaults ROM16(video_register_defaults_ADDRESS)
 #define attract_sound_mask_ADDRESS 0x09A692u
-#define attract_sound_mask ((const uint32_t *)rom(attract_sound_mask_ADDRESS))
+#define attract_sound_mask ((const u32le *)rom(attract_sound_mask_ADDRESS))
 #define eeprom_defaults_ADDRESS 0x09C580u
 #define eeprom_defaults ROM8(eeprom_defaults_ADDRESS)
 #define ram_test_patterns_ADDRESS 0x09ED5Cu
-#define ram_test_patterns ((const uint32_t *)rom(ram_test_patterns_ADDRESS))
+#define ram_test_patterns ((const u32le *)rom(ram_test_patterns_ADDRESS))
 #define rom_checksums_ADDRESS 0x09F08Cu
 #define rom_checksums ROM16(rom_checksums_ADDRESS)
 #define rom_checksum_ic8_ADDRESS 0x09F08Eu
@@ -2184,29 +2186,29 @@
 #define common_start_prompt_position_ADDRESS 0x09FFCCu
 #define common_start_prompt_position ROM16(common_start_prompt_position_ADDRESS)
 #define start_prompt_positions_3p_ADDRESS 0x09FFCEu
-#define start_prompt_positions_3p ((const uint16_t *)rom(start_prompt_positions_3p_ADDRESS))
+#define start_prompt_positions_3p ((const u16le *)rom(start_prompt_positions_3p_ADDRESS))
 #define start_prompt_position_p2_ADDRESS 0x09FFD0u
 #define start_prompt_position_p2 ROM16(start_prompt_position_p2_ADDRESS)
 #define start_prompt_position_p3_ADDRESS 0x09FFD2u
 #define start_prompt_position_p3 ROM16(start_prompt_position_p3_ADDRESS)
 #define start_prompt_positions_2p_ADDRESS 0x09FFD4u
-#define start_prompt_positions_2p ((const uint16_t *)rom(start_prompt_positions_2p_ADDRESS))
+#define start_prompt_positions_2p ((const u16le *)rom(start_prompt_positions_2p_ADDRESS))
 #define common_credit_position_ADDRESS 0x09FFD8u
 #define common_credit_position ROM16(common_credit_position_ADDRESS)
 #define credit_positions_3p_ADDRESS 0x09FFDAu
-#define credit_positions_3p ((const uint16_t *)rom(credit_positions_3p_ADDRESS))
+#define credit_positions_3p ((const u16le *)rom(credit_positions_3p_ADDRESS))
 #define credit_position_p2_ADDRESS 0x09FFDCu
 #define credit_position_p2 ROM16(credit_position_p2_ADDRESS)
 #define credit_position_p3_ADDRESS 0x09FFDEu
 #define credit_position_p3 ROM16(credit_position_p3_ADDRESS)
 #define credit_positions_2p_ADDRESS 0x09FFE0u
-#define credit_positions_2p ((const uint16_t *)rom(credit_positions_2p_ADDRESS))
+#define credit_positions_2p ((const u16le *)rom(credit_positions_2p_ADDRESS))
 #define stage_spawns_by_type_ADDRESS 0x100168u
-#define stage_spawns_by_type ((const uint32_t *)rom(stage_spawns_by_type_ADDRESS))
+#define stage_spawns_by_type ((const u32le *)rom(stage_spawns_by_type_ADDRESS))
 #define sine_table_ADDRESS 0x101632u
-#define sine_table ((const int16_t *)rom(sine_table_ADDRESS))
+#define sine_table ((const s16le *)rom(sine_table_ADDRESS))
 #define cosine_table_ADDRESS 0x101832u
-#define cosine_table ((const int16_t *)rom(cosine_table_ADDRESS))
+#define cosine_table ((const s16le *)rom(cosine_table_ADDRESS))
 #define sine_of_300_ADDRESS 0x101C32u
 #define sine_of_300 ROM16S(sine_of_300_ADDRESS)
 #define cosine_of_300_ADDRESS 0x101E32u
@@ -2218,19 +2220,19 @@
 #define fraction_slash_bottom_rows_ADDRESS 0x104BCEu
 #define fraction_slash_bottom_rows ROM32(fraction_slash_bottom_rows_ADDRESS)
 #define stage_floor_blocks_ADDRESS 0x10B6CCu
-#define stage_floor_blocks ((const uint16_t *)rom(stage_floor_blocks_ADDRESS))
+#define stage_floor_blocks ((const u16le *)rom(stage_floor_blocks_ADDRESS))
 #define floor_slope_factors_ADDRESS 0x10DF46u
-#define floor_slope_factors ((const uint32_t *)rom(floor_slope_factors_ADDRESS))
+#define floor_slope_factors ((const u32le *)rom(floor_slope_factors_ADDRESS))
 #define floor_slope_direction_tables_ADDRESS 0x10DF4Au
-#define floor_slope_direction_tables ((const uint16_t *)rom(floor_slope_direction_tables_ADDRESS))
+#define floor_slope_direction_tables ((const u16le *)rom(floor_slope_direction_tables_ADDRESS))
 #define floor_attribute_slopes_ADDRESS 0x10E150u
-#define floor_attribute_slopes ((const int16_t *)rom(floor_attribute_slopes_ADDRESS))
+#define floor_attribute_slopes ((const s16le *)rom(floor_attribute_slopes_ADDRESS))
 #define floor_attribute_wall_heights_ADDRESS 0x10E152u
-#define floor_attribute_wall_heights ((const uint16_t *)rom(floor_attribute_wall_heights_ADDRESS))
+#define floor_attribute_wall_heights ((const u16le *)rom(floor_attribute_wall_heights_ADDRESS))
 #define stage_floor_block_bounds_ADDRESS 0x10E29Cu
-#define stage_floor_block_bounds ((const uint16_t *)rom(stage_floor_block_bounds_ADDRESS))
+#define stage_floor_block_bounds ((const u16le *)rom(stage_floor_block_bounds_ADDRESS))
 #define sonic_bounce_records_ADDRESS 0x1139E8u
-#define sonic_bounce_records ((const uint16_t *)rom(sonic_bounce_records_ADDRESS))
+#define sonic_bounce_records ((const u16le *)rom(sonic_bounce_records_ADDRESS))
 #define ray_bounce_records_ADDRESS 0x113A28u
 #define ray_bounce_records ROM16(ray_bounce_records_ADDRESS)
 #define mighty_bounce_records_ADDRESS 0x113A68u
@@ -2242,59 +2244,59 @@
 #define mighty_stuck_struggle_animations_ADDRESS 0x113C82u
 #define mighty_stuck_struggle_animations ROM32(mighty_stuck_struggle_animations_ADDRESS)
 #define ledge_recover_headings_ADDRESS 0x113CD1u
-#define ledge_recover_headings ((const uint16_t *)rom(ledge_recover_headings_ADDRESS))
+#define ledge_recover_headings ((const u16le *)rom(ledge_recover_headings_ADDRESS))
 #define screen_edge_scroll_carry_flags_ADDRESS 0x113CE7u
 #define screen_edge_scroll_carry_flags ((const int8_t *)rom(screen_edge_scroll_carry_flags_ADDRESS))
 #define player_palette_lists_ADDRESS 0x113D59u
-#define player_palette_lists ((const uint32_t *)rom(player_palette_lists_ADDRESS))
+#define player_palette_lists ((const u32le *)rom(player_palette_lists_ADDRESS))
 #define floor_block_side_codes_ADDRESS 0x113E95u
 #define floor_block_side_codes ((const uint8_t *)rom(floor_block_side_codes_ADDRESS))
 #define heading_speed_factors_ADDRESS 0x113EC0u
-#define heading_speed_factors ((const uint16_t *)rom(heading_speed_factors_ADDRESS))
+#define heading_speed_factors ((const u16le *)rom(heading_speed_factors_ADDRESS))
 #define max_health_by_setting_ADDRESS 0x113EF2u
-#define max_health_by_setting ((const uint16_t *)rom(max_health_by_setting_ADDRESS))
+#define max_health_by_setting ((const u16le *)rom(max_health_by_setting_ADDRESS))
 #define hud_stage_rings_positions_ADDRESS 0x113F44u
-#define hud_stage_rings_positions ((const uint16_t *)rom(hud_stage_rings_positions_ADDRESS))
+#define hud_stage_rings_positions ((const u16le *)rom(hud_stage_rings_positions_ADDRESS))
 #define floor_1_facing_bases_ADDRESS 0x113F4Au
 #define floor_1_facing_bases ((const uint8_t *)rom(floor_1_facing_bases_ADDRESS))
 #define fall_sprite_priorities_ADDRESS 0x113F7Fu
 #define fall_sprite_priorities ROM8S(fall_sprite_priorities_ADDRESS)
 #define hop_speeds_by_speed_ADDRESS 0x113F9Fu
-#define hop_speeds_by_speed ((const int16_t *)rom(hop_speeds_by_speed_ADDRESS))
+#define hop_speeds_by_speed ((const s16le *)rom(hop_speeds_by_speed_ADDRESS))
 #define hud_prompt_positions_3p_ADDRESS 0x113FB7u
-#define hud_prompt_positions_3p ((const uint16_t *)rom(hud_prompt_positions_3p_ADDRESS))
+#define hud_prompt_positions_3p ((const u16le *)rom(hud_prompt_positions_3p_ADDRESS))
 #define hud_prompt_positions_2p_ADDRESS 0x113FBDu
-#define hud_prompt_positions_2p ((const uint16_t *)rom(hud_prompt_positions_2p_ADDRESS))
+#define hud_prompt_positions_2p ((const u16le *)rom(hud_prompt_positions_2p_ADDRESS))
 #define hud_text_positions_3p_ADDRESS 0x113FEBu
-#define hud_text_positions_3p ((const uint16_t *)rom(hud_text_positions_3p_ADDRESS))
+#define hud_text_positions_3p ((const u16le *)rom(hud_text_positions_3p_ADDRESS))
 #define hud_text_positions_2p_ADDRESS 0x113FF1u
-#define hud_text_positions_2p ((const uint16_t *)rom(hud_text_positions_2p_ADDRESS))
+#define hud_text_positions_2p ((const u16le *)rom(hud_text_positions_2p_ADDRESS))
 #define opening_scene_player_positions_ADDRESS 0x11402Eu
 #define opening_scene_player_positions ROM16(opening_scene_player_positions_ADDRESS)
 #define player_state_stops_move_ADDRESS 0x114074u
 #define player_state_stops_move ((const uint8_t *)rom(player_state_stops_move_ADDRESS))
 #define stage_player_entries_ADDRESS 0x1140AEu
-#define stage_player_entries ((const uint16_t *)rom(stage_player_entries_ADDRESS))
+#define stage_player_entries ((const u16le *)rom(stage_player_entries_ADDRESS))
 #define hud_continue_positions_3p_ADDRESS 0x114122u
-#define hud_continue_positions_3p ((const uint16_t *)rom(hud_continue_positions_3p_ADDRESS))
+#define hud_continue_positions_3p ((const u16le *)rom(hud_continue_positions_3p_ADDRESS))
 #define hud_continue_positions_2p_ADDRESS 0x114128u
-#define hud_continue_positions_2p ((const uint16_t *)rom(hud_continue_positions_2p_ADDRESS))
+#define hud_continue_positions_2p ((const u16le *)rom(hud_continue_positions_2p_ADDRESS))
 #define hud_game_over_positions_3p_ADDRESS 0x114158u
-#define hud_game_over_positions_3p ((const uint16_t *)rom(hud_game_over_positions_3p_ADDRESS))
+#define hud_game_over_positions_3p ((const u16le *)rom(hud_game_over_positions_3p_ADDRESS))
 #define hud_game_over_positions_2p_ADDRESS 0x11415Eu
-#define hud_game_over_positions_2p ((const uint16_t *)rom(hud_game_over_positions_2p_ADDRESS))
+#define hud_game_over_positions_2p ((const u16le *)rom(hud_game_over_positions_2p_ADDRESS))
 #define hud_ring_count_positions_3p_ADDRESS 0x114190u
-#define hud_ring_count_positions_3p ((const uint16_t *)rom(hud_ring_count_positions_3p_ADDRESS))
+#define hud_ring_count_positions_3p ((const u16le *)rom(hud_ring_count_positions_3p_ADDRESS))
 #define hud_ring_count_positions_2p_ADDRESS 0x114196u
-#define hud_ring_count_positions_2p ((const uint16_t *)rom(hud_ring_count_positions_2p_ADDRESS))
+#define hud_ring_count_positions_2p ((const u16le *)rom(hud_ring_count_positions_2p_ADDRESS))
 #define stage_goals_ADDRESS 0x11419Au
-#define stage_goals ((const uint16_t *)rom(stage_goals_ADDRESS))
+#define stage_goals ((const u16le *)rom(stage_goals_ADDRESS))
 #define stage_goal_exit_paths_ADDRESS 0x1141A0u
 #define stage_goal_exit_paths ((const uint8_t *)rom(stage_goal_exit_paths_ADDRESS))
 #define tumble_effect_y_offsets_ADDRESS 0x1142AEu
-#define tumble_effect_y_offsets ((const uint16_t *)rom(tumble_effect_y_offsets_ADDRESS))
+#define tumble_effect_y_offsets ((const u16le *)rom(tumble_effect_y_offsets_ADDRESS))
 #define tumble_effect_depth_offsets_ADDRESS 0x1142C4u
-#define tumble_effect_depth_offsets ((const int16_t *)rom(tumble_effect_depth_offsets_ADDRESS))
+#define tumble_effect_depth_offsets ((const s16le *)rom(tumble_effect_depth_offsets_ADDRESS))
 #define sonic_trap_struggle_animations_ADDRESS 0x114AA0u
 #define sonic_trap_struggle_animations ROM32(sonic_trap_struggle_animations_ADDRESS)
 #define ray_trap_struggle_animations_ADDRESS 0x114AB0u
@@ -2302,9 +2304,9 @@
 #define mighty_trap_struggle_animations_ADDRESS 0x114AC0u
 #define mighty_trap_struggle_animations ROM32(mighty_trap_struggle_animations_ADDRESS)
 #define stage_restart_points_ADDRESS 0x114B84u
-#define stage_restart_points ((const uint16_t *)rom(stage_restart_points_ADDRESS))
+#define stage_restart_points ((const u16le *)rom(stage_restart_points_ADDRESS))
 #define player_path_offsets_ADDRESS 0x115528u
-#define player_path_offsets ((const uint16_t *)rom(player_path_offsets_ADDRESS))
+#define player_path_offsets ((const u16le *)rom(player_path_offsets_ADDRESS))
 #define sound_commands_ADDRESS 0x115A32u
 #define sound_commands ROM16(sound_commands_ADDRESS)
 #define bookkeeping_defaults_ADDRESS 0x115B60u
@@ -2330,19 +2332,19 @@
 #define crt_test_border_lines_ADDRESS 0x115D53u
 #define crt_test_border_lines ROM16(crt_test_border_lines_ADDRESS)
 #define cabinet_type_texts_ADDRESS 0x115F2Eu
-#define cabinet_type_texts ((const uint32_t *)rom(cabinet_type_texts_ADDRESS))
+#define cabinet_type_texts ((const u32le *)rom(cabinet_type_texts_ADDRESS))
 #define vitality_setting_numbers_ADDRESS 0x115FC0u
-#define vitality_setting_numbers ((const uint16_t *)rom(vitality_setting_numbers_ADDRESS))
+#define vitality_setting_numbers ((const u16le *)rom(vitality_setting_numbers_ADDRESS))
 #define credits_to_start_texts_ADDRESS 0x1161DDu
-#define credits_to_start_texts ((const uint32_t *)rom(credits_to_start_texts_ADDRESS))
+#define credits_to_start_texts ((const u32le *)rom(credits_to_start_texts_ADDRESS))
 #define coins_per_credit_texts_ADDRESS 0x116422u
-#define coins_per_credit_texts ((const uint32_t *)rom(coins_per_credit_texts_ADDRESS))
+#define coins_per_credit_texts ((const u32le *)rom(coins_per_credit_texts_ADDRESS))
 #define bonus_adder_texts_ADDRESS 0x1164BFu
-#define bonus_adder_texts ((const uint32_t *)rom(bonus_adder_texts_ADDRESS))
+#define bonus_adder_texts ((const u32le *)rom(bonus_adder_texts_ADDRESS))
 #define coin_setting_texts_ADDRESS 0x116711u
-#define coin_setting_texts ((const uint32_t *)rom(coin_setting_texts_ADDRESS))
+#define coin_setting_texts ((const u32le *)rom(coin_setting_texts_ADDRESS))
 #define coin_setting_texts_individual_ADDRESS 0x116779u
-#define coin_setting_texts_individual ((const uint32_t *)rom(coin_setting_texts_individual_ADDRESS))
+#define coin_setting_texts_individual ((const u32le *)rom(coin_setting_texts_individual_ADDRESS))
 #define individual_coin_setting_numbers_ADDRESS 0x1167B5u
 #define individual_coin_setting_numbers ((const uint8_t *)rom(individual_coin_setting_numbers_ADDRESS))
 #define chute_1_credit_cell_positions_ADDRESS 0x116F2Du
@@ -2382,7 +2384,7 @@
 #define memory_test_bad_offsets_ADDRESS 0x117780u
 #define memory_test_bad_offsets ROM16(memory_test_bad_offsets_ADDRESS)
 #define small_large_texts_ADDRESS 0x11786Du
-#define small_large_texts ((const uint32_t *)rom(small_large_texts_ADDRESS))
+#define small_large_texts ((const u32le *)rom(small_large_texts_ADDRESS))
 
 /* the board's registers (read and written through the bus) */
 #define memory_test_video_word 0x30CA50u
@@ -3989,40 +3991,40 @@ struct object
 {
 	union
 	{
-		uint32_t credit_part_slot;
-		uint16_t draw_next;
+		u32le credit_part_slot;
+		u16le draw_next;
 		struct
 		{
 			uint8_t pad_00[0x2];
-			uint16_t sprite_flags;
+			u16le sprite_flags;
 		};
 	};
 	union
 	{
-		uint32_t part_list;
-		uint16_t sprite_frame;
+		u32le part_list;
+		u16le sprite_frame;
 		struct
 		{
 			uint8_t pad_04[0x2];
-			uint16_t sprite_palette;
+			u16le sprite_palette;
 		};
 	};
-	uint16_t sprite_scale;
-	uint16_t sprite_layer;
-	int16_t screen_y;
-	int16_t screen_x;
+	u16le sprite_scale;
+	u16le sprite_layer;
+	s16le screen_y;
+	s16le screen_x;
 	union
 	{
 		struct
 		{
 			union
 			{
-				uint16_t hitbox_size_x;
+				u16le hitbox_size_x;
 				uint8_t shadow_blink;
 			};
 			union
 			{
-				uint16_t hitbox_size_y;
+				u16le hitbox_size_y;
 				int8_t hitbox_centre_x;
 				struct
 				{
@@ -4030,25 +4032,25 @@ struct object
 					int8_t hitbox_centre_y;
 				};
 			};
-			int16_t anchor_x;
-			int16_t anchor_y;
-			int16_t sprite_height;
-			int16_t sprite_width;
+			s16le anchor_x;
+			s16le anchor_y;
+			s16le sprite_height;
+			s16le sprite_width;
 			union
 			{
-				uint32_t handler;
-				uint16_t handler_low;
+				u32le handler;
+				u16le handler_low;
 				struct
 				{
 					uint8_t pad_1C[0x2];
-					uint16_t handler_high;
+					u16le handler_high;
 				};
 			};
-			uint16_t previous;
-			uint16_t next;
+			u16le previous;
+			u16le next;
 			union
 			{
-				uint16_t direction;
+				u16le direction;
 				uint8_t direction_low;
 				struct
 				{
@@ -4058,7 +4060,7 @@ struct object
 			};
 			union
 			{
-				uint16_t parent;
+				u16le parent;
 				struct
 				{
 					uint8_t pad_26[0x1];
@@ -4067,14 +4069,14 @@ struct object
 			};
 			union
 			{
-				uint32_t hud_anim;
-				uint16_t child;
+				u32le hud_anim;
+				u16le child;
 				struct
 				{
 					uint8_t pad_28[0x2];
 					union
 					{
-						int16_t projected_x;
+						s16le projected_x;
 						uint8_t letter_fraction;
 						struct
 						{
@@ -4086,164 +4088,164 @@ struct object
 			};
 			union
 			{
-				int32_t projected_y;
+				s32le projected_y;
 				int8_t hud_anim_repeats;
-				uint16_t projected_y_fraction;
+				u16le projected_y_fraction;
 				struct
 				{
 					uint8_t pad_2C[0x1];
 					int8_t piece_frame;
 					union
 					{
-						int16_t projected_y_int;
+						s16le projected_y_int;
 						uint8_t piece_value;
 					};
 				};
 			};
 			union
 			{
-				uint32_t flags;
+				u32le flags;
 				uint8_t flags_low_byte;
-				uint16_t flags_low;
+				u16le flags_low;
 				struct
 				{
 					uint8_t pad_30[0x1];
 					uint8_t step;
-					int16_t timer;
+					s16le timer;
 				};
 			};
 			union
 			{
-				int32_t speed_x;
+				s32le speed_x;
 				uint8_t speed_x_low_byte;
-				uint16_t speed_x_fraction;
+				u16le speed_x_fraction;
 				struct
 				{
 					uint8_t pad_34[0x2];
-					int16_t speed_x_int;
+					s16le speed_x_int;
 				};
 			};
 			union
 			{
-				int32_t speed_y;
-				uint16_t speed_y_fraction;
+				s32le speed_y;
+				u16le speed_y_fraction;
 				struct
 				{
 					uint8_t pad_38[0x2];
-					int16_t speed_y_int;
+					s16le speed_y_int;
 				};
 			};
 			union
 			{
-				int32_t speed_z;
-				uint16_t speed_z_fraction;
+				s32le speed_z;
+				u16le speed_z_fraction;
 				struct
 				{
 					uint8_t pad_3C[0x2];
-					int16_t speed_z_int;
+					s16le speed_z_int;
 				};
 			};
 			union
 			{
-				int32_t z;
-				uint16_t z_fraction;
+				s32le z;
+				u16le z_fraction;
 				struct
 				{
 					uint8_t pad_40[0x2];
-					int16_t z_int;
+					s16le z_int;
 				};
 			};
 			uint8_t animation_speed;
 			int8_t animation_timer;
 			uint8_t animation_frame;
 			uint8_t kind;
-			uint32_t animation;
+			u32le animation;
 			union
 			{
-				int32_t x;
-				uint16_t x_fraction;
+				s32le x;
+				u16le x_fraction;
 				struct
 				{
 					uint8_t pad_4C[0x2];
-					int16_t x_int;
+					s16le x_int;
 				};
 			};
 			union
 			{
-				int32_t y;
-				uint16_t y_fraction;
+				s32le y;
+				u16le y_fraction;
 				struct
 				{
 					uint8_t pad_50[0x2];
-					int16_t y_int;
+					s16le y_int;
 				};
 			};
 			union
 			{
-				int32_t floor_z;
-				uint16_t floor_z_fraction;
+				s32le floor_z;
+				u16le floor_z_fraction;
 				struct
 				{
 					uint8_t pad_54[0x2];
-					int16_t floor_z_int;
+					s16le floor_z_int;
 				};
 			};
 			union
 			{
-				int32_t previous_floor_z;
-				uint16_t previous_floor_z_fraction;
+				s32le previous_floor_z;
+				u16le previous_floor_z_fraction;
 				struct
 				{
 					uint8_t pad_58[0x2];
-					int16_t previous_floor_z_int;
+					s16le previous_floor_z_int;
 				};
 			};
-			int32_t floor_block;
+			s32le floor_block;
 			union
 			{
-				int32_t previous_floor_block;
+				s32le previous_floor_block;
 				struct
 				{
 					uint8_t pad_60[0x2];
-					uint16_t cycle_count;
+					u16le cycle_count;
 				};
 			};
 			int8_t sprite_offset_x;
 			int8_t sprite_offset_y;
 			union
 			{
-				uint16_t hitbox_height;
+				u16le hitbox_height;
 				struct
 				{
 					uint8_t pad_66[0x1];
 					uint8_t tally_gets_bonus;
 				};
 			};
-			uint16_t hit_list_next;
+			u16le hit_list_next;
 			union
 			{
-				uint16_t touched_by;
+				u16le touched_by;
 				uint8_t tally_character;
 			};
-			int16_t touch_distance;
+			s16le touch_distance;
 			union
 			{
-				int32_t speed;
+				s32le speed;
 				uint8_t member_state;
-				uint16_t speed_fraction;
+				u16le speed_fraction;
 				struct
 				{
 					uint8_t pad_6E[0x1];
 					uint8_t member_number;
-					int16_t speed_int;
+					s16le speed_int;
 				};
 			};
-			uint16_t platform_list_next;
-			uint16_t platform;
+			u16le platform_list_next;
+			u16le platform;
 			uint8_t floor_slope;
 			uint8_t floor_type;
-			uint16_t wall;
-			uint16_t floor_attribute;
+			u16le wall;
+			u16le floor_attribute;
 			int8_t hitbox_offset_x;
 			int8_t hitbox_offset_y;
 			int8_t health;
@@ -4252,7 +4254,7 @@ struct object
 			uint8_t var_81;
 			union
 			{
-				uint16_t var_82;
+				u16le var_82;
 				uint8_t var_82_low;
 				struct
 				{
@@ -4262,7 +4264,7 @@ struct object
 			};
 			union
 			{
-				uint16_t var_84;
+				u16le var_84;
 				uint8_t var_84_low;
 				struct
 				{
@@ -4270,19 +4272,19 @@ struct object
 					uint8_t var_85;
 				};
 			};
-			uint16_t var_86;
+			u16le var_86;
 			union
 			{
-				uint16_t draw_depth;
+				u16le draw_depth;
 				uint8_t var_88_low;
 			};
-			uint16_t var_8A;
-			uint16_t var_8C;
+			u16le var_8A;
+			u16le var_8C;
 			uint8_t var_8E;
 			uint8_t var_8F;
 			union
 			{
-				uint16_t var_90;
+				u16le var_90;
 				struct
 				{
 					uint8_t pad_90[0x1];
@@ -4291,7 +4293,7 @@ struct object
 			};
 			union
 			{
-				uint16_t spawn_arg_1;
+				u16le spawn_arg_1;
 				uint8_t spawn_arg_1_low;
 				struct
 				{
@@ -4301,7 +4303,7 @@ struct object
 			};
 			union
 			{
-				uint16_t spawn_arg_2;
+				u16le spawn_arg_2;
 				uint8_t spawn_arg_2_low;
 				struct
 				{
@@ -4309,10 +4311,10 @@ struct object
 					uint8_t spawn_arg_2_high;
 				};
 			};
-			uint16_t var_96;
+			u16le var_96;
 			union
 			{
-				uint16_t var_98;
+				u16le var_98;
 				struct
 				{
 					uint8_t pad_98[0x1];
@@ -4321,24 +4323,24 @@ struct object
 			};
 			union
 			{
-				uint16_t var_9A;
+				u16le var_9A;
 				uint8_t player;
 			};
-			uint32_t next_handler;
+			u32le next_handler;
 		};
 		struct
 		{
 			uint8_t pad_10[0x22];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x4];
-			uint32_t legs;
+			u32le legs;
 			uint8_t pad_3C[0x10];
-			uint32_t body_frames;
-			uint32_t leg_frames;
+			u32le body_frames;
+			u32le leg_frames;
 			uint8_t pad_54[0xC];
 			int8_t frame_index;
 			uint8_t pad_61[0x1];
-			uint16_t cycle_count;
+			u16le cycle_count;
 		} animate_ending;
 		struct
 		{
@@ -4356,12 +4358,12 @@ struct object
 			uint8_t frame;
 			uint8_t anim_delay;
 			int8_t anim_timer;
-			uint32_t anim;
+			u32le anim;
 		} animate_hud;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
@@ -4384,66 +4386,66 @@ struct object
 			uint8_t bob_counter;
 			int8_t bounce_index;
 			uint8_t pad_4C[0x34];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 		} biting_head_view;
 		struct
 		{
 			uint8_t pad_10[0x20];
-			uint16_t step_timer;
+			u16le step_timer;
 		} blink_current_map_marker;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} board_prop;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t wait_timer;
+			s16le wait_timer;
 		} boulder;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} breakable_panel;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t wait_timer;
+			s16le wait_timer;
 		} brick_dust;
 		struct
 		{
 			uint8_t pad_10[0x6F];
 			uint8_t state;
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_94[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
 			uint8_t off_screen;
@@ -4454,62 +4456,62 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} bubble_column;
 		struct
 		{
 			uint8_t pad_10[0x74];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} bubble_near_parent_update;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t base_x;
-			uint16_t base_y;
-			uint16_t draw_depth;
-			uint16_t variant;
+			u16le base_x;
+			u16le base_y;
+			u16le draw_depth;
+			u16le variant;
 		} bubble_pop;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t base_x;
-			uint16_t base_y;
+			u16le base_x;
+			u16le base_y;
 			uint8_t pad_84[0x2];
-			uint16_t variant;
+			u16le variant;
 		} bubble_start;
 		struct
 		{
 			uint8_t pad_10[0x74];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} bubble_update;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t rows_left;
-			int32_t row_projected_y;
+			s16le rows_left;
+			s32le row_projected_y;
 			uint8_t pad_86[0xE];
 			union
 			{
-				int32_t row_projected_x;
+				s32le row_projected_x;
 				struct
 				{
 					uint8_t pad_94[0x2];
-					int16_t row_projected_x_whole;
+					s16le row_projected_x_whole;
 				};
 			};
 		} build_grate_steps;
 		struct
 		{
 			uint8_t pad_10[0x28];
-			uint32_t bonus_label;
+			u32le bonus_label;
 			uint8_t pad_3C[0x4];
-			uint32_t backdrop;
-			uint32_t part_3;
-			uint32_t units_digit;
-			uint32_t tens_digit;
-			uint32_t hundreds_digit;
+			u32le backdrop;
+			u32le part_3;
+			u32le units_digit;
+			u32le tens_digit;
+			u32le hundreds_digit;
 			uint8_t pad_54[0x8];
-			uint32_t result_frames;
+			u32le result_frames;
 			uint8_t pad_60[0x7];
 			uint8_t gets_bonus;
 		} build_ring_tally_panel;
@@ -4518,12 +4520,12 @@ struct object
 			uint8_t pad_10[0x84];
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_94[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
 		} build_saw_shaft_base;
@@ -4536,77 +4538,77 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x4E];
-			int16_t floor_block_high;
+			s16le floor_block_high;
 			uint8_t pad_60[0x20];
 			union
 			{
-				uint32_t path;
+				u32le path;
 				struct
 				{
 					uint8_t pad_80[0x2];
-					uint16_t path_high;
+					u16le path_high;
 				};
 			};
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 			uint8_t pad_94[0x2];
 			uint8_t state;
 			uint8_t rumble_timer;
-			int16_t start_delay;
-			uint16_t draw_depth;
-			uint16_t depth_offset;
-			int16_t slow_timer;
+			s16le start_delay;
+			u16le draw_depth;
+			u16le depth_offset;
+			s16le slow_timer;
 		} burning_boulder;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t boulder;
+			u16le boulder;
 			uint8_t pad_28[0x58];
-			int16_t offset_x;
-			int16_t offset_y;
-			int16_t pause_timer;
+			s16le offset_x;
+			s16le offset_y;
+			s16le pause_timer;
 		} burning_boulder_flame;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			uint8_t step;
 			uint8_t pad_81[0x1];
-			uint16_t step_timer;
+			u16le step_timer;
 		} button_box;
 		struct
 		{
 			uint8_t pad_10[0x71];
 			uint8_t lifted;
-			uint16_t angle;
-			uint16_t spiral_speed;
+			u16le angle;
+			u16le spiral_speed;
 		} cactus;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} cage_bar;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t glint_timer;
 			uint8_t glint_timer_high;
-			uint16_t hover_height;
+			u16le hover_height;
 		} carried_ring;
 		struct
 		{
 			uint8_t pad_10[0x24];
 			uint8_t state;
 			uint8_t pad_35[0x1];
-			uint16_t launch_position;
+			u16le launch_position;
 			uint8_t launch_kind;
 			uint8_t rides_platform;
 		} catapult;
@@ -4614,36 +4616,36 @@ struct object
 		{
 			uint8_t pad_10[0x71];
 			int8_t path_write_index;
-			uint16_t wobble_angle;
+			u16le wobble_angle;
 			uint8_t pad_84[0x2];
-			uint16_t hop_timer;
+			u16le hop_timer;
 		} centipede;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			int16_t path_index;
+			s16le path_index;
 		} centipede_follow_path;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			int16_t path_index;
+			s16le path_index;
 			uint8_t pad_84[0x2];
-			uint16_t hop_timer;
+			u16le hop_timer;
 		} centipede_segment;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			int16_t path_index;
+			s16le path_index;
 			uint8_t pad_84[0x2];
-			uint16_t hop_timer;
+			u16le hop_timer;
 			uint8_t pad_88[0xA];
-			uint32_t segment_ahead;
+			u32le segment_ahead;
 		} centipede_tail;
 		struct
 		{
 			union
 			{
-				uint32_t player_block;
+				u32le player_block;
 				struct
 				{
 					uint8_t pad_10[0x2];
@@ -4654,12 +4656,12 @@ struct object
 			uint8_t pad_14[0x6C];
 			uint8_t idle_step;
 			uint8_t character;
-			int16_t step_timer;
-			uint16_t turn_timer;
+			s16le step_timer;
+			u16le turn_timer;
 			uint8_t pad_86[0xC];
 			union
 			{
-				uint16_t right_count;
+				u16le right_count;
 				struct
 				{
 					uint8_t pad_92[0x1];
@@ -4668,7 +4670,7 @@ struct object
 			};
 			union
 			{
-				uint16_t left_count;
+				u16le left_count;
 				struct
 				{
 					uint8_t pad_94[0x1];
@@ -4684,34 +4686,34 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t end_position;
+			u16le end_position;
 		} chaser_back_zone;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 		} chaser_back_zone_check_parent;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 		} check_player;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			union
 			{
-				uint16_t frame_index_word;
+				u16le frame_index_word;
 				int8_t frame_index;
 			};
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} checker_pad;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t copy_object;
+			u16le copy_object;
 			uint8_t pad_82[0x6];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} clipped_copy_sprite;
 		struct
 		{
@@ -4721,35 +4723,35 @@ struct object
 			uint8_t pad_70[0x10];
 			union
 			{
-				uint32_t angle;
+				u32le angle;
 				struct
 				{
 					uint8_t pad_80[0x2];
-					int16_t angle_whole;
+					s16le angle_whole;
 				};
 			};
-			int32_t angle_speed;
-			uint16_t draw_depth;
+			s32le angle_speed;
+			u16le draw_depth;
 			uint8_t swing_count;
 			uint8_t pad_8B[0x1];
-			uint16_t roll_frames;
-			uint16_t roll_timer;
+			u16le roll_frames;
+			u16le roll_timer;
 			uint8_t pad_90[0x5];
 			uint8_t bridge;
-			int16_t depth_offset;
+			s16le depth_offset;
 			uint8_t pad_98[0x2];
-			uint16_t previous_plank;
+			u16le previous_plank;
 		} collapsing_bridge_plank;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			int8_t walk_step;
 			uint8_t moving;
-			int16_t frame_timer;
+			s16le frame_timer;
 			uint8_t pad_84[0x2];
-			uint16_t step_timer;
+			u16le step_timer;
 			uint8_t pad_88[0xA];
 			uint8_t variant;
 			uint8_t on_platform;
@@ -4759,7 +4761,7 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t over_pit;
 			uint8_t pad_81[0xB];
-			uint16_t triggered;
+			u16le triggered;
 			uint8_t pad_8E[0x4];
 			uint8_t variant;
 			uint8_t on_platform;
@@ -4769,17 +4771,17 @@ struct object
 			uint8_t pad_10[0x5E];
 			uint8_t state;
 			uint8_t pad_6F[0x19];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			uint8_t pad_8A[0x7];
 			uint8_t silent_row;
 			uint8_t pad_92[0x4];
-			int16_t depth_offset;
-			uint16_t normal_palette;
+			s16le depth_offset;
+			u16le normal_palette;
 		} crumbling_floor;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
@@ -4789,15 +4791,15 @@ struct object
 			uint8_t pad_10[0x50];
 			int8_t palette_index;
 			uint8_t pad_61[0x1];
-			uint16_t palette_delay;
+			u16le palette_delay;
 		} cycle_ring_tally_backdrop_palette;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t last_frame;
-			uint16_t frame_timer;
-			uint16_t lifetime;
+			u16le frame_timer;
+			u16le lifetime;
 		} debris;
 		struct
 		{
@@ -4806,7 +4808,7 @@ struct object
 			uint8_t pad_81[0x1];
 			union
 			{
-				int16_t roll_out_timer;
+				s16le roll_out_timer;
 				struct
 				{
 					uint8_t pad_82[0x1];
@@ -4819,12 +4821,12 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t state;
 			uint8_t pad_81[0x1];
-			int16_t roll_out_timer;
+			s16le roll_out_timer;
 		} door_roller_roll_out;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t fragment;
+			u32le fragment;
 			int8_t pieces_left;
 		} door_wall;
 		struct
@@ -4844,12 +4846,12 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t step;
 			uint8_t pad_81[0x3];
-			int16_t slide_y;
+			s16le slide_y;
 		} draw_eggman_booth;
 		struct
 		{
 			uint8_t pad_10[0x22];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x2C];
 			uint8_t frame_index;
 		} draw_ending_blast_frame;
@@ -4858,41 +4860,41 @@ struct object
 			uint8_t pad_10[0x3A];
 			int8_t trail_done;
 			uint8_t pad_4B[0xC];
-			uint16_t marker_blink_count;
+			u16le marker_blink_count;
 		} draw_map_stage_markers;
 		struct
 		{
 			uint8_t pad_10[0x22];
-			int16_t base_x;
-			int16_t base_y;
-			int32_t step_x;
-			int32_t step_y;
-			int32_t offset_x;
-			int32_t offset_y;
+			s16le base_x;
+			s16le base_y;
+			s32le step_x;
+			s32le step_y;
+			s32le offset_x;
+			s32le offset_y;
 			uint8_t pad_46[0x4];
 			int8_t trail_done;
-			uint16_t segment_frames;
+			u16le segment_frames;
 			uint8_t pad_4D[0x4];
-			uint32_t next_trail_point;
-			uint16_t segment_timer;
+			u32le next_trail_point;
+			u16le segment_timer;
 		} draw_map_trail_dot;
 		struct
 		{
 			uint8_t pad_10[0x5E];
 			uint8_t state;
 			uint8_t pad_6F[0x1B];
-			uint16_t group_slot;
+			u16le group_slot;
 			uint8_t pad_8C[0x6];
 			int8_t takes_slot;
 		} draw_rope_bridge_ropes;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
+			u32le path;
 			uint8_t pad_84[0x12];
 			union
 			{
-				uint16_t dropper_flags;
+				u16le dropper_flags;
 				uint8_t rides_platform;
 			};
 		} drop_icicle_row;
@@ -4901,7 +4903,7 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t pausing;
 			int8_t stretch_step;
-			uint16_t pause_timer;
+			u16le pause_timer;
 			uint8_t pad_84[0xE];
 			uint8_t facing;
 			uint8_t den_number;
@@ -4912,15 +4914,15 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} eel_den;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t stretch_step;
-			uint16_t explode_delay;
-			uint16_t frame_timer;
+			u16le explode_delay;
+			u16le frame_timer;
 			uint8_t pad_86[0xE];
 			uint8_t facing;
 			uint8_t den_number;
@@ -4940,15 +4942,15 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t stretch_step;
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} eel_piece;
 		struct
 		{
 			uint8_t pad_10[0x71];
 			int8_t stretch_step;
-			uint16_t explode_delay;
+			u16le explode_delay;
 			uint8_t pad_84[0x8];
-			uint32_t height_offset;
+			u32le height_offset;
 			uint8_t pad_90[0x5];
 			uint8_t den_number;
 		} eel_segment;
@@ -4957,38 +4959,38 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t step;
 			uint8_t pad_81[0x1];
-			int16_t step_timer;
-			int16_t slide_y;
+			s16le step_timer;
+			s16le slide_y;
 		} eggman_booth;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t step;
 			uint8_t phase;
-			uint16_t step_timer;
-			uint16_t talk_timer;
+			u16le step_timer;
+			u16le talk_timer;
 		} eggman_scene;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t frame_count;
-			uint32_t script;
+			s16le frame_count;
+			u32le script;
 		} eggman_speech;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t step;
 			uint8_t frame_index;
-			uint16_t step_timer;
-			uint16_t flicker_phase;
-			uint16_t beam_phase;
+			u16le step_timer;
+			u16le flicker_phase;
+			u16le beam_phase;
 		} eggman_teleport;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			union
 			{
-				int16_t frame_index_word;
+				s16le frame_index_word;
 				int8_t frame_index;
 				struct
 				{
@@ -4996,53 +4998,53 @@ struct object
 					int8_t last_frame;
 				};
 			};
-			uint16_t frame_toggle;
-			uint16_t draw_offset_y;
+			u16le frame_toggle;
+			u16le draw_offset_y;
 		} electric_pole;
 		struct
 		{
 			uint8_t pad_10[0x71];
 			uint8_t travel_direction;
-			int16_t spawn_timer;
-			uint16_t end_position;
+			s16le spawn_timer;
+			u16le end_position;
 		} ember_emitter;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t step;
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x10];
-			uint32_t part_3;
+			u32le part_3;
 			uint8_t pad_48[0x18];
 			uint8_t frame_index;
 			uint8_t list_index;
-			int16_t cycle_count;
+			s16le cycle_count;
 		} ending;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t step;
-			int16_t timer;
-			uint32_t exhaust_flame;
-			uint32_t path;
+			s16le timer;
+			u32le exhaust_flame;
+			u32le path;
 			uint8_t pad_3C[0x4];
-			uint32_t puff_1;
-			uint32_t puff_2;
-			uint32_t puff_3;
-			uint32_t puff_4;
-			uint32_t puff_5;
-			uint32_t puff_6;
-			uint32_t puff_7;
-			uint32_t puff_8;
+			u32le puff_1;
+			u32le puff_2;
+			u32le puff_3;
+			u32le puff_4;
+			u32le puff_5;
+			u32le puff_6;
+			u32le puff_7;
+			u32le puff_8;
 		} ending_eggman_fly_in;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			int16_t step_timer;
+			s16le step_timer;
 			uint8_t pad_34[0x2D];
 			uint8_t counting_up;
 		} escape_alarm_flash;
@@ -5051,19 +5053,19 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t last_frame;
-			uint16_t frame_toggle;
+			u16le frame_toggle;
 		} explode_object;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t last_frame;
-			uint16_t frame_toggle;
+			u16le frame_toggle;
 		} explosion;
 		struct
 		{
 			uint8_t pad_10[0x4E];
-			int16_t floor_block_high;
+			s16le floor_block_high;
 			uint8_t pad_60[0x20];
 			uint8_t state;
 			uint8_t travel_direction;
@@ -5073,11 +5075,11 @@ struct object
 			uint8_t pad_10[0x5E];
 			uint8_t state;
 			uint8_t pad_6F[0x11];
-			int16_t rattle_step;
+			s16le rattle_step;
 			uint8_t pad_82[0x6];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			uint8_t pad_8A[0xC];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} falling_grate;
 		struct
 		{
@@ -5090,73 +5092,73 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 		} fire_front;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t flame_timer;
+			s16le flame_timer;
 		} fire_trench_start;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t flame_timer;
+			s16le flame_timer;
 		} fire_trench_update;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
 			uint8_t pad_87[0x1];
 			uint8_t burst_state;
 			uint8_t pad_89[0x1];
-			int16_t blast_delay;
+			s16le blast_delay;
 		} fire_vent;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t shot;
+			u32le shot;
 		} fireball_emitter;
 		struct
 		{
 			uint8_t pad_10[0x14];
-			uint32_t arc_angle;
+			u32le arc_angle;
 			uint8_t pad_28[0x57];
 			uint8_t state;
 			uint8_t pad_80[0x2];
-			int16_t flight_timer;
+			s16le flight_timer;
 		} fireball_fly;
 		struct
 		{
 			uint8_t pad_10[0x6F];
 			uint8_t state;
 			uint8_t pad_80[0x16];
-			int16_t target_x;
+			s16le target_x;
 			uint8_t pad_98[0x2];
-			int16_t target_y;
+			s16le target_y;
 		} fireball_start;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_phase;
-			uint16_t angle;
-			int16_t growth_rate;
-			uint16_t growth_rate_high;
+			u16le frame_phase;
+			u16le angle;
+			s16le growth_rate;
+			u16le growth_rate_high;
 		} flame_jet;
 		struct
 		{
@@ -5166,10 +5168,10 @@ struct object
 			uint8_t pad_26[0x5A];
 			uint8_t frame_index;
 			uint8_t sway_step;
-			uint16_t frame_toggle;
+			u16le frame_toggle;
 			union
 			{
-				int16_t rest_timer;
+				s16le rest_timer;
 				uint8_t sway_toggle;
 				struct
 				{
@@ -5183,36 +5185,36 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t frame;
 			int8_t frame_index;
-			uint16_t frame_phase;
-			int16_t pause_timer;
+			u16le frame_phase;
+			s16le pause_timer;
 		} flame_machine_back_wall;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_toggle;
+			u16le frame_toggle;
 		} flame_machine_flame;
 		struct
 		{
 			uint8_t pad_10[0x76];
-			uint16_t time_left;
+			u16le time_left;
 		} flame_machine_init;
 		struct
 		{
 			uint8_t pad_10[0x14];
 			int8_t previous_health;
 			uint8_t pad_25[0x5D];
-			uint16_t flash_frame_count;
+			u16le flash_frame_count;
 			uint8_t pad_84[0x2];
-			uint16_t time_left;
+			u16le time_left;
 			uint8_t pad_88[0x4];
-			uint16_t destroyed_frames;
+			u16le destroyed_frames;
 		} flame_machine_update;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t flash_on;
 			uint8_t flash_period;
 			uint8_t flash_timer;
@@ -5222,183 +5224,183 @@ struct object
 			uint8_t pad_10[0x71];
 			uint8_t flash_step;
 			uint8_t pad_82[0x2];
-			uint16_t flash_timer;
+			u16le flash_timer;
 		} flash_mine_palette;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 		} follow_player_path;
 		struct
 		{
 			uint8_t pad_10[0x2C];
-			uint16_t turn_speed;
-			uint16_t base_y;
+			u16le turn_speed;
+			u16le base_y;
 			uint8_t pad_40[0x14];
 			int8_t hop_timer;
 			uint8_t step;
 			uint8_t pad_56[0x2];
-			int32_t drop_height;
+			s32le drop_height;
 		} gauge_ring;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} geyser_erupt;
 		struct
 		{
 			uint8_t pad_10[0x58];
-			uint32_t next_listed_geyser;
+			u32le next_listed_geyser;
 			uint8_t pad_6C[0x12];
-			int16_t sound_timer;
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			s16le sound_timer;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			uint32_t row_pattern;
+			s16le wait_timer;
+			u16le hold_start_position;
+			u32le row_pattern;
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_98[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
-			int16_t top_height;
+			s16le top_height;
 		} geyser_front;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
+			u32le path;
 			uint8_t pad_84[0x4];
-			int16_t speed;
+			s16le speed;
 			uint8_t pad_8A[0x4];
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			int16_t travel;
+			s16le wait_timer;
+			u16le hold_start_position;
+			s16le travel;
 		} geyser_line;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
-			uint16_t erupt_delay;
-			uint16_t draw_depth;
+			u16le erupt_delay;
+			u16le draw_depth;
 		} geyser_wait;
 		struct
 		{
 			uint8_t pad_10[0x84];
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_94[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
 		} grate_step_debris_view;
 		struct
 		{
 			uint8_t pad_10[0x74];
-			int16_t cut_z;
+			s16le cut_z;
 			uint8_t copied_animation_speed;
 			int8_t copied_animation_timer;
 		} grate_step_update;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t rows_left;
-			int32_t row_projected_y;
+			s16le rows_left;
+			s32le row_projected_y;
 			uint8_t pad_86[0x10];
-			int16_t row_projected_x;
+			s16le row_projected_x;
 		} grate_steps;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t leader;
 			uint8_t pad_81[0x1];
-			int16_t coordinate;
-			uint16_t end_position;
-			uint16_t which_flag;
+			s16le coordinate;
+			u16le end_position;
+			u16le which_flag;
 		} group_leader_hold;
 		struct
 		{
 			uint8_t pad_10[0x24];
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t pad_3F[0x9];
-			uint32_t path;
+			u32le path;
 			uint8_t pad_4C[0x34];
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 			uint8_t hold_timer;
 		} group_leader_move;
 		struct
 		{
 			uint8_t pad_10[0x7A];
-			uint16_t group_slot;
+			u16le group_slot;
 			uint8_t pad_8C[0x5];
 			uint8_t silent_row;
 			uint8_t pad_92[0x4];
-			int16_t depth_offset;
-			uint16_t normal_palette;
-			uint16_t previous_member;
+			s16le depth_offset;
+			u16le normal_palette;
+			u16le previous_member;
 		} group_member;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			union
 			{
-				uint32_t next_trigger;
-				uint16_t next_trigger_low;
+				u32le next_trigger;
+				u16le next_trigger_low;
 			};
 		} group_slot_trigger;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x59];
 			uint8_t swing_side;
-			uint16_t angle;
+			u16le angle;
 			union
 			{
-				int16_t angle_speed;
+				s16le angle_speed;
 				struct
 				{
 					uint8_t pad_84[0x1];
 					int8_t angle_speed_int;
 				};
 			};
-			int16_t swing_accel;
+			s16le swing_accel;
 			uint8_t pad_88[0xA];
 			uint8_t handle_count;
 			uint8_t drops_players;
-			uint16_t end_position;
+			u16le end_position;
 		} handle_rod;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			union
 			{
-				uint16_t index_word;
+				u16le index_word;
 				uint8_t index;
 				struct
 				{
@@ -5406,9 +5408,9 @@ struct object
 					uint8_t grip;
 				};
 			};
-			uint16_t start_angle;
-			int16_t rod_angle_speed;
-			uint16_t rod;
+			u16le start_angle;
+			s16le rod_angle_speed;
+			u16le rod;
 		} handle_rod_handle;
 		struct
 		{
@@ -5419,7 +5421,7 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t next_press;
+			u32le next_press;
 		} how_to_play_button_hand;
 		struct
 		{
@@ -5435,24 +5437,24 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t blocks_left;
+			s16le blocks_left;
 		} ice_block_row;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t state;
 			uint8_t shake_timer;
-			int16_t shake_duration;
-			int16_t shake_offset;
+			s16le shake_duration;
+			s16le shake_offset;
 			uint8_t pad_86[0x2];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} ice_floor_block;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t step;
 			int8_t last_step;
-			uint16_t step_timer;
+			u16le step_timer;
 			uint8_t pad_84[0xE];
 			uint8_t cube_speed_index;
 			uint8_t step_duration_index;
@@ -5460,8 +5462,8 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x7C];
-			int16_t travel;
-			uint16_t end_position;
+			s16le travel;
+			u16le end_position;
 		} ice_platform_leader;
 		struct
 		{
@@ -5469,34 +5471,34 @@ struct object
 			uint8_t state;
 			uint8_t member;
 			uint8_t pad_70[0x18];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			uint8_t pad_8A[0x8];
 			uint8_t icicle_landed;
 			uint8_t pad_93[0x3];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} ice_platform_piece;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t next_depth;
+			s16le next_depth;
 		} icicle_cracks;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			int16_t travel;
+			s16le wait_timer;
+			u16le hold_start_position;
+			s16le travel;
 			union
 			{
-				uint16_t record_flags;
+				u16le record_flags;
 				uint8_t rides_platform;
 				struct
 				{
@@ -5506,39 +5508,39 @@ struct object
 			};
 			union
 			{
-				int32_t platform_offset;
+				s32le platform_offset;
 				struct
 				{
 					uint8_t pad_98[0x2];
-					int16_t platform_offset_int;
+					s16le platform_offset_int;
 				};
 			};
-			uint16_t finish_timer;
+			u16le finish_timer;
 		} icicle_dropper;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x5E];
 			union
 			{
-				uint16_t blink_timer_word;
+				u16le blink_timer_word;
 				uint8_t blink_timer;
 			};
 		} icicle_shadow;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t timer;
+			s16le timer;
 			uint8_t state;
 			uint8_t pad_83[0x1];
-			uint16_t line_coordinate;
+			u16le line_coordinate;
 			uint8_t pad_86[0x2];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			uint8_t pad_8A[0xC];
 			union
 			{
-				uint16_t dropper_flags;
+				u16le dropper_flags;
 				uint8_t rides_platform;
 				struct
 				{
@@ -5552,17 +5554,17 @@ struct object
 			uint8_t pad_10[0x6F];
 			uint8_t state;
 			uint8_t pad_80[0x2];
-			int16_t flight_timer;
+			s16le flight_timer;
 			uint8_t pad_84[0x12];
-			int16_t target_x;
+			s16le target_x;
 			uint8_t pad_98[0x2];
-			int16_t target_y;
+			s16le target_y;
 		} init_fireball_flight;
 		struct
 		{
 			union
 			{
-				uint32_t player_block;
+				u32le player_block;
 				struct
 				{
 					uint8_t pad_10[0x3];
@@ -5572,59 +5574,59 @@ struct object
 			uint8_t pad_14[0x6C];
 			uint8_t portrait_changed;
 			uint8_t character;
-			uint16_t countdown;
+			u16le countdown;
 		} join_character_chooser;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t base_x;
-			int16_t base_y;
+			s16le base_x;
+			s16le base_y;
 			uint8_t pad_84[0x8];
-			uint16_t side;
+			u16le side;
 			uint8_t pad_8E[0x2];
 			int8_t standing;
 			uint8_t pad_91[0x5];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} lava_column;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 			uint8_t pad_94[0x2];
-			uint16_t unused_word;
+			u16le unused_word;
 			uint8_t sound_timer;
 		} lava_flow;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x46];
 			uint8_t state;
 			uint8_t member;
-			int16_t erupt_delay;
+			s16le erupt_delay;
 			uint8_t pad_72[0xE];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
 			uint8_t pad_87[0x1];
-			uint16_t draw_depth;
-			uint16_t group_slot;
+			u16le draw_depth;
+			u16le group_slot;
 			uint8_t pad_8C[0x2];
-			uint16_t rise_limit;
+			u16le rise_limit;
 			uint8_t pad_90[0x2];
 			uint8_t takes_slot;
 			uint8_t pad_93[0x3];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} lava_rock;
 		struct
 		{
@@ -5634,42 +5636,42 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x38];
-			int16_t move_frames;
+			s16le move_frames;
 			uint8_t pad_4A[0x28];
 			int8_t sound_timer;
 			uint8_t off_screen;
 			uint8_t pad_74[0xB];
 			uint8_t state;
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
+			s16le wait_timer;
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_92[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
 			uint8_t pad_96[0x2];
-			uint16_t hold_start_position;
+			u16le hold_start_position;
 		} machine_fire;
 		struct
 		{
 			uint8_t pad_10[0x20];
-			uint16_t timer;
+			u16le timer;
 			uint8_t pad_32[0x16];
-			uint16_t hold_frames;
+			u16le hold_frames;
 			uint8_t pad_4A[0x7];
-			uint32_t gesture_list;
+			u32le gesture_list;
 			uint8_t pad_55[0x4];
 			uint8_t unused_step;
 			uint8_t pad_5A[0x3];
@@ -5678,7 +5680,7 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x20];
-			uint16_t timer;
+			u16le timer;
 			uint8_t pad_32[0x27];
 			uint8_t frame_step;
 			uint8_t frame_step_pad;
@@ -5686,50 +5688,50 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x20];
-			int16_t timer;
-			int16_t base_x;
-			int16_t base_y;
-			int32_t step_x;
-			int32_t step_y;
-			int32_t offset_x;
-			int32_t offset_y;
+			s16le timer;
+			s16le base_x;
+			s16le base_y;
+			s32le step_x;
+			s32le step_y;
+			s32le offset_x;
+			s32le offset_y;
 		} map_intro;
 		struct
 		{
 			uint8_t pad_10[0x20];
-			int16_t timer;
-			int16_t base_x;
-			int16_t base_y;
-			int32_t step_x;
-			int32_t step_y;
+			s16le timer;
+			s16le base_x;
+			s16le base_y;
+			s32le step_x;
+			s32le step_y;
 			uint8_t pad_3E[0xA];
-			int16_t blink_frames;
+			s16le blink_frames;
 			int8_t trail_done;
 			uint8_t pad_4B[0x2];
-			int16_t target_x;
-			int16_t target_y;
+			s16le target_x;
+			s16le target_y;
 			uint8_t pad_51[0x6];
-			uint16_t marker_blink_count;
+			u16le marker_blink_count;
 			uint8_t pad_59[0x2];
 			int8_t blink_phase;
 		} map_screen;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			uint8_t state;
 			uint8_t pad_81[0x1];
-			int16_t timer;
-			uint16_t frame;
+			s16le timer;
+			u16le frame;
 		} metal_platform;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			int8_t rise_limit;
-			int16_t frame_count;
-			uint16_t dust_timer;
+			s16le frame_count;
+			u16le dust_timer;
 			uint8_t pad_86[0xC];
 			uint8_t last_health;
 			uint8_t pad_93[0x1];
@@ -5741,25 +5743,25 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t timer;
+			u16le timer;
 		} mine;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} mine_splash;
 		struct
 		{
 			uint8_t pad_10[0x20];
-			int16_t timer;
-			int16_t base_x;
-			int16_t base_y;
-			int32_t step_x;
-			int32_t step_y;
-			int32_t offset_x;
-			int32_t offset_y;
+			s16le timer;
+			s16le base_x;
+			s16le base_y;
+			s32le step_x;
+			s32le step_y;
+			s32le offset_x;
+			s32le offset_y;
 			uint8_t pad_46[0x15];
 			uint8_t blink_phase;
 		} move_map_stage_icon;
@@ -5768,28 +5770,28 @@ struct object
 			uint8_t pad_10[0x78];
 			union
 			{
-				int32_t projected_x_carry;
+				s32le projected_x_carry;
 				struct
 				{
 					uint8_t pad_88[0x2];
-					int16_t projected_x_carry_int;
+					s16le projected_x_carry_int;
 				};
 			};
 		} move_object_projected;
 		struct
 		{
 			uint8_t pad_10[0x22];
-			int16_t base_x;
-			int16_t base_y;
-			int32_t step_x;
-			int32_t step_y;
-			int32_t offset_x;
+			s16le base_x;
+			s16le base_y;
+			s32le step_x;
+			s32le step_y;
+			s32le offset_x;
 			uint8_t pad_42[0x8];
 			int8_t trail_done;
-			uint16_t segment_frames;
-			int16_t target_x;
-			int16_t target_y;
-			uint32_t next_trail_point;
+			u16le segment_frames;
+			s16le target_x;
+			s16le target_y;
+			u32le next_trail_point;
 		} next_map_trail_segment;
 		struct
 		{
@@ -5798,131 +5800,131 @@ struct object
 			uint8_t pad_81[0x1];
 			union
 			{
-				int32_t zoom;
+				s32le zoom;
 				struct
 				{
 					uint8_t pad_82[0x2];
-					int16_t zoom_int;
+					s16le zoom_int;
 				};
 			};
-			int32_t zoom_speed;
+			s32le zoom_speed;
 			int8_t phase;
 			uint8_t pad_8B[0x1];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} opening_machine;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			uint16_t wave_angle;
+			u16le wave_angle;
 			uint8_t pad_84[0x8];
-			uint32_t height_offset;
+			u32le height_offset;
 			uint8_t pad_90[0x2];
-			uint16_t wave_amplitude;
+			u16le wave_amplitude;
 		} place_eel_piece;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 			uint8_t pad_4C[0x10];
-			int16_t floor_block_low;
-			int16_t floor_block_high;
+			s16le floor_block_low;
+			s16le floor_block_high;
 			uint8_t pad_60[0x1F];
 			uint8_t health_pad;
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t hurt_flash_on;
 			uint8_t hurt_flash_period;
 			uint8_t hurt_flash_timer;
 			uint8_t pad_87[0x15];
-			uint32_t block;
+			u32le block;
 		} player_view;
 		struct
 		{
 			uint8_t pad_10[0x86];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} player_effect;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 			uint8_t pad_4C[0x34];
-			uint32_t palette_list;
+			u32le palette_list;
 		} player_object_climb;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} player_state_bouncing;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} player_state_dropping;
 		struct
 		{
 			uint8_t pad_10[0x5A];
-			uint16_t touched_by;
+			u16le touched_by;
 		} player_state_stuck;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} player_stuck_jump_out;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} player_stuck_on_object_jump_out;
 		struct
 		{
 			uint8_t pad_10[0x5A];
-			uint16_t touched_by;
+			u16le touched_by;
 		} player_stuck_wait_release;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			uint16_t sound_timer;
+			s16le wait_timer;
+			u16le hold_start_position;
+			u16le sound_timer;
 		} propeller_machine;
 		struct
 		{
 			uint8_t pad_10[0x24];
 			union
 			{
-				int16_t shake_strength;
+				s16le shake_strength;
 				uint8_t shake_strength_low;
 			};
 			uint8_t shake_step;
 			uint8_t pad_37[0x49];
-			int16_t shake_dx;
-			uint16_t draw_depth;
+			s16le shake_dx;
+			u16le draw_depth;
 		} propped_board;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			uint8_t break_frame;
 			uint8_t stopped;
-			uint16_t frame_count;
-			int16_t ring_timer;
+			u16le frame_count;
+			s16le ring_timer;
 			uint8_t pad_86[0xC];
 			uint8_t push_quadrant;
 			uint8_t post_distance;
-			int16_t ring_count;
+			s16le ring_count;
 		} push_crate;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
@@ -5930,17 +5932,17 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t last_spawn_position;
+			u16le last_spawn_position;
 		} railing_spawner;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t appear_state;
 			uint8_t pad_81[0x1];
-			uint16_t variant;
+			u16le variant;
 			int8_t hit_count;
 			uint8_t pad_85[0x1];
-			uint32_t damage_script;
+			u32le damage_script;
 		} ram_target;
 		struct
 		{
@@ -5949,20 +5951,20 @@ struct object
 			uint8_t rows_remove;
 			uint8_t rows_remove_pad;
 			uint8_t pad_83[0x1];
-			int16_t hold_timer;
+			s16le hold_timer;
 		} ranking_display;
 		struct
 		{
-			uint32_t player_block;
+			u32le player_block;
 			uint8_t pad_14[0x10];
-			uint16_t rank;
+			u16le rank;
 			uint8_t pad_26[0xE];
-			int16_t rings;
+			s16le rings;
 			uint8_t character;
 			uint8_t stages_reached;
 			union
 			{
-				uint32_t initials;
+				u32le initials;
 				uint8_t first_initial;
 				struct
 				{
@@ -5972,90 +5974,90 @@ struct object
 					uint8_t initials_pad;
 				};
 			};
-			uint32_t trackball;
+			u32le trackball;
 			uint8_t pad_40[0x40];
 			uint8_t button_bit;
 			uint8_t pad_81[0x1];
-			uint16_t out_of_rank_timer;
-			uint16_t time_left;
+			u16le out_of_rank_timer;
+			u16le time_left;
 		} ranking_entry;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			uint8_t animate;
 			uint8_t remove;
 			uint8_t pad_82[0x10];
-			uint16_t row;
+			u16le row;
 		} ranking_row;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			int16_t pause_timer;
+			s16le pause_timer;
 		} ranking_title;
 		struct
 		{
 			uint8_t pad_10[0x6E];
-			int16_t pickup_delay;
-			int16_t lifetime;
+			s16le pickup_delay;
+			s16le lifetime;
 			uint8_t pad_82[0x2];
-			uint16_t release_delay;
+			u16le release_delay;
 			uint8_t pad_86[0x4];
-			int16_t projected_x_carry_int;
+			s16le projected_x_carry_int;
 			uint8_t pad_8C[0x6];
-			int32_t bounce_speed;
+			s32le bounce_speed;
 		} released_ring;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t zoom_step;
+			u16le zoom_step;
 			uint8_t pad_82[0x2];
-			uint16_t open_position;
-			uint16_t edge_zone;
-			uint16_t draw_depth;
+			u16le open_position;
+			u16le edge_zone;
+			u16le draw_depth;
 			uint8_t pad_8A[0x2];
-			uint16_t unscaled_hitbox_size_x;
+			u16le unscaled_hitbox_size_x;
 		} rimmed_sinkhole;
 		struct
 		{
 			uint8_t pad_10[0x6E];
-			uint16_t spawn_scroll_position;
-			uint16_t unused_glint_timer;
+			u16le spawn_scroll_position;
+			u16le unused_glint_timer;
 		} ring_spin;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			uint16_t roll_delay;
+			u16le roll_delay;
 			uint8_t pad_34[0x10];
-			uint32_t tens_digit;
+			u32le tens_digit;
 			uint8_t pad_48[0x14];
-			uint16_t results_timer;
+			u16le results_timer;
 			uint8_t pad_5E[0x2];
 			uint8_t blink_index;
 			uint8_t pad_61[0x1];
-			uint16_t blink_delay;
+			u16le blink_delay;
 		} ring_tally_percent_view;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			uint16_t step_delay;
+			u16le step_delay;
 			uint8_t pad_34[0x4];
-			uint32_t bonus_label;
+			u32le bonus_label;
 			uint8_t pad_3C[0x4];
-			uint32_t backdrop;
-			uint32_t part_3;
-			uint32_t units_digit;
-			uint32_t tens_digit;
-			uint32_t hundreds_digit;
+			u32le backdrop;
+			u32le part_3;
+			u32le units_digit;
+			u32le tens_digit;
+			u32le hundreds_digit;
 			uint8_t pad_54[0xC];
 			int8_t rings_counted;
 			uint8_t step;
-			uint16_t palette_delay;
+			u16le palette_delay;
 			uint8_t pad_64[0x6];
 			uint8_t character;
 		} ring_tally_player;
@@ -6064,7 +6066,7 @@ struct object
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			int16_t timer;
+			s16le timer;
 		} ring_tally_ticker;
 		struct
 		{
@@ -6076,24 +6078,24 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 			union
 			{
-				int32_t fixed_projected_x;
-				uint16_t projected_x_fraction;
+				s32le fixed_projected_x;
+				u16le projected_x_fraction;
 				struct
 				{
 					uint8_t pad_94[0x2];
-					int16_t projected_x_whole;
+					s16le projected_x_whole;
 				};
 			};
 		} rising_saw;
@@ -6105,52 +6107,52 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t entry;
-			uint16_t end_position;
-			uint32_t list_start;
+			u32le entry;
+			u16le end_position;
+			u32le list_start;
 			union
 			{
-				int32_t last_raft_y;
+				s32le last_raft_y;
 				struct
 				{
 					uint8_t pad_8A[0x2];
-					int16_t last_raft_y_int;
+					s16le last_raft_y_int;
 				};
 			};
-			uint32_t last_raft_speed;
+			u32le last_raft_speed;
 		} river_raft_spawner;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 			uint8_t pad_4C[0x38];
 			uint8_t state;
 			uint8_t pad_85[0x3];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} river_raft_update;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 			uint8_t pad_4C[0x22];
 			uint8_t state;
 			uint8_t pad_6F[0x19];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			uint8_t pad_8A[0xC];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} river_water;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t break_frame;
 			uint8_t breaking;
-			int16_t frame_count;
-			uint16_t twinkle_delay;
+			s16le frame_count;
+			u16le twinkle_delay;
 		} rock_wall;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t limit;
+			s16le limit;
 		} roller_back_zone;
 		struct
 		{
@@ -6158,36 +6160,36 @@ struct object
 			uint8_t state;
 			uint8_t plank_index;
 			uint8_t pad_70[0x18];
-			uint16_t draw_depth;
-			uint16_t group_slot;
+			u16le draw_depth;
+			u16le group_slot;
 			uint8_t pad_8C[0x6];
 			int8_t takes_slot;
 			uint8_t pad_93[0x2];
 			uint8_t bridge;
-			int16_t depth_offset;
+			s16le depth_offset;
 		} rope_bridge_plank;
 		struct
 		{
 			uint8_t pad_10[0x6E];
-			uint16_t spawn_scroll_position;
-			uint16_t glint_timer;
-			uint16_t hover_height;
+			u16le spawn_scroll_position;
+			u16le glint_timer;
+			u16le hover_height;
 		} row_ring;
 		struct
 		{
 			uint8_t pad_10[0x22];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x2D];
 			uint8_t list_index;
 		} run_timed_spawns;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			int8_t balls_gone;
 			uint8_t row_position;
-			int16_t bob_phase;
+			s16le bob_phase;
 			uint8_t pad_84[0xE];
 			uint8_t row_direction;
 			int8_t ball_count;
@@ -6197,61 +6199,61 @@ struct object
 			uint8_t pad_10[0x5E];
 			uint8_t state;
 			uint8_t pad_6F[0x19];
-			uint16_t draw_depth;
-			uint16_t face_object;
+			u16le draw_depth;
+			u16le face_object;
 			uint8_t pad_8C[0xA];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} sand_block;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
+			s16le wait_timer;
+			u16le hold_start_position;
 		} sand_block_leader;
 		struct
 		{
 			uint8_t pad_10[0x86];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} sand_face;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			uint16_t lifetime;
-			int16_t frame_index;
+			u16le lifetime;
+			s16le frame_index;
 		} sand_puff;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t crumble_frame;
 			uint8_t crumbling;
-			int16_t frame_count;
+			s16le frame_count;
 			uint8_t pad_84[0xE];
 			uint8_t ring_count;
 		} sand_rock;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 		} sand_streams;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
-			int16_t next_shaft_z;
+			s16le next_shaft_z;
 			uint8_t pad_82[0x1];
 			uint8_t state;
-			int16_t sound_timer;
+			s16le sound_timer;
 			uint8_t pad_86[0x2];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} saw_blade;
 		struct
 		{
@@ -6261,51 +6263,51 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t next_step_z;
+			s16le next_step_z;
 			uint8_t state;
 		} saw_shaft_update;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 		} saw_sparks;
 		struct
 		{
 			uint8_t pad_10[0x6E];
-			int16_t pickup_delay;
-			int16_t lifetime;
+			s16le pickup_delay;
+			s16le lifetime;
 		} scattered_ring;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t end_position;
+			u16le end_position;
 		} scene_anchor;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t end_position;
+			u16le end_position;
 		} scene_carrier;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t end_position;
-			uint16_t radius_x4;
+			u16le end_position;
+			u16le radius_x4;
 		} scene_object_view;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
 			uint8_t pad_87[0x1];
-			uint16_t unused_stage;
-			int16_t depth_offset;
+			u16le unused_stage;
+			s16le depth_offset;
 		} scenery_sprite;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t palette_list;
+			u32le palette_list;
 			uint8_t palette_index;
 			uint8_t palette_delay;
 			uint8_t palette_timer;
@@ -6314,17 +6316,17 @@ struct object
 		{
 			uint8_t pad_10[0x21];
 			uint8_t scrolled_out;
-			int16_t timer;
+			s16le timer;
 		} scroll_credits;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} seesaw;
 		struct
 		{
 			uint8_t pad_10[0x4E];
-			uint16_t floor_block_high;
+			u16le floor_block_high;
 		} set_player_entry_by_scene;
 		struct
 		{
@@ -6336,48 +6338,48 @@ struct object
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} shaking_block;
 		struct
 		{
 			uint8_t pad_10[0x86];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} sink_swirl;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t zoom_step;
+			u16le zoom_step;
 			uint8_t pad_82[0x2];
-			uint16_t open_position;
+			u16le open_position;
 			uint8_t pad_86[0x2];
-			uint16_t draw_depth;
+			u16le draw_depth;
 			int8_t unscaled_offset_x;
 			int8_t unscaled_offset_y;
-			uint16_t unscaled_hitbox_size_x;
+			u16le unscaled_hitbox_size_x;
 		} sinkhole;
 		struct
 		{
 			uint8_t pad_10[0x86];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} sinking_effect;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} skid_dust;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			uint16_t open_delay;
+			u16le open_delay;
 		} sliding_door;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t burst_frame;
 			uint8_t bursting;
-			int16_t frame_count;
-			int16_t part_3_count;
-			uint16_t part_3_frame;
+			s16le frame_count;
+			s16le part_3_count;
+			u16le part_3_frame;
 			uint8_t pad_88[0xA];
 			uint8_t ring_count;
 			uint8_t random_scatter;
@@ -6385,70 +6387,70 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x74];
-			int16_t cut_z;
+			s16le cut_z;
 		} spawn_grate_step_debris;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t wait_timer;
+			s16le wait_timer;
 		} spawn_group_leader;
 		struct
 		{
 			uint8_t pad_10[0x82];
 			uint8_t takes_slot;
 			uint8_t pad_93[0x3];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} spawn_lava_column;
 		struct
 		{
 			uint8_t pad_10[0x58];
-			uint32_t next_listed_geyser;
+			u32le next_listed_geyser;
 		} spawn_listed_geyser;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} spawn_slip_piece;
 		struct
 		{
 			uint8_t pad_10[0x72];
-			uint16_t phase_timer;
-			int32_t spear_z;
+			u16le phase_timer;
+			s32le spear_z;
 		} spear_trap;
 		struct
 		{
 			uint8_t pad_10[0x71];
 			int8_t bounce_count;
-			uint16_t pause_timer;
+			u16le pause_timer;
 		} spike_gate_beam;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			int8_t frame_index;
 			int8_t step;
-			int16_t step_timer;
+			s16le step_timer;
 			uint8_t pad_84[0x2];
-			uint16_t trigger_delay;
+			u16le trigger_delay;
 			uint8_t pad_88[0xB];
 			uint8_t start_step;
 		} spike_panel;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 			uint8_t pad_28[0x58];
 			uint8_t spin_frame;
 			uint8_t arm_frame;
-			uint16_t spin_toggle;
+			u16le spin_toggle;
 		} spiked_disc;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			int16_t sound_timer;
-			int16_t frame_count;
-			int16_t stopped_frames;
+			s16le sound_timer;
+			s16le frame_count;
+			s16le stopped_frames;
 			uint8_t pad_86[0x8];
 			uint8_t holding_back;
 			uint8_t hold_timer;
@@ -6458,18 +6460,18 @@ struct object
 			uint8_t pad_10[0x62];
 			union
 			{
-				uint32_t event_offset_long;
-				uint16_t event_offset;
+				u32le event_offset_long;
+				u16le event_offset;
 				struct
 				{
 					uint8_t pad_72[0x2];
-					uint16_t roller_kind;
+					u16le roller_kind;
 				};
 			};
 			uint8_t pad_76[0xA];
 			union
 			{
-				uint16_t state_word;
+				u16le state_word;
 				uint8_t state;
 				struct
 				{
@@ -6477,41 +6479,41 @@ struct object
 					uint8_t holding_back;
 				};
 			};
-			int16_t wait_timer;
-			int16_t saved_base_speed;
-			uint16_t leader;
-			int16_t screen_threshold;
-			uint32_t path;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			uint16_t path_direction;
+			s16le wait_timer;
+			s16le saved_base_speed;
+			u16le leader;
+			s16le screen_threshold;
+			u32le path;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			u16le path_direction;
 			uint8_t rumble_timer;
 			uint8_t rumble_off_screen;
 			uint8_t substate;
 			uint8_t pause_timer;
 			uint8_t pad_9A[0x2];
-			uint16_t hold_start_position;
+			u16le hold_start_position;
 			uint8_t hold_timer;
 		} spiked_roller;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} stage_03_floor_block;
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 			uint8_t pad_4C[0x34];
-			uint16_t sparkle_offset;
+			u16le sparkle_offset;
 		} stage_clear_banner;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x2C];
 			uint8_t frame_index;
 		} start_ending_blast;
@@ -6519,33 +6521,33 @@ struct object
 		{
 			uint8_t pad_10[0x3A];
 			int8_t trail_done;
-			uint16_t segment_frames;
+			u16le segment_frames;
 			uint8_t pad_4D[0x8];
-			uint16_t segment_timer;
+			u16le segment_timer;
 		} start_map_trail;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t frame_index_high;
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} static_triangle;
 		struct
 		{
 			uint8_t pad_10[0x86];
-			int16_t depth_offset;
+			s16le depth_offset;
 		} stone_block;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint16_t draw_depth;
+			u16le draw_depth;
 		} stuck_effect;
 		struct
 		{
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x2D];
 			uint8_t list_index;
 		} timed_spawner;
@@ -6556,11 +6558,11 @@ struct object
 			uint8_t pad_31[0x1];
 			union
 			{
-				int16_t timer;
+				s16le timer;
 				uint8_t timer_low;
 			};
 			uint8_t pad_34[0x10];
-			uint32_t emblem_bottom_left;
+			u32le emblem_bottom_left;
 			uint8_t pad_48[0x19];
 			uint8_t frame_index;
 		} title;
@@ -6569,9 +6571,9 @@ struct object
 			uint8_t pad_10[0x20];
 			uint8_t started;
 			uint8_t pad_31[0x1];
-			int16_t timer;
+			s16le timer;
 			uint8_t pad_34[0x10];
-			uint32_t cloud_4;
+			u32le cloud_4;
 		} title_clouds;
 		struct
 		{
@@ -6579,35 +6581,35 @@ struct object
 			uint8_t sound_timer;
 			uint8_t off_screen;
 			uint8_t pad_74[0xC];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			uint16_t rotation_angle;
-			uint16_t columns;
+			s16le wait_timer;
+			u16le hold_start_position;
+			u16le rotation_angle;
+			u16le columns;
 		} tornado;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t player_block;
+			u32le player_block;
 		} trap;
 		struct
 		{
 			uint8_t pad_10[0x7C];
 			uint8_t sound_c_timer;
 			uint8_t sound_1e_timer;
-			uint32_t reached_top;
+			u32le reached_top;
 		} treadmill_gate_update;
 		struct
 		{
 			uint8_t pad_10[0x16];
-			uint16_t parent;
+			u16le parent;
 		} treadmill_roller;
 		struct
 		{
@@ -6617,29 +6619,29 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x38];
-			uint32_t animation;
+			u32le animation;
 		} tumble_effect;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t stroke_step;
 			uint8_t pad_81[0x1];
-			uint16_t stroke_timer;
+			u16le stroke_timer;
 		} turtle;
 		struct
 		{
 			uint8_t pad_10[0x22];
-			uint16_t step_delay;
+			u16le step_delay;
 			uint8_t pad_34[0x4];
-			uint32_t bonus_label;
+			u32le bonus_label;
 			uint8_t pad_3C[0x4];
-			uint32_t backdrop;
-			uint32_t part_3;
-			uint32_t units_digit;
-			uint32_t tens_digit;
-			uint32_t hundreds_digit;
+			u32le backdrop;
+			u32le part_3;
+			u32le units_digit;
+			u32le tens_digit;
+			u32le hundreds_digit;
 			uint8_t pad_54[0x8];
-			uint32_t result_frames;
+			u32le result_frames;
 			int8_t rings_counted;
 			uint8_t step;
 			uint8_t pad_62[0x4];
@@ -6651,27 +6653,27 @@ struct object
 		struct
 		{
 			uint8_t pad_10[0x4C];
-			uint16_t results_timer;
+			u16le results_timer;
 			uint8_t pad_5E[0x2];
 			uint8_t blink_index;
 			uint8_t pad_61[0x1];
-			uint16_t blink_delay;
+			u16le blink_delay;
 		} update_ring_tally_percent;
 		struct
 		{
 			uint8_t pad_10[0x14];
-			uint16_t vine;
+			u16le vine;
 			uint8_t pad_26[0x5A];
 			uint8_t holding;
 			uint8_t pad_81[0x1];
-			int16_t anchor_z;
+			s16le anchor_z;
 		} vine_bar;
 		struct
 		{
 			uint8_t pad_10[0x4];
-			int32_t base_x;
+			s32le base_x;
 			uint8_t pad_18[0x6A];
-			int16_t depth_offset;
+			s16le depth_offset;
 			uint8_t pad_84[0xF];
 			uint8_t segment_count;
 			uint8_t phase_step;
@@ -6681,27 +6683,27 @@ struct object
 			uint8_t pad_10[0x4];
 			union
 			{
-				int32_t base_x;
+				s32le base_x;
 				struct
 				{
 					uint8_t pad_14[0x2];
-					int16_t base_x_int;
+					s16le base_x_int;
 				};
 			};
 			uint8_t pad_18[0x30];
 			union
 			{
-				uint32_t segment_angle;
+				u32le segment_angle;
 				struct
 				{
 					uint8_t pad_48[0x2];
-					int16_t segment_angle_int;
+					s16le segment_angle_int;
 				};
 			};
 			uint8_t pad_4C[0x34];
 			uint8_t holding;
 			uint8_t pad_81[0x1];
-			int16_t depth_offset;
+			s16le depth_offset;
 			uint8_t pad_84[0x11];
 			uint8_t curl_scale;
 		} vine_swing;
@@ -6715,7 +6717,7 @@ struct object
 			uint8_t pad_10[0x70];
 			uint8_t frame_step;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} wall_pad;
 		struct
 		{
@@ -6725,38 +6727,38 @@ struct object
 			uint8_t pad_39[0x47];
 			uint8_t invisible;
 			uint8_t no_second_sprite;
-			uint16_t end_position;
+			u16le end_position;
 		} wall_update;
 		struct
 		{
 			uint8_t pad_10[0x70];
-			uint32_t path;
-			int16_t screen_threshold;
-			uint16_t catch_up_factor;
-			int16_t base_speed;
-			int16_t saved_threshold;
-			int16_t saved_base_speed;
+			u32le path;
+			s16le screen_threshold;
+			u16le catch_up_factor;
+			s16le base_speed;
+			s16le saved_threshold;
+			s16le saved_base_speed;
 			uint8_t holding_back;
 			uint8_t hold_timer;
-			int16_t wait_timer;
-			uint16_t hold_start_position;
-			uint16_t sound_timer;
+			s16le wait_timer;
+			u16le hold_start_position;
+			u16le sound_timer;
 		} waterfall;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			int8_t frame_index;
 			uint8_t self_copied_byte;
-			uint16_t spin_angle;
-			int16_t timer;
-			uint16_t spin_step;
+			u16le spin_angle;
+			s16le timer;
+			u16le spin_step;
 		} whirlwind;
 		struct
 		{
 			uint8_t pad_10[0x70];
 			uint8_t frame_index;
 			uint8_t pad_81[0x1];
-			uint16_t frame_timer;
+			u16le frame_timer;
 		} white_puff;
 	};
 };
@@ -6767,205 +6769,205 @@ struct player
 	uint8_t facing;
 	uint8_t pad_02[0x1];
 	uint8_t substate;
-	int16_t state_timer;
+	s16le state_timer;
 	uint8_t control_lock;
 	int8_t jump_delay;
 	uint8_t standing_started;
 	uint8_t is_joining;
-	int16_t trackball_x;
-	int16_t trackball_y;
-	int16_t invulnerable_timer;
+	s16le trackball_x;
+	s16le trackball_y;
+	s16le invulnerable_timer;
 	uint8_t pad_10[0x2];
-	uint16_t heading;
-	uint16_t object;
+	u16le heading;
+	u16le object;
 	uint8_t pad_16[0x4];
-	uint16_t last_hazard;
+	u16le last_hazard;
 	union
 	{
-		int32_t scene_hop_z;
+		s32le scene_hop_z;
 		struct
 		{
 			uint8_t pad_1C[0x2];
-			int16_t scene_hop_z_int;
+			s16le scene_hop_z_int;
 		};
 	};
-	int16_t ledge_pullback;
-	int16_t ledge_side;
-	int32_t slip_distance;
-	uint16_t target_heading;
+	s16le ledge_pullback;
+	s16le ledge_side;
+	s32le slip_distance;
+	u16le target_heading;
 	uint8_t pad_2A[0x2];
-	int16_t climb_remaining;
+	s16le climb_remaining;
 	uint8_t climb_from_top;
 	uint8_t hit_stop;
 	union
 	{
-		int32_t step_accumulator;
-		uint16_t step_accumulator_low;
+		s32le step_accumulator;
+		u16le step_accumulator_low;
 		struct
 		{
 			uint8_t pad_30[0x2];
-			int16_t step_accumulator_int;
+			s16le step_accumulator_int;
 		};
 	};
 	union
 	{
-		int32_t screen_x;
-		uint16_t screen_x_fraction;
+		s32le screen_x;
+		u16le screen_x_fraction;
 		struct
 		{
 			uint8_t pad_34[0x2];
-			int16_t screen_x_int;
+			s16le screen_x_int;
 		};
 	};
 	int8_t in_game;
 	uint8_t unused_hud_byte;
 	uint8_t pad_3A[0x2];
-	int32_t skid_slowdown;
-	int32_t skid_speed_slowdown;
+	s32le skid_slowdown;
+	s32le skid_speed_slowdown;
 	uint8_t pad_44[0x2];
 	uint8_t free_turn_timer;
 	uint8_t pad_47[0x1];
 	int8_t skid_dust_timer;
 	uint8_t bounce_direction;
-	int32_t bounce_speed_z;
-	int32_t bounce_step;
+	s32le bounce_speed_z;
+	s32le bounce_step;
 	uint8_t previous_state;
 	uint8_t ignore_screen_edges;
 	uint8_t drift_turned_back;
 	uint8_t drift_done;
-	uint16_t pull_distance_factor;
-	uint16_t unused_hud_word;
+	u16le pull_distance_factor;
+	u16le unused_hud_word;
 	uint8_t pad_5A[0x2];
-	uint32_t path_pointer;
+	u32le path_pointer;
 	uint8_t pad_60[0x4];
 	union
 	{
-		int32_t ground_speed;
+		s32le ground_speed;
 		struct
 		{
 			uint8_t pad_64[0x2];
-			uint16_t ground_speed_int;
+			u16le ground_speed_int;
 		};
 	};
 	union
 	{
-		int16_t walk_cycle;
+		s16le walk_cycle;
 		struct
 		{
 			uint8_t pad_68[0x1];
 			uint8_t walk_cycle_high;
 		};
 	};
-	int32_t walk_pending_x;
-	int32_t walk_pending_y;
+	s32le walk_pending_x;
+	s32le walk_pending_y;
 	int8_t attack_power;
 	uint8_t alternate_run_toggle;
 	uint8_t pad_74[0x1];
 	uint8_t joined_health_setting;
-	int32_t previous_x;
-	int32_t previous_y;
+	s32le previous_x;
+	s32le previous_y;
 	union
 	{
-		int32_t previous_z;
+		s32le previous_z;
 		uint8_t previous_z_low;
 		struct
 		{
 			uint8_t pad_7E[0x2];
-			int16_t previous_z_int;
+			s16le previous_z_int;
 		};
 	};
 	uint8_t pad_82[0x2];
-	uint16_t screen_edge;
-	uint16_t hud_portrait;
-	uint16_t hud_gauge;
-	uint16_t heading_snapped;
+	u16le screen_edge;
+	u16le hud_portrait;
+	u16le hud_gauge;
+	u16le heading_snapped;
 	uint8_t pad_8C[0x8];
 	union
 	{
-		uint32_t push_xy;
-		int16_t push_x;
+		u32le push_xy;
+		s16le push_x;
 		struct
 		{
 			uint8_t pad_94[0x2];
-			int16_t push_y;
+			s16le push_y;
 		};
 	};
 	union
 	{
-		int32_t animation_speed;
+		s32le animation_speed;
 		struct
 		{
 			uint8_t pad_98[0x2];
-			int16_t animation_speed_int;
+			s16le animation_speed_int;
 		};
 	};
-	uint16_t holder;
+	u16le holder;
 	uint8_t pad_9E[0x1];
 	uint8_t grey_screen_request;
 	int8_t pushed_out;
 	int8_t push_out_delay;
-	int32_t push_out_x;
-	int32_t push_out_y;
-	uint16_t fall_draw_depth;
-	uint16_t jump_first_tile;
+	s32le push_out_x;
+	s32le push_out_y;
+	u16le fall_draw_depth;
+	u16le jump_first_tile;
 	uint8_t pad_AE[0x2];
-	uint16_t path_speed;
+	u16le path_speed;
 	uint8_t path;
 	uint8_t unused_reset_byte;
 	uint8_t mishap_flag;
 	uint8_t saved_substate;
-	uint16_t facing_angle;
+	u16le facing_angle;
 	uint8_t scene_step_seen;
 	uint8_t path_request;
 	union
 	{
-		int32_t scene_zoom;
-		uint16_t scene_zoom_fraction;
+		s32le scene_zoom;
+		u16le scene_zoom_fraction;
 		struct
 		{
 			uint8_t pad_BA[0x2];
-			uint16_t scene_zoom_int;
+			u16le scene_zoom_int;
 		};
 	};
 	int8_t hud_blink_timer;
 	uint8_t hud_blink_on;
-	int16_t path_wait;
+	s16le path_wait;
 	uint8_t entry_status;
 	int8_t hurt_contact_delay;
-	uint16_t speed_scale;
-	uint16_t last_damaged;
+	u16le speed_scale;
+	u16le last_damaged;
 	union
 	{
-		int32_t escape_progress;
-		int16_t escape_progress_low;
+		s32le escape_progress;
+		s16le escape_progress_low;
 		struct
 		{
 			uint8_t pad_C8[0x2];
-			int16_t escape_progress_int;
+			s16le escape_progress_int;
 		};
 	};
-	uint16_t draw_depth;
+	u16le draw_depth;
 	union
 	{
-		int32_t side_step_accumulator;
+		s32le side_step_accumulator;
 		struct
 		{
 			uint8_t pad_CE[0x2];
-			int16_t side_step_accumulator_int;
+			s16le side_step_accumulator_int;
 		};
 	};
-	int32_t saved_screen_x;
-	int32_t saved_screen_y;
-	uint16_t saved_climb_remaining;
+	s32le saved_screen_x;
+	s32le saved_screen_y;
+	u16le saved_climb_remaining;
 	uint8_t goal_step;
 	uint8_t effect_spawned;
-	uint16_t own_view_y;
-	uint16_t last_wall;
+	u16le own_view_y;
+	u16le last_wall;
 	int8_t wall_timer;
 	uint8_t drift_anim_step;
 	union
 	{
-		uint16_t continue_countdown;
+		u16le continue_countdown;
 		int8_t continue_frames;
 		struct
 		{
@@ -6973,254 +6975,254 @@ struct player
 			int8_t continue_seconds;
 		};
 	};
-	uint16_t pull_angle;
-	uint16_t pull_start_distance;
+	u16le pull_angle;
+	u16le pull_start_distance;
 	uint8_t sequence_step;
 	int8_t ledge_direction;
-	uint16_t struggle_speed;
-	int16_t sink_depth;
+	u16le struggle_speed;
+	s16le sink_depth;
 	uint8_t pad_F0[0x4];
-	uint16_t ground_clip_bottom;
+	u16le ground_clip_bottom;
 	uint8_t pad_F6[0x1E];
-	uint32_t flags;
-	uint16_t swirl_turn_rate;
-	uint16_t unused_reset_word;
+	u32le flags;
+	u16le swirl_turn_rate;
+	u16le unused_reset_word;
 	uint8_t unused_jump_byte;
 	uint8_t enter_on_respawn;
-	uint16_t object_climb_steps;
+	u16le object_climb_steps;
 	int8_t climb_hand;
 	uint8_t pad_121[0x1];
 	uint8_t entry_step;
 	uint8_t hud_message_shown;
-	int16_t jump_frames;
-	uint16_t hud_ring_effect;
+	s16le jump_frames;
+	u16le hud_ring_effect;
 	uint8_t scene_path;
 	uint8_t ending_step;
-	uint16_t edge_object;
-	uint16_t stage_rings_shown;
+	u16le edge_object;
+	u16le stage_rings_shown;
 	uint8_t fast_climb;
 	uint8_t sequence_bounced;
 	union
 	{
-		int32_t climb_base_z;
-		uint16_t climb_base_z_fraction;
+		s32le climb_base_z;
+		u16le climb_base_z_fraction;
 		struct
 		{
 			uint8_t pad_130[0x2];
-			int16_t climb_base_z_int;
+			s16le climb_base_z_int;
 		};
 	};
 	uint8_t ending_done;
 	uint8_t game_over_done;
 	uint8_t unused_start_byte;
 	uint8_t stages_reached;
-	uint16_t ridden_object;
-	uint16_t rings;
-	uint16_t stage_rings;
+	u16le ridden_object;
+	u16le rings;
+	u16le stage_rings;
 	uint8_t splash_zone;
 	uint8_t was_in_splash_zone;
 	uint8_t stage_b_path_done;
 	int8_t rings_to_health;
 	uint8_t pad_142[0x2];
-	uint16_t hud_gauge_flags;
-	uint16_t hud_gauge_tile;
-	uint16_t hud_gauge_palette;
-	uint16_t hud_gauge_address;
+	u16le hud_gauge_flags;
+	u16le hud_gauge_tile;
+	u16le hud_gauge_palette;
+	u16le hud_gauge_address;
 	uint8_t pad_14C[0x2];
-	uint16_t hud_gauge_y;
-	uint16_t hud_gauge_x;
+	u16le hud_gauge_y;
+	u16le hud_gauge_x;
 	uint8_t pad_152[0x8];
-	uint16_t hud_gauge_height;
+	u16le hud_gauge_height;
 	uint8_t pad_15C[0xA];
 	uint8_t hud_gauge_health;
 	uint8_t hud_gauge_frame;
 	uint8_t hud_gauge_anim_delay;
 	uint8_t pad_169[0x1];
-	uint32_t hud_gauge_anim;
+	u32le hud_gauge_anim;
 	uint8_t hud_gauge_anim_repeats;
 	uint8_t hud_gauge_reset;
 	uint8_t pad_170[0x4];
-	uint16_t hud_portrait_flags;
-	uint16_t hud_portrait_tile;
-	uint16_t hud_portrait_palette;
+	u16le hud_portrait_flags;
+	u16le hud_portrait_tile;
+	u16le hud_portrait_palette;
 	uint8_t pad_17A[0x4];
-	uint16_t hud_portrait_y;
-	uint16_t hud_portrait_x;
+	u16le hud_portrait_y;
+	u16le hud_portrait_x;
 	uint8_t pad_182[0x8];
-	uint16_t hud_portrait_height;
+	u16le hud_portrait_height;
 	uint8_t pad_18C[0xB];
 	uint8_t hud_portrait_frame;
 	uint8_t hud_portrait_anim_delay;
 	uint8_t pad_199[0x1];
-	uint32_t hud_portrait_anim;
+	u32le hud_portrait_anim;
 	uint8_t hud_portrait_anim_repeats;
 	uint8_t pad_19F[0x5];
-	uint16_t hud_ring_effect_flags;
+	u16le hud_ring_effect_flags;
 	uint8_t pad_1A6[0x2];
-	uint16_t hud_ring_effect_palette;
+	u16le hud_ring_effect_palette;
 	uint8_t pad_1AA[0x4];
-	uint16_t hud_ring_effect_y;
-	uint16_t hud_ring_effect_x;
+	u16le hud_ring_effect_y;
+	u16le hud_ring_effect_x;
 	uint8_t pad_1B2[0x15];
 	uint8_t hud_ring_effect_frame;
 	uint8_t hud_ring_effect_anim_delay;
 	uint8_t hud_ring_effect_anim_timer;
-	uint32_t hud_ring_effect_anim;
+	u32le hud_ring_effect_anim;
 	uint8_t pad_1CE[0x4];
-	uint32_t join_time;
-	uint16_t last_scroll;
-	int16_t stall_frames;
+	u32le join_time;
+	u16le last_scroll;
+	s16le stall_frames;
 	uint8_t pad_1DA[0x26];
 };
 
 struct object_type_record
 {
-	uint32_t part_count;
-	uint32_t handler;
+	u32le part_count;
+	u32le handler;
 };
 
 struct type_spawn_record
 {
-	uint16_t position;
-	uint16_t projected_x;
-	int16_t projected_y;
-	int16_t z;
-	uint16_t object_type;
-	uint16_t spawn_arg_1;
-	uint16_t spawn_arg_2;
+	u16le position;
+	u16le projected_x;
+	s16le projected_y;
+	s16le z;
+	u16le object_type;
+	u16le spawn_arg_1;
+	u16le spawn_arg_2;
 };
 
 struct handler_spawn_record
 {
-	uint16_t position;
-	uint16_t x;
-	uint16_t y;
-	uint16_t handler_arg;
-	uint32_t handler;
+	u16le position;
+	u16le x;
+	u16le y;
+	u16le handler_arg;
+	u32le handler;
 };
 
 struct object_start_list
 {
-	uint16_t count;
+	u16le count;
 };
 
 struct machine_fireball_spawns
 {
-	uint16_t count;
+	u16le count;
 };
 
 struct machine_fireball_spawn
 {
-	int16_t x;
-	int16_t y;
-	int16_t target_x;
-	int16_t target_y;
-	int16_t z;
-	uint32_t next_handler;
+	s16le x;
+	s16le y;
+	s16le target_x;
+	s16le target_y;
+	s16le z;
+	u32le next_handler;
 };
 
 struct ring_row
 {
-	uint16_t position;
-	uint16_t template_offset;
-	int16_t ring_count;
-	uint16_t x;
-	uint16_t y;
+	u16le position;
+	u16le template_offset;
+	s16le ring_count;
+	u16le x;
+	u16le y;
 	int8_t dx;
 	int8_t dy;
 };
 
 struct group_spawn_record
 {
-	uint16_t position;
+	u16le position;
 	uint8_t kind;
 	uint8_t leader;
 	uint8_t takes_slot;
 	uint8_t pad_05[0x1];
-	uint32_t floor_block;
-	uint16_t member_count;
-	uint16_t step_x;
-	uint16_t step_y;
-	uint16_t direction;
-	uint16_t member_x;
-	uint16_t member_y;
-	uint16_t member_template;
+	u32le floor_block;
+	u16le member_count;
+	u16le step_x;
+	u16le step_y;
+	u16le direction;
+	u16le member_x;
+	u16le member_y;
+	u16le member_template;
 };
 
 struct sprite_buffer_swap
 {
-	uint16_t back_buffer_offset;
-	uint16_t list_jump;
+	u16le back_buffer_offset;
+	u16le list_jump;
 };
 
 struct sine_and_cosine
 {
-	uint16_t sine;
+	u16le sine;
 	uint8_t pad_02[0x1FE];
-	uint16_t cosine;
+	u16le cosine;
 };
 
 struct floor_attribute_record
 {
 	union
 	{
-		int16_t push_x;
+		s16le push_x;
 		uint8_t axis;
 	};
-	int16_t push_y;
+	s16le push_y;
 	union
 	{
-		int16_t x_per_rise;
+		s16le x_per_rise;
 		uint8_t ride;
 	};
-	int16_t height;
-	int16_t top_z;
-	uint16_t along_min;
-	uint16_t along_length;
-	uint16_t rise;
+	s16le height;
+	s16le top_z;
+	u16le along_min;
+	u16le along_length;
+	u16le rise;
 };
 
 struct floor_block_type
 {
 	uint8_t floor_type;
 	uint8_t pad_01[0x1];
-	uint16_t floor_attribute;
+	u16le floor_attribute;
 };
 
 struct floor_outline_list
 {
-	uint16_t count;
+	u16le count;
 };
 
 struct floor_outline
 {
-	int16_t left_x;
-	int16_t left_y;
-	int16_t right_x;
-	int16_t right_y;
-	int16_t top_x;
-	int16_t top_y;
-	int16_t bottom_x;
-	int16_t bottom_y;
+	s16le left_x;
+	s16le left_y;
+	s16le right_x;
+	s16le right_y;
+	s16le top_x;
+	s16le top_y;
+	s16le bottom_x;
+	s16le bottom_y;
 };
 
 struct floor_outline_corner
 {
-	uint16_t x;
-	uint16_t y;
+	u16le x;
+	u16le y;
 };
 
 struct stage_event
 {
-	uint16_t position;
+	u16le position;
 	uint8_t next_game_mode;
 	uint8_t pad_03[0x1];
 };
 
 struct stage_link_point
 {
-	uint16_t from_block;
-	uint16_t to_block;
+	u16le from_block;
+	u16le to_block;
 };
 
 struct layer_blend_list
@@ -7232,111 +7234,111 @@ struct layer_blend_record
 {
 	uint8_t blend_mask;
 	uint8_t layer_bit;
-	uint16_t shadow_offset;
-	uint16_t blend_factor;
+	u16le shadow_offset;
+	u16le blend_factor;
 };
 
 struct restart_point_record
 {
-	uint16_t position;
+	u16le position;
 	uint8_t pad_02[0x6];
 };
 
 struct stage_palette
 {
-	uint32_t source;
-	uint32_t halfword_count;
+	u32le source;
+	u32le halfword_count;
 };
 
 struct stage_name_banner
 {
-	uint16_t screen_x;
-	uint16_t screen_y;
+	u16le screen_x;
+	u16le screen_y;
 };
 
 struct scroll_mode_step
 {
-	uint16_t mode;
-	uint16_t duration;
+	u16le mode;
+	u16le duration;
 };
 
 struct event_0f_message
 {
-	int16_t show_time;
-	uint16_t screen_x;
-	uint16_t screen_y;
-	uint16_t kind;
-	uint16_t frames;
+	s16le show_time;
+	u16le screen_x;
+	u16le screen_y;
+	u16le kind;
+	u16le frames;
 };
 
 struct message_box_kind
 {
-	uint16_t sprite_frame;
-	uint16_t palette;
-	uint16_t width;
-	uint16_t height;
+	u16le sprite_frame;
+	u16le palette;
+	u16le width;
+	u16le height;
 };
 
 struct stage_06_lightning_strike
 {
-	int16_t strike_time;
-	uint16_t screen_x;
-	uint16_t screen_y;
-	uint32_t animation;
+	s16le strike_time;
+	u16le screen_x;
+	u16le screen_y;
+	u32le animation;
 };
 
 struct event_1a_scroll_step
 {
-	uint16_t position;
-	uint16_t mode;
-	uint16_t speed;
+	u16le position;
+	u16le mode;
+	u16le speed;
 };
 
 struct stage_03_floor_block_kind
 {
-	uint16_t shape;
-	uint16_t fall_flag;
+	u16le shape;
+	u16le fall_flag;
 };
 
 struct stage_03_floor_block_shape
 {
 	int8_t sprite_offset_x;
 	int8_t sprite_offset_y;
-	uint16_t depth_offset;
+	u16le depth_offset;
 };
 
 struct stage_03_floor_block_animation
 {
-	uint16_t last_frame;
-	uint16_t first_frame;
+	u16le last_frame;
+	u16le first_frame;
 	uint8_t pad_04[0x4];
 };
 
 struct rock_debris_piece
 {
-	uint16_t sprite_flags;
-	uint16_t offset_x;
-	uint16_t offset_y;
-	uint16_t speed_x;
-	uint16_t speed_y;
-	uint16_t animation_offset;
+	u16le sprite_flags;
+	u16le offset_x;
+	u16le offset_y;
+	u16le speed_x;
+	u16le speed_y;
+	u16le animation_offset;
 };
 
 struct spiked_roller_kind
 {
 	uint8_t part_count;
-	uint16_t layout;
-	uint16_t first_state;
-	uint16_t back_zone;
+	u16le layout;
+	u16le first_state;
+	u16le back_zone;
 };
 
 struct spiked_roller_chase_step
 {
-	uint16_t position;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
+	u16le position;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
 };
 
 struct spiked_roller_layout
@@ -7348,27 +7350,27 @@ struct spiked_roller_layout
 
 struct spiked_roller_part
 {
-	uint16_t sprite_flags;
-	uint16_t hitbox_size_x;
-	uint16_t hitbox_size_y;
-	uint16_t path_direction;
-	uint32_t flags;
+	u16le sprite_flags;
+	u16le hitbox_size_x;
+	u16le hitbox_size_y;
+	u16le path_direction;
+	u32le flags;
 	int8_t hitbox_offset_x;
 	int8_t hitbox_offset_y;
 };
 
 struct spiked_roller_event
 {
-	uint16_t position;
-	uint16_t test;
-	int16_t coordinate;
-	uint16_t state;
+	u16le position;
+	u16le test;
+	s16le coordinate;
+	u16le state;
 };
 
 struct door_roller_spawn
 {
-	int16_t x;
-	int16_t y;
+	s16le x;
+	s16le y;
 	uint8_t first_frame;
 	uint8_t pad_05[0x1];
 };
@@ -7376,175 +7378,175 @@ struct door_roller_spawn
 struct door_fragment
 {
 	uint8_t pad_00[0x8];
-	uint16_t animation;
+	u16le animation;
 };
 
 struct fireball_emitter_list
 {
-	int16_t x;
-	int16_t y;
-	int16_t floor_z;
+	s16le x;
+	s16le y;
+	s16le floor_z;
 };
 
 struct fireball_type
 {
-	uint16_t sprite_flags;
-	uint16_t sprite_palette;
-	uint16_t sprite_scale;
-	uint16_t hitbox_height;
-	uint16_t hitbox_size_x;
+	u16le sprite_flags;
+	u16le sprite_palette;
+	u16le sprite_scale;
+	u16le hitbox_height;
+	u16le hitbox_size_x;
 	int8_t sprite_offset_x;
 	int8_t sprite_offset_y;
 	int8_t hitbox_centre_x;
 	int8_t hitbox_centre_y;
-	uint16_t animation;
+	u16le animation;
 };
 
 struct machine_fire_script_step
 {
-	int16_t height;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
+	s16le height;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
 };
 
 struct cage_bar_animation
 {
-	uint16_t last_frame;
+	u16le last_frame;
 	uint8_t pad_02[0x4];
-	uint16_t broken_frame;
+	u16le broken_frame;
 };
 
 struct fire_vent_spawn
 {
-	uint16_t position;
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	int16_t blast_delay;
+	u16le position;
+	s16le x;
+	s16le y;
+	s16le z;
+	s16le blast_delay;
 };
 
 struct icicle_dropper_record
 {
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	uint16_t direction;
-	uint16_t flags;
-	uint16_t script;
+	s16le x;
+	s16le y;
+	s16le z;
+	u16le direction;
+	u16le flags;
+	u16le script;
 };
 
 struct icicle_dropper_step
 {
-	uint16_t position;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
-	int16_t end_coordinate;
+	u16le position;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
+	s16le end_coordinate;
 };
 
 struct sink_swirl_effect
 {
-	int16_t depth_offset;
-	uint32_t streak_animation;
-	uint32_t puff_animation;
+	s16le depth_offset;
+	u32le streak_animation;
+	u32le puff_animation;
 };
 
 struct object_start_place
 {
-	int16_t x;
-	int16_t y;
-	int16_t floor_z;
-	uint16_t end_position;
+	s16le x;
+	s16le y;
+	s16le floor_z;
+	u16le end_position;
 };
 
 struct river_raft_entry
 {
-	int16_t distance;
-	uint16_t speed;
-	uint32_t floor_block;
+	s16le distance;
+	u16le speed;
+	u32le floor_block;
 };
 
 struct geyser_front_record
 {
-	int16_t start_z;
-	int16_t top_height;
-	uint16_t geyser_list;
+	s16le start_z;
+	s16le top_height;
+	u16le geyser_list;
 };
 
 struct chase_step_at_scroll
 {
-	uint16_t position;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
+	u16le position;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
 };
 
 struct listed_geyser
 {
-	uint16_t position;
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	uint16_t erupt_position;
+	u16le position;
+	u16le x;
+	u16le y;
+	u16le z;
+	u16le erupt_position;
 };
 
 struct stone_block_position
 {
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	int16_t depth_offset;
+	s16le x;
+	s16le y;
+	s16le z;
+	s16le depth_offset;
 };
 
 struct geyser_line_start
 {
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	uint16_t script;
+	s16le x;
+	s16le y;
+	s16le z;
+	u16le script;
 };
 
 struct geyser_line_step
 {
-	uint16_t position;
-	int16_t y_limit;
-	int16_t speed;
-	int16_t wait;
+	u16le position;
+	s16le y_limit;
+	s16le speed;
+	s16le wait;
 };
 
 struct propeller_machine_animation_step
 {
-	uint16_t parts_6_9_frame;
-	uint16_t part_4_frame;
+	u16le parts_6_9_frame;
+	u16le part_4_frame;
 };
 
 struct rope_bridge_rope_offset
 {
-	int16_t dx;
-	int16_t dy;
+	s16le dx;
+	s16le dy;
 };
 
 struct spike_panel_screen_offset
 {
-	int16_t dx;
-	int16_t dy;
+	s16le dx;
+	s16le dy;
 };
 
 struct spike_panel_part_offset
 {
-	int16_t dx;
-	int16_t dy;
-	int16_t dz;
+	s16le dx;
+	s16le dy;
+	s16le dz;
 };
 
 struct flame_machine_offset
 {
-	int16_t dx;
-	int16_t dy;
+	s16le dx;
+	s16le dy;
 };
 
 struct flame_machine_arm_sway
@@ -7555,14 +7557,14 @@ struct flame_machine_arm_sway
 
 struct spiked_disc_hold_offset
 {
-	int16_t dx;
-	int16_t dz;
+	s16le dx;
+	s16le dz;
 };
 
 struct hitbox_size_pair
 {
-	uint16_t size_x;
-	uint16_t size_y;
+	u16le size_x;
+	u16le size_y;
 };
 
 struct hitbox_offset_pair
@@ -7578,28 +7580,28 @@ struct crawler_walk_row
 
 struct hitbox_size_and_offset
 {
-	uint16_t size_x;
-	uint16_t size_y;
+	u16le size_x;
+	u16le size_y;
 	int8_t offset_x;
 	int8_t offset_y;
 };
 
 struct crawler_piece_offset
 {
-	int16_t dx;
-	int16_t dy;
+	s16le dx;
+	s16le dy;
 };
 
 struct fence_offset
 {
-	uint16_t dx;
-	uint16_t dy;
+	u16le dx;
+	u16le dy;
 };
 
 struct fence_post_box
 {
-	uint16_t size_x;
-	uint16_t size_y;
+	u16le size_x;
+	u16le size_y;
 };
 
 struct fence_post_box_offset
@@ -7610,27 +7612,27 @@ struct fence_post_box_offset
 
 struct sprite_palette_cycle
 {
-	uint16_t last_index;
-	uint16_t palettes[];
+	u16le last_index;
+	u16le palettes[];
 };
 
 struct hud_step_list
 {
-	uint16_t last_index;
-	uint16_t steps[];
+	u16le last_index;
+	u16le steps[];
 };
 
 struct eggman_speech_step
 {
-	int16_t delay;
-	uint16_t command;
-	uint16_t arguments[];
+	s16le delay;
+	u16le command;
+	u16le arguments[];
 };
 
 struct how_to_play_button_press
 {
-	uint16_t press_time;
-	uint16_t frame;
+	u16le press_time;
+	u16le frame;
 };
 
 struct coin_setting_value
@@ -7643,76 +7645,76 @@ struct coin_setting_value
 
 struct ending_tower_frame
 {
-	int16_t end_time;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
+	s16le end_time;
+	u16le sprite_frame;
+	u16le sprite_palette;
 };
 
 struct ending_explosion_frame
 {
-	uint16_t sprite_frame;
-	uint16_t sprite_flags;
+	u16le sprite_frame;
+	u16le sprite_flags;
 };
 
 struct ending_music_cue
 {
-	int16_t time;
-	uint16_t sound_id;
+	s16le time;
+	u16le sound_id;
 };
 
 struct ending_timed_frame
 {
-	int16_t end_time;
-	uint16_t sprite_frame;
+	s16le end_time;
+	u16le sprite_frame;
 };
 
 struct ending_timed_palette
 {
-	int16_t end_time;
-	uint16_t sprite_palette;
+	s16le end_time;
+	u16le sprite_palette;
 };
 
 struct scenery_kind_record
 {
-	uint16_t sprite_flags;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
-	int16_t depth_offset;
-	uint32_t handler;
+	u16le sprite_flags;
+	u16le sprite_frame;
+	u16le sprite_palette;
+	s16le depth_offset;
+	u32le handler;
 };
 
 struct group_leader_hold_record
 {
 	uint8_t leader;
 	uint8_t direction;
-	int16_t coordinate;
-	uint16_t end_position;
-	uint16_t which_flag;
+	s16le coordinate;
+	u16le end_position;
+	u16le which_flag;
 };
 
 struct tornado_start_record
 {
-	uint16_t x;
-	uint16_t y;
-	uint16_t hazard_list_offset;
-	uint16_t whirlwind_list_offset;
+	u16le x;
+	u16le y;
+	u16le hazard_list_offset;
+	u16le whirlwind_list_offset;
 };
 
 struct tornado_path_step
 {
-	uint16_t position;
-	int16_t coordinate;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
-	uint16_t direction;
+	u16le position;
+	s16le coordinate;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
+	u16le direction;
 };
 
 struct default_ranking_record
 {
-	uint16_t rings;
-	uint16_t character_and_stages;
+	u16le rings;
+	u16le character_and_stages;
 	uint8_t first_letter;
 	uint8_t second_letter;
 	uint8_t third_letter;
@@ -7731,27 +7733,27 @@ struct wall_kind_offsets
 
 struct wall_kind_parts
 {
-	uint16_t size_x;
-	uint16_t size_y;
-	uint16_t palette;
+	u16le size_x;
+	u16le size_y;
+	u16le palette;
 	uint8_t part_step_x;
 	uint8_t part_step_y;
-	int16_t part_sprite;
+	s16le part_sprite;
 	uint8_t second_offset_x;
 	uint8_t second_offset_y;
-	int16_t second_sprite;
+	s16le second_sprite;
 };
 
 struct timed_spawn
 {
-	int16_t time;
-	uint16_t handler_offset;
+	s16le time;
+	u16le handler_offset;
 };
 
 struct crt_test_color_bar_row
 {
-	uint16_t x;
-	uint16_t y;
+	u16le x;
+	u16le y;
 	uint8_t first_color;
 };
 
@@ -7768,68 +7770,68 @@ struct chooser_voice_row
 
 struct map_icon_position
 {
-	uint16_t x;
-	uint16_t y;
+	u16le x;
+	u16le y;
 };
 
 struct crt_test_line
 {
-	uint16_t start_x;
-	uint16_t start_y;
-	uint16_t end_x;
-	uint16_t end_y;
+	u16le start_x;
+	u16le start_y;
+	u16le end_x;
+	u16le end_y;
 };
 
 struct screen_sign_kind
 {
-	uint16_t sprite_frame;
-	uint16_t duration;
-	uint16_t palette_list_offset;
+	u16le sprite_frame;
+	u16le duration;
+	u16le palette_list_offset;
 };
 
 struct ram_target_damage_step
 {
 	int8_t hits;
 	uint8_t pad_01[0x1];
-	uint16_t animation;
+	u16le animation;
 };
 
 struct falling_rock
 {
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	int16_t speed_x;
-	int16_t speed_y;
-	uint32_t animation;
+	u16le x;
+	u16le y;
+	u16le z;
+	s16le speed_x;
+	s16le speed_y;
+	u32le animation;
 };
 
 struct line_direction_step
 {
-	int16_t row_step;
-	int16_t column_step;
+	s16le row_step;
+	s16le column_step;
 };
 
 struct flood_fill_record
 {
-	uint16_t direction_and_y;
-	uint16_t right_x;
-	uint32_t right_address;
-	uint16_t left_x;
-	uint32_t left_address;
-	uint16_t parent_right_x;
-	uint32_t parent_right_address;
-	uint16_t parent_left_x;
-	uint32_t parent_left_address;
+	u16le direction_and_y;
+	u16le right_x;
+	u32le right_address;
+	u16le left_x;
+	u32le left_address;
+	u16le parent_right_x;
+	u32le parent_right_address;
+	u16le parent_left_x;
+	u32le parent_left_address;
 };
 
 struct floor_block
 {
-	int32_t x_min;
-	int32_t x_max;
-	int32_t y_min;
-	int32_t y_max;
-	int16_t height;
+	s32le x_min;
+	s32le x_max;
+	s32le y_min;
+	s32le y_max;
+	s16le height;
 	uint8_t type_index;
 	uint8_t slope;
 	uint8_t fall_priorities;
@@ -7844,93 +7846,93 @@ struct bridge_load
 
 struct stage_object_record
 {
-	uint16_t sprite_flags;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
-	uint32_t handler;
-	uint32_t animation;
-	uint16_t hitbox_size_x;
-	uint16_t hitbox_size_y;
+	u16le sprite_flags;
+	u16le sprite_frame;
+	u16le sprite_palette;
+	u32le handler;
+	u32le animation;
+	u16le hitbox_size_x;
+	u16le hitbox_size_y;
 	int8_t sprite_offset_x;
 	int8_t sprite_offset_y;
-	int16_t depth_offset;
+	s16le depth_offset;
 };
 
 struct stage_object_record_2
 {
-	uint16_t sprite_flags;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
-	uint32_t handler;
-	uint32_t animation;
-	uint32_t odd_member_animation;
-	uint16_t hitbox_size_x;
-	uint16_t hitbox_size_y;
-	int16_t depth_offset;
+	u16le sprite_flags;
+	u16le sprite_frame;
+	u16le sprite_palette;
+	u32le handler;
+	u32le animation;
+	u32le odd_member_animation;
+	u16le hitbox_size_x;
+	u16le hitbox_size_y;
+	s16le depth_offset;
 };
 
 struct stage_object_template
 {
-	uint16_t sprite_flags;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
-	uint16_t hitbox_size_x;
-	uint16_t hover_height;
+	u16le sprite_flags;
+	u16le sprite_frame;
+	u16le sprite_palette;
+	u16le hitbox_size_x;
+	u16le hover_height;
 	uint8_t animation_speed;
 	int8_t animation_timer;
 	uint8_t animation_frame;
 	uint8_t kind;
-	uint32_t animation;
-	uint32_t handler;
+	u32le animation;
+	u32le handler;
 	int8_t sprite_offset_x;
 	int8_t sprite_offset_y;
-	uint16_t hitbox_height;
+	u16le hitbox_height;
 };
 
 struct sprite_part_list
 {
-	uint16_t count;
-	uint16_t part_0_frame;
+	u16le count;
+	u16le part_0_frame;
 	uint8_t pad_04[0x6];
-	uint16_t part_1_frame;
+	u16le part_1_frame;
 	uint8_t pad_0C[0x76];
 };
 
 struct sprite_part
 {
-	uint16_t frame;
-	uint16_t flags;
+	u16le frame;
+	u16le flags;
 	int8_t dx;
 	int8_t dy;
-	uint16_t palette;
+	u16le palette;
 };
 
 struct frame_animation
 {
-	uint16_t last_frame;
-	uint16_t frames[];
+	u16le last_frame;
+	u16le frames[];
 };
 
 struct animation_step
 {
-	uint16_t frame;
+	u16le frame;
 	int8_t dx;
 	int8_t dy;
 };
 
 struct sign_kind
 {
-	int16_t z;
-	uint16_t sprite_frame;
-	uint16_t duration;
-	uint16_t palette_list_offset;
-	uint32_t handler;
+	s16le z;
+	u16le sprite_frame;
+	u16le duration;
+	u16le palette_list_offset;
+	u32le handler;
 };
 
 struct back_zone_record
 {
-	uint16_t limit;
-	uint32_t handler;
+	u16le limit;
+	u32le handler;
 };
 
 struct metal_wall_part_offset
@@ -7941,116 +7943,116 @@ struct metal_wall_part_offset
 
 struct wall_spawn
 {
-	uint16_t position;
-	uint16_t end_position;
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	uint16_t kind;
+	u16le position;
+	u16le end_position;
+	u16le x;
+	u16le y;
+	u16le z;
+	u16le kind;
 	uint8_t part_count;
 	uint8_t depth_from_next;
 };
 
 struct object_pair_template
 {
-	uint32_t handler;
-	uint32_t animation;
+	u32le handler;
+	u32le animation;
 	int8_t sprite_offset_x;
 	int8_t sprite_offset_y;
 	uint8_t launch_kind;
 	uint8_t pad_0B[0x1];
-	uint16_t base_hitbox_size_x;
-	uint16_t base_hitbox_size_y;
+	u16le base_hitbox_size_x;
+	u16le base_hitbox_size_y;
 	int8_t base_hitbox_offset_x;
 	int8_t base_hitbox_offset_y;
-	uint32_t base_handler;
-	uint32_t base_animation;
+	u32le base_handler;
+	u32le base_animation;
 };
 
 struct fireball_shot
 {
-	uint16_t position;
-	int16_t x;
-	int16_t dy;
-	int16_t speed_y;
-	int16_t speed_z;
-	uint16_t type;
+	u16le position;
+	s16le x;
+	s16le dy;
+	s16le speed_y;
+	s16le speed_z;
+	u16le type;
 };
 
 struct tornado_hazard
 {
-	uint16_t position;
-	int16_t coordinate;
+	u16le position;
+	s16le coordinate;
 };
 
 struct sinkhole_growth
 {
-	uint16_t zoom_step;
-	uint16_t open_delay;
+	u16le zoom_step;
+	u16le open_delay;
 };
 
 struct centipede_path_point
 {
-	int16_t projected_x;
-	int16_t projected_y;
+	s16le projected_x;
+	s16le projected_y;
 };
 
 struct clip_entry
 {
-	uint16_t draw_next;
-	uint16_t command;
-	uint16_t bottom;
-	uint16_t left;
-	uint16_t right;
-	uint16_t unk_0A;
-	uint16_t unk_0C;
-	uint16_t unk_0E;
-	uint16_t unk_10;
+	u16le draw_next;
+	u16le command;
+	u16le bottom;
+	u16le left;
+	u16le right;
+	u16le unk_0A;
+	u16le unk_0C;
+	u16le unk_0E;
+	u16le unk_10;
 };
 
 struct grate_debris_piece
 {
-	int16_t dx;
-	int16_t dy;
-	int16_t speed_x;
-	int16_t speed_z;
-	uint16_t animation;
+	s16le dx;
+	s16le dy;
+	s16le speed_x;
+	s16le speed_z;
+	u16le animation;
 };
 
 struct opening_scene_position
 {
-	int16_t screen_x;
-	int16_t projected_y;
-	uint16_t zoom;
+	s16le screen_x;
+	s16le projected_y;
+	u16le zoom;
 };
 
 struct leader_spawn
 {
 	uint8_t leader;
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	uint16_t direction;
-	uint16_t path;
+	s16le x;
+	s16le y;
+	s16le z;
+	u16le direction;
+	u16le path;
 };
 
 struct ice_leader_spawn
 {
 	uint8_t leader;
-	uint16_t end_position;
-	int16_t reference_x;
-	int16_t x;
-	int16_t y;
-	int16_t z;
+	u16le end_position;
+	s16le reference_x;
+	s16le x;
+	s16le y;
+	s16le z;
 };
 
 struct credit_block
 {
 	union
 	{
-		uint32_t counts_long;
+		u32le counts_long;
 		uint8_t coins;
-		uint16_t counts;
+		u16le counts;
 		struct
 		{
 			uint8_t pad_00[0x1];
@@ -8063,39 +8065,39 @@ struct credit_block
 
 struct trackball_motion
 {
-	int16_t x;
-	int16_t y;
+	s16le x;
+	s16le y;
 };
 
 struct flagged_step
 {
-	uint16_t flags;
-	uint16_t frame;
+	u16le flags;
+	u16le frame;
 };
 
 struct player_palette_list
 {
-	uint16_t last_index;
-	uint16_t normal_palette;
+	u16le last_index;
+	u16le normal_palette;
 	uint8_t pad_04[0x4];
 };
 
 struct edge_voice_scroll_range
 {
-	uint16_t start;
-	uint16_t length;
+	u16le start;
+	u16le length;
 };
 
 struct screen_edge_push
 {
-	uint16_t limit_direction;
-	uint16_t push_direction;
+	u16le limit_direction;
+	u16le push_direction;
 };
 
 struct slope_speed_pair
 {
-	uint16_t speed_factor;
-	uint16_t direction;
+	u16le speed_factor;
+	u16le direction;
 };
 
 struct floor_type_player_state
@@ -8105,179 +8107,179 @@ struct floor_type_player_state
 
 struct teeter_record
 {
-	uint16_t first_frame;
+	u16le first_frame;
 };
 
 struct teeter_animation_offsets
 {
-	uint16_t offsets[0x2];
+	u16le offsets[0x2];
 };
 
 struct shocked_palette_row
 {
-	uint16_t palettes[0x8];
+	u16le palettes[0x8];
 };
 
 struct edge_hang_animations
 {
 	uint8_t pad_00[0x36];
-	uint16_t hold_frame;
-	uint16_t let_go_frame;
-	uint16_t slip_piece_frame;
+	u16le hold_frame;
+	u16le let_go_frame;
+	u16le slip_piece_frame;
 };
 
 struct player_bounce_record
 {
-	uint16_t direction;
-	uint16_t sprite_flags;
-	uint16_t animation_offset;
+	u16le direction;
+	u16le sprite_flags;
+	u16le animation_offset;
 };
 
 struct knocked_out_entry
 {
-	uint16_t sprite_flags;
-	uint16_t animation_offset;
+	u16le sprite_flags;
+	u16le animation_offset;
 };
 
 struct restart_point
 {
-	uint16_t until;
+	u16le until;
 	uint8_t kind;
 	uint8_t screen_y;
-	uint16_t x;
-	uint16_t y_or_height;
+	u16le x;
+	u16le y_or_height;
 };
 
 struct stage_start_point
 {
-	uint16_t spacing_shift;
-	uint16_t x;
-	uint16_t y;
+	u16le spacing_shift;
+	u16le x;
+	u16le y;
 };
 
 struct stage_goal
 {
-	uint16_t position;
-	uint16_t direction;
-	uint16_t line;
+	u16le position;
+	u16le direction;
+	u16le line;
 	uint8_t exit_path;
 	uint8_t pad_07[0x5];
 };
 
 struct stage_goal_line_range
 {
-	uint16_t line_min;
-	uint16_t line_max;
+	u16le line_min;
+	u16le line_max;
 };
 
 struct player_path_step
 {
-	int16_t speed;
-	uint16_t x_or_wait;
-	uint16_t y;
-	uint16_t flags;
+	s16le speed;
+	u16le x_or_wait;
+	u16le y;
+	u16le flags;
 };
 
 struct hud_portrait_sprite
 {
-	uint16_t frame;
-	uint16_t palette;
+	u16le frame;
+	u16le palette;
 };
 
 struct hud_palette_cycle
 {
-	uint16_t last_index;
+	u16le last_index;
 };
 
 struct floor_slope
 {
 	uint8_t flags;
 	uint8_t pad_01[0x1];
-	int32_t factor;
-	uint16_t direction_table;
+	s32le factor;
+	u16le direction_table;
 };
 
 struct sand_block_part_list
 {
-	uint16_t count;
+	u16le count;
 	uint8_t pad_02[0x6];
-	uint16_t first_palette;
+	u16le first_palette;
 };
 
 struct flagged_animation_start
 {
-	uint16_t last_step;
-	uint16_t first_flags;
-	uint16_t first_frame;
-	uint16_t second_flags;
+	u16le last_step;
+	u16le first_flags;
+	u16le first_frame;
+	u16le second_flags;
 };
 
 struct debris_path_step
 {
-	int16_t end_time;
-	int16_t screen_x;
-	int16_t screen_y;
-	uint16_t sprite_frame;
+	s16le end_time;
+	s16le screen_x;
+	s16le screen_y;
+	u16le sprite_frame;
 };
 
 struct dust_cloud_frame
 {
-	int16_t screen_y;
-	uint16_t sprite_frame;
+	s16le screen_y;
+	u16le sprite_frame;
 };
 
 struct credit_part
 {
-	uint16_t sprite_frame;
-	int16_t screen_y;
-	uint16_t sprite_palette;
-	uint16_t slot;
+	u16le sprite_frame;
+	s16le screen_y;
+	u16le sprite_palette;
+	u16le slot;
 };
 
 struct screen_point
 {
-	int16_t x;
-	int16_t y;
+	s16le x;
+	s16le y;
 };
 
 struct map_marker_layout
 {
-	uint16_t sprite_layer;
-	int16_t screen_x;
-	int16_t screen_y;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
-	uint16_t cleared_palette;
+	u16le sprite_layer;
+	s16le screen_x;
+	s16le screen_y;
+	u16le sprite_frame;
+	u16le sprite_palette;
+	u16le cleared_palette;
 };
 
 struct map_marker_blink
 {
-	uint16_t sprite_layer;
-	int16_t screen_x;
-	int16_t screen_y;
-	uint16_t sprite_frame;
-	uint16_t sprite_palette;
+	u16le sprite_layer;
+	s16le screen_x;
+	s16le screen_y;
+	u16le sprite_frame;
+	u16le sprite_palette;
 };
 
 struct wipe_window
 {
-	int16_t left;
-	int16_t top;
-	uint16_t frames;
+	s16le left;
+	s16le top;
+	u16le frames;
 };
 
 struct ranking_record
 {
 	union
 	{
-		uint32_t rings_long;
-		int16_t rings;
+		u32le rings_long;
+		s16le rings;
 		struct
 		{
 			uint8_t pad_00[0x2];
 			union
 			{
-				uint16_t character_and_stages;
+				u16le character_and_stages;
 				uint8_t character;
 				struct
 				{
@@ -8289,7 +8291,7 @@ struct ranking_record
 	};
 	union
 	{
-		uint32_t initials;
+		u32le initials;
 		uint8_t first_initial;
 		struct
 		{
@@ -8309,28 +8311,28 @@ struct ranking_row_number
 
 struct ring_tally_portrait
 {
-	uint16_t sprite_palette;
-	uint16_t sprite_frame;
-	uint16_t no_bonus_frame;
-	uint16_t bonus_frame;
+	u16le sprite_palette;
+	u16le sprite_frame;
+	u16le no_bonus_frame;
+	u16le bonus_frame;
 };
 
 struct ring_tally_result_faces
 {
-	uint16_t no_bonus_frame;
-	uint16_t bonus_frame;
+	u16le no_bonus_frame;
+	u16le bonus_frame;
 };
 
 struct geyser_rise_step
 {
-	uint16_t frames;
-	uint16_t rise_speed;
+	u16le frames;
+	u16le rise_speed;
 };
 
 struct palette_set_cycle
 {
-	uint32_t frames;
-	uint32_t dest;
+	u32le frames;
+	u32le dest;
 	uint8_t timer;
 	uint8_t rows_left;
 	uint8_t delay;
@@ -8353,7 +8355,7 @@ struct coin_counter
 {
 	union
 	{
-		uint16_t pulse_timers;
+		u16le pulse_timers;
 		uint8_t on_frames;
 		struct
 		{
@@ -8373,14 +8375,14 @@ struct text_cell_position
 
 struct polygon_span
 {
-	uint32_t address;
-	int16_t length;
+	u32le address;
+	s16le length;
 };
 
 struct quad_vertex
 {
-	int16_t x;
-	int16_t y;
+	s16le x;
+	s16le y;
 };
 
 struct picture_colour_slot
@@ -8392,52 +8394,52 @@ struct picture_colour_slot
 
 struct saved_bitmap_rect
 {
-	uint32_t row_bits;
-	uint32_t rows;
+	u32le row_bits;
+	u32le rows;
 };
 
 struct demo_header
 {
-	uint16_t stage_number;
-	uint16_t start_section;
+	u16le stage_number;
+	u16le start_section;
 	uint8_t pad_04[0xC];
 };
 
 struct vblank_copy
 {
-	uint32_t source;
-	uint32_t dest;
-	uint16_t halfwords;
+	u32le source;
+	u32le dest;
+	u16le halfwords;
 };
 
 struct sprite_frame_record
 {
-	uint16_t width;
-	uint16_t height;
-	uint16_t bank_bits;
-	uint16_t address;
+	u16le width;
+	u16le height;
+	u16le bank_bits;
+	u16le address;
 };
 
 struct string_record
 {
-	uint16_t x;
-	uint16_t y;
-	uint16_t palette;
-	uint16_t scale;
+	u16le x;
+	u16le y;
+	u16le palette;
+	u16le scale;
 };
 
 struct queued_string
 {
-	int16_t x;
-	int16_t y;
-	uint16_t palette;
-	uint16_t scale;
-	uint32_t text;
+	s16le x;
+	s16le y;
+	u16le palette;
+	u16le scale;
+	u32le text;
 };
 
 struct placed_text
 {
-	uint16_t position;
+	u16le position;
 	uint8_t string[];
 };
 
@@ -8448,18 +8450,18 @@ struct tilemap_skip
 
 struct tilemap_long_skip
 {
-	int16_t cells;
+	s16le cells;
 };
 
 struct vram_script_address
 {
-	uint16_t cell;
+	u16le cell;
 };
 
 struct vram_script_cell_run
 {
 	uint8_t count;
-	uint16_t cell;
+	u16le cell;
 };
 
 struct vram_script_byte_cells
@@ -8475,175 +8477,175 @@ struct vram_script_word_cells
 
 struct vram_script_page_clear
 {
-	uint16_t cell;
+	u16le cell;
 	uint8_t pages;
 };
 
 struct video_register_defaults_tail
 {
-	uint32_t text_backdrop_control;
-	uint32_t bitmap_scroll;
-	uint32_t bitmap_control;
+	u32le text_backdrop_control;
+	u32le bitmap_scroll;
+	u32le bitmap_control;
 };
 
 struct palette_load_list
 {
-	uint16_t entry_count;
+	u16le entry_count;
 };
 
 struct palette_list_entry
 {
-	uint32_t source;
-	uint16_t palette_offset;
-	uint16_t copy_mode;
+	u32le source;
+	u16le palette_offset;
+	u16le copy_mode;
 };
 
 struct palette_pens_1_15
 {
-	uint32_t pens_1_2;
-	uint32_t pens_3_4;
-	uint32_t pens_5_6;
-	uint32_t pens_7_8;
-	uint32_t pens_9_10;
-	uint32_t pens_11_12;
-	uint32_t pens_13_14;
-	uint16_t pen_15;
+	u32le pens_1_2;
+	u32le pens_3_4;
+	u32le pens_5_6;
+	u32le pens_7_8;
+	u32le pens_9_10;
+	u32le pens_11_12;
+	u32le pens_13_14;
+	u16le pen_15;
 };
 
 struct palette_repeat_source
 {
-	uint32_t palettes;
+	u32le palettes;
 };
 
 struct chase_step_with_limit
 {
-	uint16_t position;
-	int16_t limit;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
+	u16le position;
+	s16le limit;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
 };
 
 struct biting_head_path_entry
 {
-	uint16_t position;
-	int16_t limit;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
-	uint16_t direction;
+	u16le position;
+	s16le limit;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
+	u16le direction;
 };
 
 struct bridge_fire_script_entry
 {
-	int16_t height;
-	uint16_t position;
-	int16_t screen_threshold;
-	int16_t catch_up_factor;
-	int16_t base_speed;
-	uint16_t wait;
+	s16le height;
+	u16le position;
+	s16le screen_threshold;
+	s16le catch_up_factor;
+	s16le base_speed;
+	u16le wait;
 };
 
 struct fire_front_path_start
 {
-	int16_t x;
-	int16_t y;
-	int16_t floor_z;
-	uint16_t direction;
+	s16le x;
+	s16le y;
+	s16le floor_z;
+	u16le direction;
 };
 
 struct biting_head_path_start
 {
-	int16_t x;
-	int16_t y;
+	s16le x;
+	s16le y;
 };
 
 struct rising_saw_path_start
 {
-	int16_t x;
-	int16_t y;
-	int16_t z;
+	s16le x;
+	s16le y;
+	s16le z;
 };
 
 struct brick_wall_brick
 {
-	uint16_t sprite_flags;
-	uint16_t offset_x;
-	uint16_t offset_y;
-	uint16_t speed_x;
-	uint16_t speed_y;
-	uint16_t look;
+	u16le sprite_flags;
+	u16le offset_x;
+	u16le offset_y;
+	u16le speed_x;
+	u16le speed_y;
+	u16le look;
 };
 
 struct brick_look
 {
-	uint16_t palette;
+	u16le palette;
 };
 
 struct brick_dust_puff
 {
-	uint16_t sprite_flags;
-	uint16_t offset_x;
-	uint16_t offset_y;
-	uint16_t delay;
+	u16le sprite_flags;
+	u16le offset_x;
+	u16le offset_y;
+	u16le delay;
 };
 
 struct biting_head_bite_step
 {
-	uint16_t jaw_frame;
+	u16le jaw_frame;
 	uint8_t hold;
 	uint8_t pad_03[0x1];
 };
 
 struct grate_step_debris_list
 {
-	int16_t count;
+	s16le count;
 };
 
 struct burning_boulder_record
 {
-	int16_t x;
-	int16_t start_delay;
-	uint32_t path;
+	s16le x;
+	s16le start_delay;
+	u32le path;
 };
 
 struct burning_boulder_flame_offset
 {
-	int16_t dx;
-	int16_t dy;
-	uint16_t animation;
+	s16le dx;
+	s16le dy;
+	u16le animation;
 };
 
 struct falling_ember_speed
 {
-	int16_t speed_z;
-	int16_t speed_y;
+	s16le speed_z;
+	s16le speed_y;
 };
 
 struct scene_carrier_record
 {
-	int16_t x;
-	int16_t y;
-	int16_t z;
-	int32_t speed_x;
-	int32_t speed_y;
-	int32_t speed_z;
-	uint16_t end_position;
+	s16le x;
+	s16le y;
+	s16le z;
+	s32le speed_x;
+	s32le speed_y;
+	s32le speed_z;
+	u16le end_position;
 };
 
 struct lava_steam_puff_offset
 {
-	int16_t dx;
-	int16_t dy;
+	s16le dx;
+	s16le dy;
 };
 
 struct group_slot_trigger_record
 {
-	uint16_t position;
-	int16_t slot;
-	uint16_t delay;
+	u16le position;
+	s16le slot;
+	u16le delay;
 };
 
 #pragma pack(pop)
@@ -8856,10 +8858,10 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define TYPE_SPAWN_RECORD(address) ((const struct type_spawn_record *)rom(address))
 #define HANDLER_SPAWN_RECORD(address) ((const struct handler_spawn_record *)rom(address))
 #define OBJECT_START_LIST(address) ((const struct object_start_list *)rom(address))
-#define OBJECT_START_HANDLERS(address) ((const uint32_t *)rom(address))
+#define OBJECT_START_HANDLERS(address) ((const u32le *)rom(address))
 #define MACHINE_FIREBALL_SPAWNS(address) ((const struct machine_fireball_spawns *)rom(address))
 #define MACHINE_FIREBALL_SPAWN(address) ((const struct machine_fireball_spawn *)rom(address))
-#define ROM_CHIP_CHECKSUMS(address) ((const uint16_t *)rom(address))
+#define ROM_CHIP_CHECKSUMS(address) ((const u16le *)rom(address))
 #define RING_ROW(address) ((const struct ring_row *)rom(address))
 #define GROUP_SPAWN_RECORD(address) ((const struct group_spawn_record *)rom(address))
 #define SPRITE_CONTROL_SETTINGS(address) ((const uint8_t *)rom(address))
@@ -8879,17 +8881,17 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define STAGE_NAME_BANNER(address) ((const struct stage_name_banner *)rom(address))
 #define SECTION_SCROLL_SPEEDS(address) ((const uint8_t *)rom(address))
 #define SECTION_FOLLOW_SPEEDS(address) ((const uint8_t *)rom(address))
-#define SECTION_CAMERA_LIMITS(address) ((const int16_t *)rom(address))
-#define SECTION_DIRECTIONS(address) ((const int16_t *)rom(address))
-#define SECTION_END_POSITIONS(address) ((const uint16_t *)rom(address))
+#define SECTION_CAMERA_LIMITS(address) ((const s16le *)rom(address))
+#define SECTION_DIRECTIONS(address) ((const s16le *)rom(address))
+#define SECTION_END_POSITIONS(address) ((const u16le *)rom(address))
 #define SCROLL_MODE_STEP(address) ((const struct scroll_mode_step *)rom(address))
-#define FAST_SCROLL_STARTS(address) ((const uint16_t *)rom(address))
-#define SCROLL_QUADRANT_SINES(address) ((const int16_t *)rom(address))
-#define STAGE_START_TILE_SETS(address) ((const uint32_t *)rom(address))
+#define FAST_SCROLL_STARTS(address) ((const u16le *)rom(address))
+#define SCROLL_QUADRANT_SINES(address) ((const s16le *)rom(address))
+#define STAGE_START_TILE_SETS(address) ((const u32le *)rom(address))
 #define BLOCK_TILE_SETS(address) ((const uint8_t *)rom(address))
-#define TILE_SET_VRAM_SCRIPTS(address) ((const uint32_t *)rom(address))
-#define STAGE_SECTION_LIST_OFFSETS(address) ((const uint16_t *)rom(address))
-#define SECTION_VALUES(address) ((const uint16_t *)rom(address))
+#define TILE_SET_VRAM_SCRIPTS(address) ((const u32le *)rom(address))
+#define STAGE_SECTION_LIST_OFFSETS(address) ((const u16le *)rom(address))
+#define SECTION_VALUES(address) ((const u16le *)rom(address))
 #define NBG_LAYER_PRIORITIES(address) ((const uint8_t *)rom(address))
 #define NBG3_BLOCK_PAGES(address) ((const uint8_t *)rom(address))
 #define NBG3_QUADRANTS(address) ((const uint8_t *)rom(address))
@@ -8943,14 +8945,14 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define FENCE_OFFSET(address) ((const struct fence_offset *)rom(address))
 #define FENCE_POST_BOX(address) ((const struct fence_post_box *)rom(address))
 #define FENCE_POST_BOX_OFFSET(address) ((const struct fence_post_box_offset *)rom(address))
-#define RANKING_PORTRAIT_FRAME_LIST(address) ((const uint16_t *)rom(address))
+#define RANKING_PORTRAIT_FRAME_LIST(address) ((const u16le *)rom(address))
 #define CHARACTER_BIT_NUMBERS(address) ((const uint8_t *)rom(address))
 #define SPRITE_PALETTE_CYCLE(address) ((const struct sprite_palette_cycle *)rom(address))
-#define SPRITE_CYCLE_PALETTES(address) ((const uint16_t *)rom(address))
+#define SPRITE_CYCLE_PALETTES(address) ((const u16le *)rom(address))
 #define DEMO_TRACKBALL_DELTAS(address) ((const int8_t *)rom(address))
 #define HUD_STEP_LIST(address) ((const struct hud_step_list *)rom(address))
 #define EGGMAN_SPEECH_STEP(address) ((const struct eggman_speech_step *)rom(address))
-#define EGGMAN_SPEECH_ARGUMENTS(address) ((const uint16_t *)rom(address))
+#define EGGMAN_SPEECH_ARGUMENTS(address) ((const u16le *)rom(address))
 #define HOW_TO_PLAY_BUTTON_PRESS(address) ((const struct how_to_play_button_press *)rom(address))
 #define MAP_EGGMAN_GESTURES(address) ((const int8_t *)rom(address))
 #define COIN_SETTING_VALUE(address) ((const struct coin_setting_value *)rom(address))
@@ -8968,15 +8970,15 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define WALL_KIND_PARTS(address) ((const struct wall_kind_parts *)rom(address))
 #define TITLE_SONIC_LOOP_CODES(address) ((const uint8_t *)rom(address))
 #define TIMED_SPAWN(address) ((const struct timed_spawn *)rom(address))
-#define TITLE_SMOKE_PUFF_SPRITES(address) ((const uint16_t *)rom(address))
+#define TITLE_SMOKE_PUFF_SPRITES(address) ((const u16le *)rom(address))
 #define INPUT_TEST_BIT_NUMBERS(address) ((const uint8_t *)rom(address))
 #define CRT_TEST_COLOR_BAR_ROW(address) ((const struct crt_test_color_bar_row *)rom(address))
 #define SOUND_COMMAND_BYTES(address) ((const struct sound_command_bytes *)rom(address))
 #define RAM_TEST_PATTERN_BYTES(address) ((const uint8_t *)rom(address))
-#define RAM_TEST_PATTERN_WORDS(address) ((const uint16_t *)rom(address))
+#define RAM_TEST_PATTERN_WORDS(address) ((const u16le *)rom(address))
 #define CHOOSER_VOICE_ROW(address) ((const struct chooser_voice_row *)rom(address))
 #define MAP_ICON_POSITION(address) ((const struct map_icon_position *)rom(address))
-#define MEMORY_TEST_RESULT_OFFSETS(address) ((const uint16_t *)rom(address))
+#define MEMORY_TEST_RESULT_OFFSETS(address) ((const u16le *)rom(address))
 #define CRT_TEST_LINE(address) ((const struct crt_test_line *)rom(address))
 #define SCREEN_SIGN_KIND(address) ((const struct screen_sign_kind *)rom(address))
 #define RAM_TARGET_DAMAGE_STEP(address) ((const struct ram_target_damage_step *)rom(address))
@@ -8991,13 +8993,13 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define SPRITE_PART_LIST(address) ((struct sprite_part_list *)ram(address))
 #define SPRITE_PART(address) ((struct sprite_part *)ram(address))
 #define FRAME_ANIMATION(address) ((const struct frame_animation *)rom(address))
-#define SPRITE_FRAME_NUMBERS(address) ((const uint16_t *)rom(address))
-#define PART_LIST_OFFSETS(address) ((const uint16_t *)rom(address))
+#define SPRITE_FRAME_NUMBERS(address) ((const u16le *)rom(address))
+#define PART_LIST_OFFSETS(address) ((const u16le *)rom(address))
 #define ANIMATION_STEP(address) ((const struct animation_step *)rom(address))
 #define SIGN_KIND(address) ((const struct sign_kind *)rom(address))
 #define BACK_ZONE_RECORD(address) ((const struct back_zone_record *)rom(address))
 #define METAL_WALL_PART_OFFSET(address) ((const struct metal_wall_part_offset *)rom(address))
-#define METAL_WALL_PART_SPRITES(address) ((const uint16_t *)rom(address))
+#define METAL_WALL_PART_SPRITES(address) ((const u16le *)rom(address))
 #define WALL_SPAWN(address) ((const struct wall_spawn *)rom(address))
 #define OBJECT_PAIR_TEMPLATE(address) ((const struct object_pair_template *)rom(address))
 #define FIREBALL_SHOT(address) ((const struct fireball_shot *)rom(address))
@@ -9016,7 +9018,7 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define EDGE_VOICE_SCROLL_RANGE(address) ((const struct edge_voice_scroll_range *)rom(address))
 #define SCREEN_EDGE_PUSH(address) ((const struct screen_edge_push *)rom(address))
 #define SLOPE_SPEED_PAIR(address) ((const struct slope_speed_pair *)rom(address))
-#define PLAYER_FACING_ANIMATION_OFFSETS(address) ((const uint16_t *)rom(address))
+#define PLAYER_FACING_ANIMATION_OFFSETS(address) ((const u16le *)rom(address))
 #define FLOOR_TYPE_PLAYER_STATE(address) ((const struct floor_type_player_state *)rom(address))
 #define TEETER_RECORD(address) ((const struct teeter_record *)rom(address))
 #define TEETER_ANIMATION_OFFSETS(address) ((const struct teeter_animation_offsets *)rom(address))
@@ -9024,7 +9026,7 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define EDGE_HANG_ANIMATIONS(address) ((const struct edge_hang_animations *)rom(address))
 #define PLAYER_BOUNCE_RECORD(address) ((const struct player_bounce_record *)rom(address))
 #define KNOCKED_OUT_ENTRY(address) ((const struct knocked_out_entry *)rom(address))
-#define STRUGGLE_ANIMATION_POINTERS(address) ((const uint32_t *)rom(address))
+#define STRUGGLE_ANIMATION_POINTERS(address) ((const u32le *)rom(address))
 #define RESTART_POINT(address) ((const struct restart_point *)rom(address))
 #define STAGE_START_POINT(address) ((const struct stage_start_point *)rom(address))
 #define STAGE_GOAL(address) ((const struct stage_goal *)rom(address))
@@ -9033,11 +9035,11 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define PLAYER_PATH_STEP(address) ((const struct player_path_step *)rom(address))
 #define HUD_PORTRAIT_SPRITE(address) ((const struct hud_portrait_sprite *)rom(address))
 #define HUD_PALETTE_CYCLE(address) ((const struct hud_palette_cycle *)rom(address))
-#define HUD_CYCLE_PALETTES(address) ((const uint16_t *)rom(address))
+#define HUD_CYCLE_PALETTES(address) ((const u16le *)rom(address))
 #define FLOOR_SLOPE(address) ((const struct floor_slope *)rom(address))
 #define SAND_BLOCK_PART_LIST(address) ((const struct sand_block_part_list *)rom(address))
 #define FLAGGED_ANIMATION_START(address) ((const struct flagged_animation_start *)rom(address))
-#define ENDING_SPRITE_FRAMES(address) ((const uint16_t *)rom(address))
+#define ENDING_SPRITE_FRAMES(address) ((const u16le *)rom(address))
 #define DEBRIS_PATH_STEP(address) ((const struct debris_path_step *)rom(address))
 #define DUST_CLOUD_FRAME(address) ((const struct dust_cloud_frame *)rom(address))
 #define CREDIT_PART(address) ((const struct credit_part *)rom(address))
@@ -9049,13 +9051,13 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define RANKING_ROW_NUMBER(address) ((const struct ranking_row_number *)rom(address))
 #define RING_TALLY_PORTRAIT(address) ((const struct ring_tally_portrait *)rom(address))
 #define RING_TALLY_RESULT_FACES(address) ((const struct ring_tally_result_faces *)rom(address))
-#define TITLE_WAVE_SINES(address) ((const uint16_t *)rom(address))
+#define TITLE_WAVE_SINES(address) ((const u16le *)rom(address))
 #define GEYSER_RISE_STEP(address) ((const struct geyser_rise_step *)rom(address))
 #define PALETTE_SET_CYCLE(address) ((struct palette_set_cycle *)ram(address))
 #define PALETTE_CYCLE(address) ((struct palette_cycle *)ram(address))
 #define COIN_COUNTER(address) ((struct coin_counter *)ram(address))
-#define START_PROMPT_TEXT_OFFSETS(address) ((const uint16_t *)rom(address))
-#define FRACTION_FONT_ROW_LONGS(address) ((const uint32_t *)rom(address))
+#define START_PROMPT_TEXT_OFFSETS(address) ((const u16le *)rom(address))
+#define FRACTION_FONT_ROW_LONGS(address) ((const u32le *)rom(address))
 #define TEXT_CELL_POSITION(address) ((const struct text_cell_position *)rom(address))
 #define POLYGON_SPAN(address) ((struct polygon_span *)ram(address))
 #define QUAD_VERTEX(address) ((struct quad_vertex *)ram(address))
@@ -9064,8 +9066,8 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define BOOT_REGISTER_VALUES(address) ((const uint8_t *)rom(address))
 #define DEMO_HEADER(address) ((const struct demo_header *)rom(address))
 #define ROM_CHECK_BYTES(address) ((const uint8_t *)rom(address))
-#define INPUT_TEST_TEXTS(address) ((const uint32_t *)rom(address))
-#define INPUT_TEST_CURSOR_LIMITS(address) ((const int16_t *)rom(address))
+#define INPUT_TEST_TEXTS(address) ((const u32le *)rom(address))
+#define INPUT_TEST_CURSOR_LIMITS(address) ((const s16le *)rom(address))
 #define TEST_CURSOR_CHARACTERS(address) ((const uint8_t *)rom(address))
 #define VBLANK_COPY(address) ((struct vblank_copy *)ram(address))
 #define SPRITE_FRAME_RECORD(address) ((const struct sprite_frame_record *)rom(address))
@@ -9078,21 +9080,21 @@ _Static_assert(sizeof(struct group_slot_trigger_record) == 0x6, "struct group_sl
 #define TILEMAP_SKIP(address) ((const struct tilemap_skip *)rom(address))
 #define TILEMAP_LONG_SKIP(address) ((const struct tilemap_long_skip *)rom(address))
 #define FONT_ROWS_1BPP(address) ((const uint8_t *)rom(address))
-#define FONT_ROWS_2BPP(address) ((const uint16_t *)rom(address))
+#define FONT_ROWS_2BPP(address) ((const u16le *)rom(address))
 #define VRAM_SCRIPT(address) ((const uint8_t *)rom(address))
 #define VRAM_SCRIPT_ADDRESS(address) ((const struct vram_script_address *)rom(address))
 #define VRAM_SCRIPT_CELL_RUN(address) ((const struct vram_script_cell_run *)rom(address))
 #define VRAM_SCRIPT_BYTE_CELLS(address) ((const struct vram_script_byte_cells *)rom(address))
 #define VRAM_SCRIPT_LOW_BYTES(address) ((const uint8_t *)rom(address))
 #define VRAM_SCRIPT_WORD_CELLS(address) ((const struct vram_script_word_cells *)rom(address))
-#define VRAM_SCRIPT_CELLS(address) ((const uint16_t *)rom(address))
+#define VRAM_SCRIPT_CELLS(address) ((const u16le *)rom(address))
 #define VRAM_SCRIPT_PAGE_CLEAR(address) ((const struct vram_script_page_clear *)rom(address))
 #define VIDEO_REGISTER_DEFAULTS_TAIL(address) ((const struct video_register_defaults_tail *)rom(address))
 #define PALETTE_LOAD_LIST(address) ((const struct palette_load_list *)rom(address))
 #define PALETTE_LIST_ENTRY(address) ((const struct palette_list_entry *)rom(address))
 #define PALETTE_PENS_1_15(address) ((const struct palette_pens_1_15 *)rom(address))
 #define PALETTE_REPEAT_SOURCE(address) ((const struct palette_repeat_source *)rom(address))
-#define PALETTE_REPEAT_COUNTS(address) ((const uint16_t *)rom(address))
+#define PALETTE_REPEAT_COUNTS(address) ((const u16le *)rom(address))
 #define CHASE_STEP_WITH_LIMIT(address) ((const struct chase_step_with_limit *)rom(address))
 #define BITING_HEAD_PATH_ENTRY(address) ((const struct biting_head_path_entry *)rom(address))
 #define BRIDGE_FIRE_SCRIPT_ENTRY(address) ((const struct bridge_fire_script_entry *)rom(address))

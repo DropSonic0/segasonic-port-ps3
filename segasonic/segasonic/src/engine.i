@@ -1,0 +1,1 @@
+Failed to generate preprocessed output for 'objects - copia.cpp'
