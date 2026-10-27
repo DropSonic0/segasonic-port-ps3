@@ -1,14 +1,14 @@
 /**
- *    Name:        machine.c
- *    Description: System 32 memory map, interrupt controller, timers, video registers and SegaSonic protection
- *    Version:     0.1.0
- *    Created:     11-10-2026
- *    Modified:    13-10-2026
- *    Author:      Sebastian Toyos
- *
- *    license:BSD-3-Clause
- *    Behavior follows MAME sega/segas32.cpp, segas32_v.cpp and segas32_m.cpp (Aaron Giles).
- */
+*    Name:        machine.c
+*    Description: System 32 memory map, interrupt controller, timers, video registers and SegaSonic protection
+*    Version:     0.1.0
+*    Created:     11-10-2026
+*    Modified:    13-10-2026
+*    Author:      Sebastian Toyos
+*
+*    license:BSD-3-Clause
+*    Behavior follows MAME sega/segas32.cpp, segas32_v.cpp and segas32_m.cpp (Aaron Giles).
+*/
 #include "internal.h"
 
 #include <stdarg.h>
@@ -73,8 +73,8 @@ uint8_t s32_irq_acknowledge(void)
 	const uint8_t pending = pending_irqs();
 
 	for (int source = 0; source < 5; source++)
-		if (pending & (1u << source))
-			return s32_board.irq_control[source];
+	if (pending & (1u << source))
+		return s32_board.irq_control[source];
 	return 0;
 }
 
@@ -82,8 +82,8 @@ static void update_next_timer(void)
 {
 	s32_board.next_timer = UINT64_MAX;
 	for (int which = 0; which < 2; which++)
-		if (s32_board.timer_deadline[which] && s32_board.timer_deadline[which] < s32_board.next_timer)
-			s32_board.next_timer = s32_board.timer_deadline[which];
+	if (s32_board.timer_deadline[which] && s32_board.timer_deadline[which] < s32_board.next_timer)
+		s32_board.next_timer = s32_board.timer_deadline[which];
 }
 
 static void start_timer(int which)
@@ -138,30 +138,30 @@ static void int_control_write(uint32_t offset, uint8_t data)
 {
 	switch (offset)
 	{
-		case 0: case 1: case 2: case 3: case 4:    /* vectors */
-		case 5:                                      /* unknown */
-			s32_board.irq_control[offset] = data;
-			break;
-		case 6:                                      /* mask */
-			s32_board.irq_control[6] = data;
-			update_irq();
-			break;
-		case 7:                                      /* acknowledge */
-			s32_board.irq_control[7] &= data;
-			update_irq();
-			break;
-		case 8: case 9:
-			s32_board.irq_control[offset] = data;
-			start_timer(0);
-			break;
-		case 10: case 11:
-			s32_board.irq_control[offset] = data;
-			start_timer(1);
-			break;
-		default:                                     /* 12-15: interrupt to the sound CPU */
-			s32_board.sound_requests++;
-			s32_sound_signal_irq(S32_SOUND_IRQ_V60);
-			break;
+	case 0: case 1: case 2: case 3: case 4:    /* vectors */
+	case 5:                                      /* unknown */
+		s32_board.irq_control[offset] = data;
+		break;
+	case 6:                                      /* mask */
+		s32_board.irq_control[6] = data;
+		update_irq();
+		break;
+	case 7:                                      /* acknowledge */
+		s32_board.irq_control[7] &= data;
+		update_irq();
+		break;
+	case 8: case 9:
+		s32_board.irq_control[offset] = data;
+		start_timer(0);
+		break;
+	case 10: case 11:
+		s32_board.irq_control[offset] = data;
+		start_timer(1);
+		break;
+	default:                                     /* 12-15: interrupt to the sound CPU */
+		s32_board.sound_requests++;
+		s32_sound_signal_irq(S32_SOUND_IRQ_V60);
+		break;
 	}
 }
 
@@ -218,11 +218,11 @@ static uint8_t sprite_control_read(uint32_t offset)
 {
 	switch (offset)
 	{
-		case 0: return (uint8_t)(0xfc | s32_board.sprite_buffer);
-		case 1: return 0xfd;                                  /* "normal" render status */
-		case 6: return (uint8_t)(0xfc | (s32_board.sprite_control_latched[6] & 1));
-		case 7: return 0xfc;
-		default: return (uint8_t)(0xfc | s32_board.sprite_control_latched[offset]);
+	case 0: return (uint8_t)(0xfc | s32_board.sprite_buffer);
+	case 1: return 0xfd;                                  /* "normal" render status */
+	case 6: return (uint8_t)(0xfc | (s32_board.sprite_control_latched[6] & 1));
+	case 7: return 0xfc;
+	default: return (uint8_t)(0xfc | s32_board.sprite_control_latched[offset]);
 	}
 }
 
@@ -241,9 +241,9 @@ static uint64_t next_frame_event(void)
 {
 	switch (s32_board.frame_phase)
 	{
-		case 0: return s32_line_start(s32_board.frame, S32_VISIBLE_LINES);
-		case 1: return s32_frame_start(s32_board.frame + 1);
-		default: return s32_frame_start(s32_board.frame + 1) + S32_CPU_CLOCK / 20000;
+	case 0: return s32_line_start(s32_board.frame, S32_VISIBLE_LINES);
+	case 1: return s32_frame_start(s32_board.frame + 1);
+	default: return s32_frame_start(s32_board.frame + 1) + S32_CPU_CLOCK / 20000;
 	}
 }
 
@@ -262,19 +262,19 @@ void s32_wait(void)
 	s32_board.cycles = event;
 	switch (s32_board.frame_phase)
 	{
-		case 0:
-			s32_vblank_start();
-			s32_board.frame_phase = 1;
-			break;
-		case 1:
-			s32_vblank_end();
-			s32_board.frame_phase = 2;
-			break;
-		default:
-			s32_sprite_update();
-			s32_board.frame++;
-			s32_board.frame_phase = 0;
-			break;
+	case 0:
+		s32_vblank_start();
+		s32_board.frame_phase = 1;
+		break;
+	case 1:
+		s32_vblank_end();
+		s32_board.frame_phase = 2;
+		break;
+	default:
+		s32_sprite_update();
+		s32_board.frame++;
+		s32_board.frame_phase = 0;
+		break;
 	}
 }
 
@@ -301,7 +301,7 @@ void s32_vblank_start(void)
 	if (s32_board.frame_shown)
 		s32_board.frame_shown();
 	/* the game reads and clears the trackball counters right after VBLANK ends: controls that move
-	   now are seen whole at the next read */
+	now are seen whole at the next read */
 	if (s32_board.controls_update)
 		s32_board.controls_update();
 	s32_signal_irq(S32_IRQ_VBLANK_START);
@@ -386,33 +386,33 @@ static uint16_t bus_read(uint32_t address, uint16_t mask)
 	address &= 0xfffffe;
 	switch (address >> 20)
 	{
-		case 0x0: case 0x1:
-			return load16(&s32_board.program[address]);
-		case 0x2:
-			return load16(&s32_board.work_ram[address & 0xffff]);
-		case 0x3:
-			return load16(&s32_board.video_ram[address & 0x1ffff]);
-		case 0x4:
-			return load16(&s32_board.sprite_ram[address & 0x1ffff]);
-		case 0x5:
-			return 0xff00 | sprite_control_read((address >> 1) & 7);
-		case 0x6:
-			if (address & 0x10000)
-				return s32_board.mixer[(address >> 1) & 0x3f];
-			return palette_read((address >> 1) & 0x7fff);
-		case 0x7:
-			return load16(&s32_board.shared_ram[address & 0x1fff]);
-		case 0xc:
-			return 0xff00 | s32_io_read(address & 0x7f);
-		case 0xd:
-			if (address < 0xd80000)
-				return (uint16_t)(int_control_read(address & 0xf) | (int_control_read((address & 0xf) + 1) << 8));
-			return random_read();
-		case 0xf:
-			return load16(&s32_board.program[address & 0xfffff]);
-		default:
-			(void)mask;
-			return unmapped_read(address);
+	case 0x0: case 0x1: case 0x8: case 0x9:
+		return load16(&s32_board.program[address & 0x1fffff]);
+	case 0x2:
+		return load16(&s32_board.work_ram[address & 0xffff]);
+	case 0x3:
+		return load16(&s32_board.video_ram[address & 0x1ffff]);
+	case 0x4:
+		return load16(&s32_board.sprite_ram[address & 0x1ffff]);
+	case 0x5:
+		return 0xff00 | sprite_control_read((address >> 1) & 7);
+	case 0x6:
+		if (address & 0x10000)
+			return s32_board.mixer[(address >> 1) & 0x3f];
+		return palette_read((address >> 1) & 0x7fff);
+	case 0x7:
+		return load16(&s32_board.shared_ram[address & 0x1fff]);
+	case 0xc:
+		return 0xff00 | s32_io_read(address & 0x7f);
+	case 0xd:
+		if (address < 0xd80000)
+			return (uint16_t)(int_control_read(address & 0xf) | (int_control_read((address & 0xf) + 1) << 8));
+		return random_read();
+	case 0xf:
+		return load16(&s32_board.program[address & 0xfffff]);
+	default:
+		(void)mask;
+		return unmapped_read(address);
 	}
 }
 
@@ -421,52 +421,52 @@ static void bus_write(uint32_t address, uint16_t data, uint16_t mask)
 	address &= 0xfffffe;
 	switch (address >> 20)
 	{
-		case 0x2:
-			if (address == 0x20e5c4)
-				level_load_protection(data, mask);
-			else
-				store16(&s32_board.work_ram[address & 0xffff], data, mask);
-			break;
-		case 0x3:
-			store16(&s32_board.video_ram[address & 0x1ffff], data, mask);
-			break;
-		case 0x4:
-			store16(&s32_board.sprite_ram[address & 0x1ffff], data, mask);
-			break;
-		case 0x5:
+	case 0x2:
+		if (address == 0x20e5c4)
+			level_load_protection(data, mask);
+		else
+			store16(&s32_board.work_ram[address & 0xffff], data, mask);
+		break;
+	case 0x3:
+		store16(&s32_board.video_ram[address & 0x1ffff], data, mask);
+		break;
+	case 0x4:
+		store16(&s32_board.sprite_ram[address & 0x1ffff], data, mask);
+		break;
+	case 0x5:
+		if (mask & 0x00ff)
+			s32_board.sprite_control[(address >> 1) & 7] = (uint8_t)data;
+		break;
+	case 0x6:
+		if (address & 0x10000)
+		{
+			uint16_t *reg = &s32_board.mixer[(address >> 1) & 0x3f];
+			*reg = (uint16_t)((*reg & ~mask) | (data & mask));
+		}
+		else
+			palette_write((address >> 1) & 0x7fff, data, mask);
+		break;
+	case 0x7:
+		store16(&s32_board.shared_ram[address & 0x1fff], data, mask);
+		break;
+	case 0xc:
+		if (mask & 0x00ff)
+			s32_io_write(address & 0x7f, (uint8_t)data);
+		break;
+	case 0xd:
+		if (address < 0xd80000)
+		{
 			if (mask & 0x00ff)
-				s32_board.sprite_control[(address >> 1) & 7] = (uint8_t)data;
-			break;
-		case 0x6:
-			if (address & 0x10000)
-			{
-				uint16_t *reg = &s32_board.mixer[(address >> 1) & 0x3f];
-				*reg = (uint16_t)((*reg & ~mask) | (data & mask));
-			}
-			else
-				palette_write((address >> 1) & 0x7fff, data, mask);
-			break;
-		case 0x7:
-			store16(&s32_board.shared_ram[address & 0x1fff], data, mask);
-			break;
-		case 0xc:
-			if (mask & 0x00ff)
-				s32_io_write(address & 0x7f, (uint8_t)data);
-			break;
-		case 0xd:
-			if (address < 0xd80000)
-			{
-				if (mask & 0x00ff)
-					int_control_write(address & 0xf, (uint8_t)data);
-				if (mask & 0xff00)
-					int_control_write((address & 0xf) + 1, (uint8_t)(data >> 8));
-			}
-			break;                              /* the random number seed write is ignored */
-		case 0x0: case 0x1: case 0xf:
-			break;                              /* ROM */
-		default:
-			unmapped_write(address, data, mask);
-			break;
+				int_control_write(address & 0xf, (uint8_t)data);
+			if (mask & 0xff00)
+				int_control_write((address & 0xf) + 1, (uint8_t)(data >> 8));
+		}
+		break;                              /* the random number seed write is ignored */
+	case 0x0: case 0x1: case 0x8: case 0x9: case 0xf:
+		break;                              /* ROM */
+	default:
+		unmapped_write(address, data, mask);
+		break;
 	}
 }
 
@@ -540,20 +540,20 @@ void s32_reset(void)
 
 void s32_init(const uint8_t *program)
 {
-	void (*irq_changed)(bool) = s32_board.irq_changed;
-	void (*controls_update)(void) = s32_board.controls_update;
-	void (*log)(const char *) = s32_board.log;
-	void (*frame_shown)(void) = s32_board.frame_shown;
-	void (*sprites_due)(bool, bool) = s32_board.sprites_due;
-	void (*time_passes)(uint64_t) = s32_board.time_passes;
-	void (*sound_irq_changed)(bool, uint8_t) = s32_board.sound_irq_changed;
-	void (*sound_reset_changed)(bool) = s32_board.sound_reset_changed;
+	void(*irq_changed)(bool) = s32_board.irq_changed;
+	void(*controls_update)(void) = s32_board.controls_update;
+	void(*log)(const char *) = s32_board.log;
+	void(*frame_shown)(void) = s32_board.frame_shown;
+	void(*sprites_due)(bool, bool) = s32_board.sprites_due;
+	void(*time_passes)(uint64_t) = s32_board.time_passes;
+	void(*sound_irq_changed)(bool, uint8_t) = s32_board.sound_irq_changed;
+	void(*sound_reset_changed)(bool) = s32_board.sound_reset_changed;
 	const s32_sound_chips chips = s32_board.chips;
 	const uint8_t *sound_rom = s32_board.sound_rom;
 	const bool frame_timing = s32_board.frame_timing;
 
 	/* callbacks, the sound chips, the sound ROM and the timing survive; everything else starts from
-	   power-on. A saved EEPROM is loaded after this. */
+	power-on. A saved EEPROM is loaded after this. */
 	memset(&s32_board, 0, sizeof(s32_board));
 	s32_board.irq_changed = irq_changed;
 	s32_board.controls_update = controls_update;
