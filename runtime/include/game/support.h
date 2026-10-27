@@ -84,7 +84,7 @@ extern "C" {
 		}
 		if (region == 0x700000u)
 			return &s32_board.shared_ram[address & 0x1fffu];
-		if (region == 0x800000u)
+		if ((address & 0xc00000u) == 0x800000u || region == 0xe00000u)
 			return (uint8_t *)&s32_board.program[address & 0x1fffffu];
 		if (region == 0xc00000u)
 			return &s32_board.io_latch[address & 7u];
@@ -103,7 +103,7 @@ extern "C" {
 	{
 		if ((address & 0xf00000u) == 0xf00000u)
 			return &s32_board.program[address & 0xfffffu];
-		if ((address & 0xf00000u) == 0x800000u)
+		if ((address & 0xc00000u) == 0x800000u || (address & 0xf00000u) == 0xe00000u)
 			return &s32_board.program[address & 0x1fffffu];
 		if ((address & 0xffffffu) < 0x200000u)
 			return &s32_board.program[address & 0x1fffffu];

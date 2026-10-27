@@ -10,7 +10,7 @@
  *    tools/decompile.py, with the names of symbols.txt.
  */
 #include "game.h"
-
+#include <stdio.h>
 /* Sets up the video chip: vblank_start_hook = apply_video_registers; from video_control, 0x00-0x0F from
    video_register_defaults, 0x10-0x4F cleared, the zoom steps 0x50-0x5B 0x200, 0x5C-0x5F from the
    defaults, five clip rectangles 0,0-0x13F,0xDF, 0x88-0x8F from the defaults; then set_screen_mode(0)
@@ -704,35 +704,72 @@ uint32_t erase_vram_script_repeat(uint16_t cell, uint32_t script, uint32_t dest)
    default_palette_list into palette RAM (load_palette_list); hands back where it stopped writing. */
 uint32_t load_default_palettes(void)
 {
-	uint32_t dest = 0, ignored = 0, palette_list = 0;
+	uint32_t dest = 0, ignored = 0, palette_list = 0, i = 0, r32 = 0;
+
+	mem_write32(0x609F00u, 0x11223344u);
+	r32 = mem_read32(0x609F00u);
+	printf("[TEST] w32=11223344 -> r16: %04X %04X, r32: %08X (esperado 3344 1122 11223344)\n",
+		(unsigned)mem_read16(0x609F00u), (unsigned)mem_read16(0x609F02u), (unsigned)r32);
 
 	vblank_copies_pending = 0u;
 	vblank_copy_count = 0u;
 	palette_list = default_palette_list_ADDRESS;
 	load_palette_list(palette_list, &ignored, &dest);
+
+	printf("[PAL] fin dest=%08X\n", (unsigned)dest);
+	printf("[PAL] 609000:");
+	for (i = 0; i < 16u; i++)
+		printf(" %04X", (unsigned)mem_read16(0x609000u + i * 2u));
+	printf("\n[PAL] 608000:");
+	for (i = 0; i < 16u; i++)
+		printf(" %04X", (unsigned)mem_read16(0x608000u + i * 2u));
+	printf("\n");
 	return dest;
 }
 
-/* Loads palette RAM (0x600000) from a list: a count, then entries of a source, a palette RAM offset and
-   a copy mode, each source running to the next entry's: 0 copy_palettes_with_pen_0, 2
-   copy_palette_block, 4 repeat_palette_block (6 would be copy_palettes_with_pen_0 with pen 0 = 6; no
-   list has it). */
+static uint16_t pal_swap16(uint16_t v)
+{
+	return (uint16_t)((v << 8) | (v >> 8));
+}
+
+static uint32_t pal_swap32(uint32_t v)
+{
+	return (v << 24) | ((v & 0xFF00u) << 8) | ((v >> 8) & 0xFF00u) | (v >> 24);
+}
+
 void load_palette_list(uint32_t palette_list, uint32_t *p_source, uint32_t *p_dest)
 {
-	uint32_t copy_mode = 0, dest = 0, entries_left = 0, size = 0;
+	uint32_t copy_mode = 0, dest = 0, entries_left = 0, size = 0, next_source = 0;
 
-	entries_left = PALETTE_LOAD_LIST(palette_list)->entry_count;
+	entries_left = pal_swap16(PALETTE_LOAD_LIST(palette_list)->entry_count);
+	printf("[PAL v2] list=%08X entry_count=%u\n", (unsigned)palette_list, (unsigned)entries_left);
 	dest = 0x600000u;
+	if (entries_left == 0u || entries_left > 0x400u)
+	{
+		printf("[PAL v2] entry_count invalido, abortando\n");
+		*p_dest = dest;
+		return;
+	}
 	palette_list += 2u;
 	do
 	{
-		*p_source = PALETTE_LIST_ENTRY(palette_list)->source;
+		*p_source = pal_swap32(PALETTE_LIST_ENTRY(palette_list)->source);
 		palette_list += 4u;
-		dest = (dest & ~0xFFFFu) | PALETTE_LIST_ENTRY(palette_list - 0x4u)->palette_offset;
+		dest = (dest & ~0xFFFFu) | pal_swap16(PALETTE_LIST_ENTRY(palette_list - 0x4u)->palette_offset);
 		palette_list += 2u;
-		copy_mode = PALETTE_LIST_ENTRY(palette_list - 0x6u)->copy_mode;
+		copy_mode = pal_swap16(PALETTE_LIST_ENTRY(palette_list - 0x6u)->copy_mode);
 		palette_list += 2u;
-		size = PALETTE_LIST_ENTRY(palette_list)->source - *p_source;
+		next_source = pal_swap32(PALETTE_LIST_ENTRY(palette_list)->source);
+		size = next_source - *p_source;
+		printf("[PAL v2] left=%u src=%08X next_src=%08X size=%08X dest=%08X mode=%u\n",
+			(unsigned)entries_left, (unsigned)*p_source, (unsigned)next_source,
+			(unsigned)size, (unsigned)dest, (unsigned)copy_mode);
+		if (size > 0x20000u)
+		{
+			printf("[PAL v2] size invalido, salteo entry\n");
+			entries_left--;
+			continue;
+		}
 		switch (copy_mode)
 		{
 		case 0x0u:
@@ -761,48 +798,20 @@ void copy_palettes_with_pen_0(uint16_t pen_0_color, uint32_t size, uint32_t *p_s
 {
 	uint32_t source = *p_source;
 	uint32_t dest = *p_dest;
-	uint16_t pen_15 = 0;
-	uint32_t pens_1_2 = 0, pens_3_4 = 0, pens_5_6 = 0, pens_7_8 = 0, pens_9_10 = 0, pens_11_12 = 0, pens_13_14 = 0, halfwords_left = 0;
+	uint32_t halfwords_left = 0, i = 0;
+	const uint8_t *colors = NULL;
 
 	size = size >> 1;
 	do
 	{
+		colors = (const uint8_t *)rom(source);
 		mem_write16(dest, pen_0_color);
-		pens_1_2 = PALETTE_PENS_1_15(source)->pens_1_2;
-		source += 4u;
-		dest += 2u;
-		mem_write32(dest, pens_1_2);
-		pens_3_4 = PALETTE_PENS_1_15(source - 0x4u)->pens_3_4;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_3_4);
-		pens_5_6 = PALETTE_PENS_1_15(source - 0x8u)->pens_5_6;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_5_6);
-		pens_7_8 = PALETTE_PENS_1_15(source - 0xCu)->pens_7_8;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_7_8);
-		pens_9_10 = PALETTE_PENS_1_15(source - 0x10u)->pens_9_10;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_9_10);
-		pens_11_12 = PALETTE_PENS_1_15(source - 0x14u)->pens_11_12;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_11_12);
-		pens_13_14 = PALETTE_PENS_1_15(source - 0x18u)->pens_13_14;
-		source += 4u;
-		dest += 4u;
-		mem_write32(dest, pens_13_14);
-		pen_15 = PALETTE_PENS_1_15(source - 0x1Cu)->pen_15;
-		source += 2u;
-		dest += 4u;
-		mem_write16(dest, pen_15);
+		for (i = 0; i < 15u; i++)
+			mem_write16(dest + 2u + i * 2u, (uint16_t)(colors[i * 2u] | (colors[i * 2u + 1u] << 8)));
+		source += 30u;
+		dest += 32u;
 		halfwords_left = size;
 		size = halfwords_left - 0xFu;
-		dest += 2u;
 	} while ((int32_t)halfwords_left > 0xF);
 	*p_source = source;
 	*p_dest = dest;
@@ -828,13 +837,20 @@ void repeat_palette_block(uint32_t size, uint32_t *p_source, uint32_t *p_dest, u
 	uint32_t dest_end = 0, repeat_counts = 0, repeats_left = 0, source_end = 0;
 
 	repeat_counts = source;
-	source = PALETTE_REPEAT_SOURCE(*p_palette_list)->palettes;
+	source = pal_swap32(PALETTE_REPEAT_SOURCE(*p_palette_list)->palettes);
 	size = size >> 1;
+	printf("[PAL rep] counts=%08X palettes=%08X n=%u dest=%08X\n",
+		(unsigned)repeat_counts, (unsigned)source, (unsigned)size, (unsigned)*p_dest);
 	*p_palette_list += 4u;
 	do
 	{
-		repeats_left = PALETTE_REPEAT_COUNTS(repeat_counts)[0];
+		repeats_left = pal_swap16(PALETTE_REPEAT_COUNTS(repeat_counts)[0]);
 		repeat_counts += 2u;
+		if (repeats_left == 0u || repeats_left > 0x100u)
+		{
+			printf("[PAL rep] repeticiones invalidas: %u\n", (unsigned)repeats_left);
+			repeats_left = 1u;
+		}
 		do
 		{
 			move_string(source, 0x10u, *p_dest, 0x10u, 2u, 0u, 0u, fill_value, &dest_end, &source_end);
@@ -845,6 +861,7 @@ void repeat_palette_block(uint32_t size, uint32_t *p_source, uint32_t *p_dest, u
 		size--;
 	} while (size != 0u);
 	*p_source = source;
+	printf("[PAL rep] fin dest=%08X\n", (unsigned)*p_dest);
 }
 
 /* Adds a copy to vblank_copies for the next VBLANK: source, dest (its top byte is how many times it is

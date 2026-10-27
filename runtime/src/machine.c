@@ -386,7 +386,7 @@ static uint16_t bus_read(uint32_t address, uint16_t mask)
 	address &= 0xfffffe;
 	switch (address >> 20)
 	{
-	case 0x0: case 0x1: case 0x8: case 0x9:
+	case 0x0: case 0x1: case 0x8: case 0x9: case 0xa: case 0xb: case 0xe:
 		return load16(&s32_board.program[address & 0x1fffff]);
 	case 0x2:
 		return load16(&s32_board.work_ram[address & 0xffff]);
@@ -462,8 +462,8 @@ static void bus_write(uint32_t address, uint16_t data, uint16_t mask)
 				int_control_write((address & 0xf) + 1, (uint8_t)(data >> 8));
 		}
 		break;                              /* the random number seed write is ignored */
-	case 0x0: case 0x1: case 0x8: case 0x9: case 0xf:
-		break;                              /* ROM */
+	case 0x0: case 0x1: case 0x8: case 0x9: case 0xa: case 0xb: case 0xe: case 0xf:
+		break;                              /* ROM / unmapped */
 	default:
 		unmapped_write(address, data, mask);
 		break;
