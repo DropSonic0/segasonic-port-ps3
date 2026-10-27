@@ -11,8 +11,7 @@
 #define SEGASONIC_PORT_ACTIONS_H
 
 #include "console_actions.h"
-
-#include <SDL.h>
+//#include <SDL.h>
 #include <stdbool.h>
 #include <stdint.h>
 

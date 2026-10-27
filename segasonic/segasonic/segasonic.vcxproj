@@ -48,21 +48,31 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;SEGASONIC_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>C:\segasonic-port-main\src;C:\segasonic-port-main\runtime\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\runtime\include;$(ProjectDir)..\..\console;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;SEGASONIC_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <OptimizationLevel>Level2</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\runtime\include;$(ProjectDir)..\..\console;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>libPSGLU.a;libPSGL.a;libgcm_cmd.a;libgcm_sys_stub.a;libresc_stub.a;libsysutil_game_stub.a;libsysutil_stub.a;libio_stub.a;libaudio_stub.a;libpthread.a;libsysmodule_stub.a;libfs_stub.a;libm.a;libnet_stub.a</AdditionalDependencies>
+    </Link>
+    <Link>
+      <AdditionalLibraryDirectories>C:\usr\local\cell\target\ppu\lib\PSGL\RSX\ultra-opt</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\console\console.c" />
+    <ClCompile Include="..\..\ports\headless\main.c" />
     <ClCompile Include="..\..\runtime\src\extract.c" />
     <ClCompile Include="..\..\runtime\src\game.c" />
     <ClCompile Include="..\..\runtime\src\game_data.c" />
@@ -77,7 +87,6 @@
     <ClCompile Include="..\..\runtime\src\sound.c" />
     <ClCompile Include="..\..\runtime\src\sound_chips.c" />
     <ClCompile Include="..\..\runtime\src\sound_cpu.c" />
-    <ClCompile Include="..\..\runtime\src\v60.c" />
     <ClCompile Include="..\..\runtime\src\video.c" />
     <ClCompile Include="..\..\runtime\src\workers.c" />
     <ClCompile Include="..\..\runtime\src\ym3438.c" />

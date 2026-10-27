@@ -43,6 +43,13 @@
 #include "console.h"
 #endif
 
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+#include <PSGL/psgl.h>
+#include <PSGL/psglu.h>
+#include <cell/pad.h>
+#include <cell/audio.h>
+#endif
+
 #include <inttypes.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -262,8 +269,231 @@ static void write_levels(void)
 		mix_peak, clipped, pcm_limit);
 }
 
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+static bool ps3_graphics_initialized = false;
+static PSGLdevice* ps3_device = NULL;
+static PSGLcontext* ps3_context = NULL;
+static GLuint ps3_texture = 0;
+static uint32_t ps3_audio_port = 0xFFFFFFFF;
+static bool ps3_pad_initialized = false;
+static CellPadData last_ps3_pad;
+static uint32_t last_ps3_held = 0;
+
+static void ps3_graphics_init(void)
+{
+	PSGLinitOptions options;
+	PSGLdeviceParameters params;
+
+	memset(&options, 0, sizeof(options));
+	options.enable = PSGL_INIT_MAX_SPUS | PSGL_INIT_INITIALIZE_SPUS | PSGL_INIT_HOST_MEMORY_SIZE;
+	options.maxSPUs = 0;
+	options.initializeSPUs = false;
+	options.hostMemorySize = 4 * 1024 * 1024;
+
+	psglInit(&options);
+
+	memset(&params, 0, sizeof(params));
+	params.enable = PSGL_DEVICE_PARAMETERS_COLOR_FORMAT | PSGL_DEVICE_PARAMETERS_DEPTH_FORMAT | PSGL_DEVICE_PARAMETERS_BUFFERING_MODE;
+	params.bufferingMode = PSGL_BUFFERING_MODE_TRIPLE;
+	params.colorFormat = GL_ARGB_SCE;
+	params.depthFormat = GL_DEPTH_COMPONENT24;
+
+	ps3_device = psglCreateDeviceExtended(&params);
+	ps3_context = psglCreateContext();
+	psglMakeCurrent(ps3_context, ps3_device);
+
+	glGenTextures(1, &ps3_texture);
+	glBindTexture(GL_TEXTURE_2D, ps3_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	ps3_graphics_initialized = true;
+}
+
+static void ps3_audio_init(void)
+{
+	if (cellAudioInit() == CELL_OK || cellAudioInit() == CELL_AUDIO_ERROR_ALREADY_INIT)
+	{
+		CellAudioPortParam portParam;
+		memset(&portParam, 0, sizeof(portParam));
+		portParam.nChannel = CELL_AUDIO_PORT_2CH;
+		portParam.nBlock = 8;
+		portParam.attr = 0;
+		if (cellAudioPortOpen(&portParam, &ps3_audio_port) == CELL_OK)
+		{
+			cellAudioPortStart(ps3_audio_port);
+			cellAudioSetPortLevel(ps3_audio_port, 1.0f);
+		}
+	}
+}
+
+static void ps3_graphics_render_frame(void)
+{
+	int width = 0;
+	const uint32_t *pixels;
+
+	if (!ps3_graphics_initialized) return;
+	pixels = s32_video_frame(&width);
+	if (!pixels || width <= 0) return;
+
+	glBindTexture(GL_TEXTURE_2D, ps3_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, width, S32_VIDEO_HEIGHT, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_TEXTURE_2D);
+
+	GLfloat vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f,  0.0f, 1.0f };
+	GLfloat texcoords[] = { 0.0f, 1.0f,  1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f };
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, vertices);
+	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_TEXTURE_2D);
+
+	psglSwap();
+}
+
+static void ps3_audio_render_frame(void)
+{
+	const int32_t *samples[3];
+	size_t counts[3];
+	static float floatBuffer[1024 * 2];
+	size_t sample_count, at;
+
+	if (ps3_audio_port == 0xFFFFFFFF) return;
+
+	s32_board.time_passes(s32_board.cycles);
+	sound_chips_end_frame(s32_board.cycles);
+
+	for (int chip = 0; chip < 3; chip++)
+		samples[chip] = sound_chips_frame_samples(chip, &counts[chip]);
+
+	sample_count = counts[0];
+	if (sample_count == 0) return;
+	if (sample_count > 1024) sample_count = 1024;
+
+	for (at = 0; at < sample_count; at++)
+	{
+		size_t fm1 = (counts[1] > 0) ? (at < counts[1] ? at : counts[1] - 1) : 0;
+		size_t pcm = (counts[2] > 0) ? (at * counts[2] / counts[0]) : 0;
+
+		for (int side = 0; side < 2; side++)
+		{
+			double value = 0.30 * ((samples[0] ? samples[0][at * 2 + side] : 0) + (samples[1] ? samples[1][fm1 * 2 + side] : 0))
+				+ 0.40 * (samples[2] ? samples[2][pcm * 2 + side] : 0);
+			float fval = (float)(value / 32768.0);
+			if (fval > 1.0f) fval = 1.0f;
+			if (fval < -1.0f) fval = -1.0f;
+			floatBuffer[at * 2 + side] = fval;
+		}
+	}
+	cellAudioAdd2chData(ps3_audio_port, floatBuffer, (uint32_t)sample_count, 1.0f);
+}
+
+static void ps3_pad_update(void)
+{
+	CellPadData padData;
+
+	if (!ps3_pad_initialized)
+	{
+		cellPadInit(7);
+		ps3_pad_initialized = true;
+	}
+
+	if (cellPadGetData(0, &padData) == CELL_PAD_OK && padData.len > 0)
+	{
+		last_ps3_pad = padData;
+	}
+
+	if (last_ps3_pad.len > 0)
+	{
+		uint16_t digital1 = last_ps3_pad.button[CELL_PAD_BTN_OFFSET_DIGITAL1];
+		uint16_t digital2 = last_ps3_pad.button[CELL_PAD_BTN_OFFSET_DIGITAL2];
+		uint32_t held = 0;
+
+		int stickX = (int)(last_ps3_pad.button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_X] & 0xFF) - 128;
+		int stickY = (int)(last_ps3_pad.button[CELL_PAD_BTN_OFFSET_ANALOG_LEFT_Y] & 0xFF) - 128;
+
+		if ((digital1 & CELL_PAD_CTRL_UP) || stickY < -50)
+		{
+			held |= ACTION_BIT(ACTION_UP);
+			int roll = (stickY < -50) ? (-stickY / 8) : 8;
+			s32_board.input.trackball_y[0] = (uint16_t)(s32_board.input.trackball_y[0] - roll);
+		}
+		if ((digital1 & CELL_PAD_CTRL_DOWN) || stickY > 50)
+		{
+			held |= ACTION_BIT(ACTION_DOWN);
+			int roll = (stickY > 50) ? (stickY / 8) : 8;
+			s32_board.input.trackball_y[0] = (uint16_t)(s32_board.input.trackball_y[0] + roll);
+		}
+		if ((digital1 & CELL_PAD_CTRL_LEFT) || stickX < -50)
+		{
+			held |= ACTION_BIT(ACTION_LEFT);
+			int roll = (stickX < -50) ? (-stickX / 8) : 8;
+			s32_board.input.trackball_x[0] = (uint16_t)(s32_board.input.trackball_x[0] - roll);
+		}
+		if ((digital1 & CELL_PAD_CTRL_RIGHT) || stickX > 50)
+		{
+			held |= ACTION_BIT(ACTION_RIGHT);
+			int roll = (stickX > 50) ? (stickX / 8) : 8;
+			s32_board.input.trackball_x[0] = (uint16_t)(s32_board.input.trackball_x[0] + roll);
+		}
+
+		if (digital2 & (CELL_PAD_CTRL_CROSS | CELL_PAD_CTRL_CIRCLE | CELL_PAD_CTRL_SQUARE))
+		{
+			held |= ACTION_BIT(ACTION_ACCEPT);
+			held |= ACTION_BIT(ACTION_JUMP);
+			s32_board.input.port_a &= (uint8_t)~0x01u;
+		}
+		else
+		{
+			s32_board.input.port_a |= 0x01u;
+		}
+
+		if (digital2 & (CELL_PAD_CTRL_TRIANGLE | CELL_PAD_CTRL_L1 | CELL_PAD_CTRL_R1))
+		{
+			held |= ACTION_BIT(ACTION_BACK);
+		}
+
+		if (digital1 & (CELL_PAD_CTRL_START | CELL_PAD_CTRL_SELECT))
+		{
+			held |= ACTION_BIT(ACTION_START);
+			s32_board.input.port_e &= (uint8_t)~0x10u;
+		}
+		else
+		{
+			s32_board.input.port_e |= 0x10u;
+		}
+
+		uint32_t pressed = held & ~last_ps3_held;
+		last_ps3_held = held;
+
+#ifdef SEGASONIC_CONSOLE
+		if (!console_in_game() && (pressed & ACTION_BIT(ACTION_BACK)))
+			console_back();
+		console_actions(pressed, held);
+#endif
+	}
+}
+#endif
+
 static void on_frame_done(void)
 {
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	ps3_graphics_render_frame();
+	ps3_audio_render_frame();
+#endif
 	if (hashes)
 		fprintf(hashes, "%" PRIu64 " %016" PRIx64 "\n", program_frames() - 1, s32_state_hash());
 	if (dump_dir && program_frames() - 1 == dump_frame)
@@ -393,10 +623,14 @@ static void apply_actions(uint64_t frame)
 }
 #endif
 
+
 static void on_controls_update(void)
 {
 	/* VBLANK of the board's frame is starting */
 	s32_script_apply(script, s32_board.frame);
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	ps3_pad_update();
+#endif
 #ifdef SEGASONIC_CONSOLE
 	apply_actions(s32_board.frame);
 	if (wide_video)
@@ -583,8 +817,17 @@ int main(int argc, char **argv)
 	s32_board.log = on_log;
 	s32_board.frame_timing = true;
 	/* (the video's rows on that many threads beside this one: the same frames, which the checks show) */
+#if !defined(__CELLOS_LV2__) && !defined(__SNC__)
 	if (getenv("SEGASONIC_VIDEO_WORKERS"))
 		s32_workers_start(atoi(getenv("SEGASONIC_VIDEO_WORKERS")));
+#else
+	ps3_graphics_init();
+	ps3_audio_init();
+	s32_board.sound_rom = game_sound;
+	sound_chips_attach();
+	sound_cpu_attach();
+	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
+#endif
 	s32_init(game_program);
 	program_reset();
 	program_frame_done = on_frame_done;

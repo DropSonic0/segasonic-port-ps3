@@ -390,6 +390,19 @@ def write_c(program, out_dir, variables_path=None):
     (out_dir / "sound.h").write_text(
         file_header("sound.h", "the sound program's ports, variables, tables, structures and functions")
         + "#ifndef SONIC_SOUND_H\n#define SONIC_SOUND_H\n\n#include \"sound/support.h\"\n\n"
+        + "#ifndef _Static_assert\n"
+        + "#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L\n"
+        + "/* Built-in in C11 */\n"
+        + "#elif defined(__cplusplus) && __cplusplus >= 201103L\n"
+        + "#define _Static_assert(cond, msg) static_assert(cond, msg)\n"
+        + "#elif defined(_MSC_VER) && _MSC_VER >= 1600\n"
+        + "#define _Static_assert(cond, msg) static_assert(cond, msg)\n"
+        + "#else\n"
+        + "#define SONIC_CONCAT_IMPL(a, b) a##b\n"
+        + "#define SONIC_CONCAT(a, b) SONIC_CONCAT_IMPL(a, b)\n"
+        + "#define _Static_assert(cond, msg) typedef char SONIC_CONCAT(static_assert_, __LINE__)[(cond) ? 1 : -1]\n"
+        + "#endif\n"
+        + "#endif\n\n"
         + "/* the board's I/O ports the program uses */\n" + "\n".join(emitter.port_declarations()) + "\n\n"
         + "\n".join(named.declarations()) + "\n\n/* data in the program ROM sound_symbols.txt labels */\n"
         + "\n".join(f"#define {name}_ADDRESS 0x{address:04X}u" for address, name in sorted(emitter.data_labels.items()))

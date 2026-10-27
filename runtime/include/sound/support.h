@@ -28,6 +28,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifndef _Static_assert
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+/* Built-in in C11 */
+#elif defined(__cplusplus) && __cplusplus >= 201103L
+#define _Static_assert(cond, msg) static_assert(cond, msg)
+#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#define _Static_assert(cond, msg) static_assert(cond, msg)
+#else
+#define SONIC_CONCAT_IMPL(a, b) a##b
+#define SONIC_CONCAT(a, b) SONIC_CONCAT_IMPL(a, b)
+#define _Static_assert(cond, msg) typedef char SONIC_CONCAT(static_assert_, __LINE__)[(cond) ? 1 : -1]
+#endif
+#endif
+
 #define SOUND_RAM8(address)  (s32_board.shared_ram[(address) & 0x1fff])
 #define SOUND_RAM16(address) (*(uint16_t *)&s32_board.shared_ram[(address) & 0x1fff])
 #define SOUND_ROM8(address)  (s32_board.sound_rom[(address)])

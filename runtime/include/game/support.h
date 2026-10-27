@@ -37,8 +37,26 @@ extern "C" {
 /* Functions that stop the game: the C compiler knows they do not come back */
 #if defined(_MSC_VER)
 #define GAME_NORETURN __declspec(noreturn)
-#else
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #define GAME_NORETURN _Noreturn
+#elif defined(__SNC__) || defined(__GNUC__) || defined(__clang__)
+#define GAME_NORETURN __attribute__((noreturn))
+#else
+#define GAME_NORETURN
+#endif
+
+#ifndef _Static_assert
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+/* Built-in in C11 */
+#elif defined(__cplusplus) && __cplusplus >= 201103L
+#define _Static_assert(cond, msg) static_assert(cond, msg)
+#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#define _Static_assert(cond, msg) static_assert(cond, msg)
+#else
+#define SONIC_CONCAT_IMPL(a, b) a##b
+#define SONIC_CONCAT(a, b) SONIC_CONCAT_IMPL(a, b)
+#define _Static_assert(cond, msg) typedef char SONIC_CONCAT(static_assert_, __LINE__)[(cond) ? 1 : -1]
+#endif
 #endif
 
 /* a structure pointer that is not in work RAM: in the program ROM (a link left at 0 in an object a

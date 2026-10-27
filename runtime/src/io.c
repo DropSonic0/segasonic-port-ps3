@@ -66,7 +66,13 @@ static void eeprom_log(const char *what, int address, uint32_t value)
 	static int enabled = -1;
 
 	if (enabled < 0)
+	{
+#if defined(__CELLOS_LV2__) || defined(__SNC__)
+		enabled = 0;
+#else
 		enabled = getenv("S32_LOG_EEPROM") != NULL;
+#endif
+	}
 	if (enabled)
 		fprintf(stderr, "eeprom %s %02X %04X frame %llu\n", what, address, value,
 		        (unsigned long long)s32_board.frame);

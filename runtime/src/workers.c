@@ -35,6 +35,14 @@ typedef CondVar pool_signal;
 #define WAIT(signal, lock) condvarWait(signal, lock)
 #define WAKE_ALL(signal) condvarWakeAll(signal)
 #define WAKE(signal) condvarWakeOne(signal)
+#elif defined(__CELLOS_LV2__) || defined(__SNC__)
+typedef int pool_lock;
+typedef int pool_signal;
+#define LOCK(lock) (void)(lock)
+#define UNLOCK(lock) (void)(lock)
+#define WAIT(signal, lock) (void)(signal)
+#define WAKE_ALL(signal) (void)(signal)
+#define WAKE(signal) (void)(signal)
 #else
 #include <pthread.h>
 typedef pthread_mutex_t pool_lock;
@@ -126,6 +134,10 @@ static void *worker_entry(void *number)
 
 void s32_workers_start(int count)
 {
+#if defined(__CELLOS_LV2__) || defined(__SNC__)
+	(void)count;
+	return;
+#else
 	if (pool.count > 0 || count <= 0)
 		return;
 	if (count > WORKERS_MOST)
@@ -165,6 +177,7 @@ void s32_workers_start(int count)
 #endif
 		pool.count++;
 	}
+#endif
 }
 
 int s32_workers_count(void)
