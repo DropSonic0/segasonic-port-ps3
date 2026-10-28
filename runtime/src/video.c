@@ -33,6 +33,7 @@
 #include <ppu_intrinsics.h>
 #include <sys/sys_time.h>
 #include <stdio.h>
+#include <stdlib.h>
 #endif
 
 #define WIDTH   S32_VIDEO_MAX_WIDTH
@@ -105,6 +106,9 @@ typedef struct sprite_drawing
 	int color;
 	int transparent_bits;       /* an indirect color with all these bits set is transparent */
 	uint16_t table[16];
+	bool one_to_one;            /* sin zoom: un pen es un pixel */
+	int lut_mid[16];            /* el pixel de cada pen (-1: transparente) lejos de los extremos de la palabra */
+	int lut_end[16];            /* lo mismo para el primer y el último pen de la palabra */
 } sprite_drawing;
 
 static struct
@@ -122,11 +126,31 @@ static struct
 	layer layers[LAYERS];                   /* the sprites' entry is unused: they have their own buffers */
 	uint16_t sprites[2][HEIGHT][WIDTH];     /* frame buffers: one is shown, the list draws into the other */
 	int shown_sprites;
-	uint32_t frame[HEIGHT][WIDTH];
+	uint32_t frame[HEIGHT][WIDTH] __attribute__((aligned(128)));
 	clip_runs runs;
 } video;
 
 static const uint16_t transparent_row[WIDTH] = { 0 };
+static uint32_t palette_argb[0x4000];   /* la paleta ya convertida a ARGB, una vez por frame */
+static uint8_t *tile_pens;   /* por tile: 16 filas x 16 pens, 1 byte cada uno */
+
+static void decode_tiles(void)
+{
+	static const uint8_t byte_of_column[16] = { 0, 0, 2, 2, 1, 1, 3, 3, 4, 4, 6, 6, 5, 5, 7, 7 };
+
+	free(tile_pens);
+	tile_pens = video.tile_count ? (uint8_t *)malloc((size_t)video.tile_count * 256) : NULL;
+	if (tile_pens == NULL)
+		return;     /* sin memoria: queda el camino lento de siempre */
+	for (uint32_t tile = 0; tile < video.tile_count; tile++)
+	for (int y = 0; y < 16; y++)
+	for (int x = 0; x < 16; x++)
+	{
+		const uint8_t value = video.tiles[(size_t)tile * 128 + y * 8 + byte_of_column[x]];
+
+		tile_pens[(size_t)tile * 256 + y * 16 + x] = (x & 1) ? (value & 0x0f) : (value >> 4);
+	}
+}
 
 /* ---- the board's memories ---- */
 
@@ -173,7 +197,11 @@ static uint16_t sprite_word(uint32_t index)
 
 static uint32_t big_endian_word(const uint8_t *at)
 {
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	return *(const uint32_t *)at;    /* la PPU ya es big-endian */
+#else
 	return (uint32_t)at[0] << 24 | (uint32_t)at[1] << 16 | (uint32_t)at[2] << 8 | at[3];
+#endif
 }
 
 static void clip_area(area *target, const area *bounds)
@@ -457,6 +485,99 @@ static void draw_row(layer *out, int y, const uint16_t *runs, bool drawn, pixel_
 	out->empty[y] = transparent == video.visible.right + 1 - video.visible.left;
 }
 
+/* Una fila de tilemap sin zoom: copia celda por celda en vez de pixel por pixel */
+static unsigned fill_tile_row(uint16_t *out, int left, int right, const int *pages, int bank, int line,
+	int column, int step)
+{
+	const uint32_t cell_row = (uint32_t)(line >> 4) << 5;
+	unsigned seen = 0;
+	int x = left;
+
+	column &= 0xfff;
+	while (x <= right)
+	{
+		const int in_cell = column & 15;
+		int count = step > 0 ? 16 - in_cell : in_cell + 1;
+		const uint32_t index = (uint32_t)pages[(column >> 9) & 1] << 9 | cell_row | (uint32_t)((column >> 4) & 31);
+		const uint16_t cell = own_cell_marks && own_cell_marks[index] ? own_cell_words[index] : video_word(index);
+		uint32_t tile = (uint32_t)bank << 13 | (cell & 0x1fff);
+		const int tile_line = (cell & 0x8000) ? 15 - (line & 15) : (line & 15);
+		const unsigned palette = (unsigned)((cell >> 4) & 0x1ff) << 4;
+		const int dir = (cell & 0x4000) ? -step : step;
+		int at = (cell & 0x4000) ? 15 - in_cell : in_cell;
+		const uint8_t *pens;
+
+		if (tile >= video.tile_count)
+			tile %= video.tile_count;
+		pens = &tile_pens[(size_t)tile * 256 + tile_line * 16];
+		if (count > right - x + 1)
+			count = right - x + 1;
+		for (int i = 0; i < count; i++, at += dir)
+		{
+			const unsigned pen = pens[at];
+			const unsigned value = (palette | pen) & (0u - ((pen + 15) >> 4));   /* pen 0 -> 0 */
+
+			out[x + i] = (uint16_t)value;
+			seen |= value;
+		}
+		x += count;
+		column = (column + step * count) & 0xfff;
+	}
+	return seen;
+}
+
+static bool runs_in_order(const uint16_t *runs)
+{
+	for (;; runs++)
+	{
+		if (runs[1] < runs[0])
+			return false;
+		if (runs[1] > video.visible.right)
+			return true;
+	}
+}
+
+/* Borra lo que las ventanas de recorte dejan afuera; dice si borró algo */
+static bool clip_filled_row(uint16_t *pixels, const uint16_t *runs, bool drawn)
+{
+	bool clipped = false;
+
+	for (;; runs++, drawn = !drawn)
+	{
+		const int end = runs[1] < WIDTH ? runs[1] : WIDTH;
+
+		if (!drawn && end > runs[0])
+		{
+			memset(&pixels[runs[0]], 0, (size_t)(end - runs[0]) * sizeof(uint16_t));
+			clipped = true;
+		}
+		if (runs[1] > video.visible.right)
+			break;
+	}
+	return clipped;
+}
+
+static void draw_tile_row(layer *out, int y, const uint16_t *runs, bool drawn, const int *pages, int bank,
+	int line, int column, int step, pixel_source slow, const void *slow_row)
+{
+	uint16_t *pixels = out->pixels[y];
+	unsigned seen;
+
+	if (tile_pens == NULL || !runs_in_order(runs))
+	{
+		draw_row(out, y, runs, drawn, slow, slow_row);    /* el camino de siempre */
+		return;
+	}
+	seen = fill_tile_row(pixels, video.visible.left, video.visible.right, pages, bank, line, column, step);
+	if (clip_filled_row(pixels, runs, drawn))
+	{
+		seen = 0;
+		for (int x = video.visible.left; x <= video.visible.right; x++)
+			seen |= pixels[x];
+	}
+	out->empty[y] = seen == 0;
+}
+
 /* ---- the layers ---- */
 
 /* The four pages of tilemap 0-3 (upper left, upper right, lower left, lower right) and its tile bank */
@@ -529,7 +650,12 @@ static void draw_zoomed_rows(void *context, int first, int last)
 			zoomed->x_start, zoomed->x_step, { -1, NULL, 0, false }
 		};
 
-		draw_row(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
+		if (zoomed->x_step == 0x100000u || zoomed->x_step == 0u - 0x100000u)
+			draw_tile_row(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
+			zoomed->first_drawn, row.pages, row.bank, row.line, (int)(row.x_start >> 20),
+			zoomed->x_step == 0x100000u ? 1 : -1, zoomed_pixel, &row);
+		else
+			draw_row(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
 			zoomed->first_drawn, zoomed_pixel, &row);
 	}
 }
@@ -646,8 +772,8 @@ static void draw_scrolled_rows(void *context, int first, int last)
 		row.bank = scrolled->bank;
 		row.line = source_y & 0xff;
 		row.cache.key = -1;
-		draw_row(&video.layers[LAYER_NBG0 + scrolled->number], y, video.runs.lists[video.runs.list_of_row[y]],
-			scrolled->first_drawn, scrolled_pixel, &row);
+		draw_tile_row(&video.layers[LAYER_NBG0 + scrolled->number], y, video.runs.lists[video.runs.list_of_row[y]],
+			scrolled->first_drawn, row.pages, row.bank, row.line, row.x_start, row.x_step, scrolled_pixel, &row);
 	}
 }
 
@@ -991,6 +1117,44 @@ static void draw_sprite_row(const sprite_drawing *sprite, bool from_ram, uint32_
 	}
 }
 
+/* Una fila de sprite sin zoom (4 bits por pen): igual que draw_sprite_row, pero con los colores ya resueltos */
+static void draw_sprite_row_1to1(const sprite_drawing *sprite, bool from_ram, uint32_t bank, uint32_t address,
+	int x, int x_end, int x_delta, int end_pen)
+{
+	const int clip_left = sprite->inside->left;
+	const int clip_right = sprite->inside->right;
+	const bool leave_alone = sprite->outside_row;
+	const int alone_left = sprite->outside->left;
+	const int alone_right = sprite->outside->right;
+	const bool shadow = sprite->shadow;
+	uint16_t *const row = sprite->row;
+
+	while (x != x_end)
+	{
+		const uint32_t word = sprite_graphics(from_ram, bank, address++);
+		int pen = 0;
+
+		for (int index = 0; index < 8 && x != x_end; index++, x += x_delta)
+		{
+			const int *lut = (index == 0 || index == 7) ? sprite->lut_end : sprite->lut_mid;
+			int pixel;
+
+			pen = (int)(word >> (28 - 4 * index)) & 15;
+			pixel = lut[pen];
+			if (pixel >= 0 && x >= clip_left && x <= clip_right
+				&& !(leave_alone && x >= alone_left && x <= alone_right))
+			{
+				if (!shadow)
+					row[x] = (uint16_t)pixel;
+				else
+					row[x] &= 0x7fff;
+			}
+		}
+		if (end_pen != 0 && pen == 15)
+			break;
+	}
+}
+
 /* A sprite entry (8 words): flags, source height and width, screen height (and bank bits), screen
 width, y, x, the graphics' offset in the bank, and the color. Hands back how many more entries it
 takes: an indirect table kept in the list takes two. */
@@ -1070,6 +1234,26 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 	x_zoom = (((sprite.bits8 ? 4 : 8) * source_width) << 16) / width;
 	y_zoom = (source_height << 16) / height;
 
+	sprite.one_to_one = !sprite.bits8 && x_zoom == 0x10000;
+	if (sprite.one_to_one)
+	{
+		for (int pen = 0; pen < 16; pen++)
+		{
+			int pixel;
+
+			if (!sprite.indirect)
+				pixel = pen != 0 ? (sprite.color | pen) : -1;
+			else
+			{
+				pixel = sprite.table[pen];
+				if ((pixel & sprite.transparent_bits) == sprite.transparent_bits)
+					pixel = -1;
+			}
+			sprite.lut_end[pen] = pen != end_pen ? pixel : -1;
+			sprite.lut_mid[pen] = pen != 0 ? pixel : -1;
+		}
+	}
+
 	/* place it: the list's offset, then its alignment (0 or 3 centered, 1 by the far edge, 2 by the near) */
 	x = sign_extend(sprite_word(entry + 5), 12) + (bit(flags, 4) ? x_offset : 0) + video.sprite_side;
 	y = sign_extend(sprite_word(entry + 4), 12) + (bit(flags, 5) ? y_offset : 0);
@@ -1123,7 +1307,10 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 		{
 			sprite.row = video.sprites[video.shown_sprites ^ 1][row];
 			sprite.outside_row = row >= outside->top && row <= outside->bottom;
-			draw_sprite_row(&sprite, from_ram, bank, address, x, x_end, x_delta, x_zoom, end_pen);
+			if (sprite.one_to_one)
+				draw_sprite_row_1to1(&sprite, from_ram, bank, address, x, x_end, x_delta, end_pen);
+			else
+				draw_sprite_row(&sprite, from_ram, bank, address, x, x_end, x_delta, x_zoom, end_pen);
 		}
 		/* the zoom steps through the source rows */
 		y_accumulator += y_zoom;
@@ -1357,9 +1544,51 @@ static void mix_rows(void *context, int first, int last)
 		rows[LAYER_SPRITES] = video.sprites[video.shown_sprites][sprite_y];
 		rows[LAYER_BACKDROP] = video.layers[LAYER_BACKDROP].pixels[y];
 
+		const mix_layer *fast_entries[8];
+		const uint16_t *fast_rows[8];
+		int fast_count = 0;
+		bool fast = true;
+
+		for (const mix_layer *entry = frame->orders[grouping.mask];; entry++)
+		{
+			const int *offs;
+
+			if (entry->index == LAYER_SPRITES)
+				continue;
+			if (entry->index != LAYER_BACKDROP && video.layers[entry->index].empty[y])
+				continue;
+			offs = frame->offsets[entry->offsets];
+			if (entry->blend != 0 || (offs[0] | offs[1] | offs[2]) != 0)
+				fast = false;
+			fast_entries[fast_count] = entry;
+			fast_rows[fast_count++] = entry->index == LAYER_BACKDROP
+				? video.layers[LAYER_BACKDROP].pixels[y] : video.layers[entry->index].pixels[y];
+			if (entry->index == LAYER_BACKDROP)
+				break;
+		}
+
 		for (int x = video.visible.left; x <= video.visible.right; x++, sprite_x += sprite_dx)
 		{
 			const int sprite_pixel = rows[LAYER_SPRITES][sprite_x];
+			if (fast && sprite_pixel == 0xffff)
+			{
+				const mix_layer *top = fast_entries[fast_count - 1];
+				int pixel = fast_rows[fast_count - 1][x] & 0x1fff;
+
+				for (int k = 0; k < fast_count - 1; k++)
+				{
+					const int value = fast_rows[k][x] & 0x1fff;
+
+					if (value)
+					{
+						pixel = value;
+						top = fast_entries[k];
+						break;
+					}
+				}
+				video.frame[y][x] = palette_argb[(top->palette_base + ((pixel >> top->shift) & 0xfff0) + (pixel & 0x0f)) & 0x3fff];
+				continue;
+			}
 			const int group = (sprite_pixel >> grouping.shift) & grouping.mask;
 			int shadow = 0;
 			int pixel;
@@ -1495,6 +1724,29 @@ static void mix(int drawn)
 		sprites->sprite_blend = 0;
 		sprites->offsets = color_offsets(bit(mixer_register(0x3e), 6), bit(sprite_control, 15));
 	}
+	for (int i = 0; i < 0x4000; i++)
+	{
+		const uint16_t c = s32_board.palette[i];
+
+		palette_argb[i] = 0xFF000000u | (uint32_t)(c & 0x1f) << 19 | (uint32_t)((c >> 5) & 0x1f) << 11
+			| (uint32_t)((c >> 10) & 0x1f) << 3;
+	}
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	{
+		static unsigned mix_debug;
+
+		if (++mix_debug % 120 == 0)
+		{
+			const mix_layer *shown = orders[grouping.mask];
+
+			printf("[mixdbg] blending=%d factor=%d shadow=%d off0=%d,%d,%d off1=%d,%d,%d |", blending, frame.blend_factor,
+				frame.shadow_mask != 0, offsets[0][0], offsets[0][1], offsets[0][2], offsets[1][0], offsets[1][1], offsets[1][2]);
+			for (int i = 0; i <= count; i++)
+				printf(" L%d(b%02x,o%d)", shown[i].index, shown[i].blend, shown[i].offsets);
+			printf("\n");
+		}
+	}
+#endif
 	s32_workers_rows(mix_rows, &frame, video.visible.top, video.visible.bottom);
 }
 
@@ -1579,6 +1831,7 @@ void s32_video_init(const uint8_t *tiles, size_t tiles_size, const uint8_t *spri
 	video.sprite_rom = sprites;
 	video.sprite_rom_words = (uint32_t)(sprites_size / 4);
 	video.sprite_banks = video.sprite_rom_words >> 20;
+	decode_tiles();
 	video.visible.right = 319;
 	video.visible.bottom = HEIGHT - 1;
 	s32_board.sprites_due = s32_video_sprites;

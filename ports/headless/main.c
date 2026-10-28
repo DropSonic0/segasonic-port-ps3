@@ -50,6 +50,10 @@
 #include <PSGL/psglu.h>
 #include <cell/pad.h>
 #include <cell/audio.h>
+#include <cell/sysmodule.h>
+#ifndef CELL_SYSMODULE_AUDIO
+#define CELL_SYSMODULE_AUDIO 0x000a
+#endif
 #endif
 
 #include <inttypes.h>
@@ -288,6 +292,7 @@ static CellPadData last_ps3_pads[3];
 static uint32_t last_ps3_held[3] = { 0 };
 
 #define PS3_OUTPUT_RATE 48000
+#define PS3_AUDIO_BLOCK_SAMPLES 256
 static const double PS3_FM_RATE = S32_SOUND_CLOCK / 144.0;
 static const double PS3_PCM_RATE = S32_PCM_CLOCK / 384.0;
 
@@ -301,6 +306,8 @@ typedef struct ps3_resampler
 } ps3_resampler;
 
 static ps3_resampler ps3_chips[3];
+static float ps3_audio_accum[4096 * 2];
+static size_t ps3_audio_accum_count = 0;
 
 static void ps3_get_save_path(const char *filename, char *out_path, size_t size)
 {
@@ -498,21 +505,46 @@ static void ps3_graphics_init(void)
 
 static void ps3_audio_init(void)
 {
-	if (cellAudioInit() == CELL_OK || cellAudioInit() == CELL_AUDIO_ERROR_ALREADY_INIT)
+	int sys_res = cellSysmoduleLoadModule(CELL_SYSMODULE_AUDIO);
+	printf("[ps3_audio] cellSysmoduleLoadModule(CELL_SYSMODULE_AUDIO) = %d (0x%x)\n", sys_res, sys_res);
+
+	int init_res = cellAudioInit();
+	printf("[ps3_audio] cellAudioInit = %d (0x%x)\n", init_res, init_res);
+
+	if (init_res == CELL_OK || init_res == CELL_AUDIO_ERROR_ALREADY_INIT)
 	{
 		CellAudioPortParam portParam;
 		memset(&portParam, 0, sizeof(portParam));
 		portParam.nChannel = CELL_AUDIO_PORT_2CH;
-		portParam.nBlock = 8;
+		portParam.nBlock = 16;
 		portParam.attr = 0;
-		if (cellAudioPortOpen(&portParam, &ps3_audio_port) == CELL_OK)
+		int open_res = cellAudioPortOpen(&portParam, &ps3_audio_port);
+		printf("[ps3_audio] cellAudioPortOpen = %d (0x%x), ps3_audio_port = %u\n", open_res, open_res, ps3_audio_port);
+		if (open_res == CELL_OK)
 		{
-			cellAudioPortStart(ps3_audio_port);
+			static float initial_silence[PS3_AUDIO_BLOCK_SAMPLES * 2 * 2] = { 0 };
+			cellAudioAdd2chData(ps3_audio_port, initial_silence, PS3_AUDIO_BLOCK_SAMPLES * 2, 1.0f);
+			int start_res = cellAudioPortStart(ps3_audio_port);
+			printf("[ps3_audio] cellAudioPortStart = %d (0x%x)\n", start_res, start_res);
 			cellAudioSetPortLevel(ps3_audio_port, 1.0f);
 		}
 	}
 	ps3_chips[0].step = ps3_chips[1].step = PS3_FM_RATE / PS3_OUTPUT_RATE;
 	ps3_chips[2].step = PS3_PCM_RATE / PS3_OUTPUT_RATE;
+}
+
+static void ps3_copy_row(uint32_t *destination, const uint32_t *source, int pixels)
+{
+	if ((((uintptr_t)destination | (uintptr_t)source) & 15) == 0)
+	{
+		const vector unsigned int *from = (const vector unsigned int *)source;
+		vector unsigned int *to = (vector unsigned int *)destination;
+
+		for (int i = 0; i < pixels / 4; i++)
+			to[i] = from[i];
+	}
+	else
+		memcpy(destination, source, (size_t)pixels * sizeof(uint32_t));
 }
 
 static void ps3_draw_picture(const uint32_t *source, int width)
@@ -533,7 +565,7 @@ static void ps3_draw_picture(const uint32_t *source, int width)
 	if (destination)
 	{
 		for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
-			memcpy(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
+			ps3_copy_row(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], width);
 	}
 	t2 = __mftb();
 	if (destination)
@@ -615,10 +647,15 @@ static void ps3_graphics_render_frame(void)
 
 static void ps3_audio_render_frame(void)
 {
-	static float floatBuffer[PS3_OUTPUT_RATE / 60 * 2];
+	static uint64_t audio_frames = 0;
 	size_t made = 0;
 
-	if (ps3_audio_port == 0xFFFFFFFF) return;
+	if (ps3_audio_port == 0xFFFFFFFF)
+	{
+		if (++audio_frames % 300 == 1)
+			printf("[ps3_audio] audio port not initialized!\n");
+		return;
+	}
 
 	s32_board.time_passes(s32_board.cycles);
 	sound_chips_end_frame(s32_board.cycles);
@@ -630,7 +667,7 @@ static void ps3_audio_render_frame(void)
 		ps3_resampler_keep(&ps3_chips[chip], samples, count);
 	}
 
-	while (made < PS3_OUTPUT_RATE / 60)
+	while (made < PS3_OUTPUT_RATE / 60 && ps3_audio_accum_count < 4096)
 	{
 		double fm0[2], fm1[2], pcm[2];
 
@@ -643,25 +680,52 @@ static void ps3_audio_render_frame(void)
 		ps3_resampler_sample_at(&ps3_chips[1], ps3_chips[1].position, fm1);
 		ps3_resampler_sample_at(&ps3_chips[2], ps3_chips[2].position, pcm);
 
+		double vol = 1.0;
+#ifdef SEGASONIC_CONSOLE
+		vol = console_window_settings.volume / 5.0;
+#endif
+
 		for (int side = 0; side < 2; side++)
 		{
-			double value = 0.30 * (fm0[side] + fm1[side]) + 0.40 * pcm[side];
+			double value = vol * (0.30 * (fm0[side] + fm1[side]) + 0.40 * pcm[side]);
 			float fval = (float)(value / 32768.0);
 			if (fval > 1.0f) fval = 1.0f;
 			if (fval < -1.0f) fval = -1.0f;
-			floatBuffer[made * 2 + side] = fval;
+			ps3_audio_accum[ps3_audio_accum_count * 2 + side] = fval;
 		}
 
 		for (int chip = 0; chip < 3; chip++)
 			ps3_chips[chip].position += ps3_chips[chip].step;
+		ps3_audio_accum_count++;
 		made++;
 	}
 
 	for (int chip = 0; chip < 3; chip++)
 		ps3_resampler_drop_used(&ps3_chips[chip]);
 
-	if (made > 0)
-		cellAudioAdd2chData(ps3_audio_port, floatBuffer, (uint32_t)made, 1.0f);
+	int last_res = 0;
+	unsigned sent_blocks = 0;
+	while (ps3_audio_accum_count >= PS3_AUDIO_BLOCK_SAMPLES)
+	{
+		int res = cellAudioAdd2chData(ps3_audio_port, ps3_audio_accum, PS3_AUDIO_BLOCK_SAMPLES, 1.0f);
+		last_res = res;
+		if (res != CELL_OK)
+		{
+			break;
+		}
+		sent_blocks++;
+		ps3_audio_accum_count -= PS3_AUDIO_BLOCK_SAMPLES;
+		if (ps3_audio_accum_count > 0)
+		{
+			memmove(ps3_audio_accum, ps3_audio_accum + PS3_AUDIO_BLOCK_SAMPLES * 2, ps3_audio_accum_count * 2 * sizeof(float));
+		}
+	}
+
+	if (++audio_frames % 180 == 0)
+	{
+		printf("[ps3_audio] frame=%" PRIu64 " made=%zu accum=%zu sent_blocks=%u last_add_res=%d sound_reqs=%u\n",
+			audio_frames, made, ps3_audio_accum_count, sent_blocks, last_res, s32_board.sound_requests);
+	}
 }
 
 static void ps3_pad_update(void)
@@ -695,15 +759,15 @@ static void ps3_pad_update(void)
 		int rstickY = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_RIGHT_Y] & 0xFF) - 128;
 
 		int roll_x = 0, roll_y = 0;
-		if (abs(stickX) > 20) roll_x += (stickX > 0) ? (stickX - 20) / 8 : (stickX + 20) / 8;
-		if (abs(stickY) > 20) roll_y += (stickY > 0) ? (stickY - 20) / 8 : (stickY + 20) / 8;
-		if (abs(rstickX) > 20) roll_x += (rstickX > 0) ? (rstickX - 20) / 8 : (rstickX + 20) / 8;
-		if (abs(rstickY) > 20) roll_y += (rstickY > 0) ? (rstickY - 20) / 8 : (rstickY + 20) / 8;
+		if (abs(stickX) > 20) roll_x -= (stickX > 0) ? (stickX - 20) * 30 / 107 : (stickX + 20) * 30 / 107;
+		if (abs(stickY) > 20) roll_y += (stickY > 0) ? (stickY - 20) * 30 / 107 : (stickY + 20) * 30 / 107;
+		if (abs(rstickX) > 20) roll_x -= (rstickX > 0) ? (rstickX - 20) * 30 / 107 : (rstickX + 20) * 30 / 107;
+		if (abs(rstickY) > 20) roll_y += (rstickY > 0) ? (rstickY - 20) * 30 / 107 : (rstickY + 20) * 30 / 107;
 
-		if (digital1 & CELL_PAD_CTRL_UP) { held |= ACTION_BIT(ACTION_UP); roll_y -= 8; }
-		if (digital1 & CELL_PAD_CTRL_DOWN) { held |= ACTION_BIT(ACTION_DOWN); roll_y += 8; }
-		if (digital1 & CELL_PAD_CTRL_LEFT) { held |= ACTION_BIT(ACTION_LEFT); roll_x -= 8; }
-		if (digital1 & CELL_PAD_CTRL_RIGHT) { held |= ACTION_BIT(ACTION_RIGHT); roll_x += 8; }
+		if (digital1 & CELL_PAD_CTRL_UP) { held |= ACTION_BIT(ACTION_UP); roll_y -= 30; }
+		if (digital1 & CELL_PAD_CTRL_DOWN) { held |= ACTION_BIT(ACTION_DOWN); roll_y += 30; }
+		if (digital1 & CELL_PAD_CTRL_LEFT) { held |= ACTION_BIT(ACTION_LEFT); roll_x += 30; }
+		if (digital1 & CELL_PAD_CTRL_RIGHT) { held |= ACTION_BIT(ACTION_RIGHT); roll_x -= 30; }
 
 		s32_board.input.trackball_x[p] = (uint16_t)(s32_board.input.trackball_x[p] + roll_x);
 		s32_board.input.trackball_y[p] = (uint16_t)(s32_board.input.trackball_y[p] + roll_y);
@@ -868,7 +932,8 @@ static void ps3_run_pause(void)
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
 static uint64_t prof_gfx, prof_audio, prof_emul, prof_last_end;
-static unsigned prof_frames;
+static unsigned prof_frames, prof_skipped;
+static uint64_t prof_start;
 #endif
 
 #if (defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)) && defined(SEGASONIC_CONSOLE)
@@ -885,11 +950,29 @@ static void ps3_timed_frame_shown(void)
 	{
 		ps3_picture_skipped = true;
 		skipped_last = true;
+		prof_skipped++;
 		return;
 	}
 	ps3_picture_skipped = false;
 	skipped_last = false;
 	console_draw_frame();
+}
+#endif
+
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+/* Espera hasta el próximo tick de 1/60 s: el juego no corre más rápido que eso */
+static void ps3_limit_frame(void)
+{
+	static uint64_t next_frame_time;
+	const uint64_t period = (uint64_t)sys_time_get_timebase_frequency() / 60;
+	const uint64_t now = __mftb();
+
+	if (next_frame_time == 0 || now > next_frame_time + period * 4)
+		next_frame_time = now;      /* primera vez, o muy atrasado: empezar de nuevo */
+	next_frame_time += period;
+	while (__mftb() < next_frame_time)
+	{
+	}
 }
 #endif
 
@@ -927,13 +1010,19 @@ static void on_frame_done(void)
 	if (++prof_frames == 60)
 	{
 		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
+		const uint64_t now = __mftb();
+		const double seconds = prof_start ? (double)(now - prof_start) / (double)sys_time_get_timebase_frequency() : 0.0;
 
-		printf("[prof] emul+video=%.2f gfx=%.2f audio=%.2f ms/frame\n",
-			(double)prof_emul * ms, (double)prof_gfx * ms, (double)prof_audio * ms);
+		printf("[prof] emul+video=%.2f gfx=%.2f audio=%.2f ms/frame fps=%.1f skipped=%u/60\n",
+			(double)prof_emul * ms, (double)prof_gfx * ms, (double)prof_audio * ms,
+			seconds > 0.0 ? 60.0 / seconds : 0.0, prof_skipped);
+		prof_start = now;
+		prof_skipped = 0;
 		prof_gfx = prof_audio = prof_emul = 0;
 		prof_frames = 0;
 	}
 	prof_last_end = __mftb();
+	ps3_limit_frame();
 #endif
 	if (hashes)
 		fprintf(hashes, "%" PRIu64 " %016" PRIx64 "\n", program_frames() - 1, s32_state_hash());

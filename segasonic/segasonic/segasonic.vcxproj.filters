@@ -112,6 +112,7 @@
     <ClCompile Include="cpp_wrappers\video_video.cpp" />
     <ClCompile Include="cpp_wrappers\console.cpp" />
     <ClCompile Include="cpp_wrappers\game.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_cpu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />

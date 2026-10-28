@@ -93,7 +93,9 @@
     <ClCompile Include="..\..\runtime\src\script.c" />
     <ClCompile Include="..\..\runtime\src\sound.c" />
     <ClCompile Include="..\..\runtime\src\sound_chips.c" />
-    <ClCompile Include="..\..\runtime\src\sound_cpu.c" />
+    <ClCompile Include="..\..\runtime\src\sound_cpu.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\runtime\src\video.c" />
     <ClCompile Include="..\..\runtime\src\workers.c" />
     <ClCompile Include="..\..\runtime\src\ym3438.c" />
@@ -262,6 +264,7 @@
     <ClCompile Include="cpp_wrappers\scenes_ranking.cpp" />
     <ClCompile Include="cpp_wrappers\scenes_ring_tally.cpp" />
     <ClCompile Include="cpp_wrappers\scenes_title.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_cpu.cpp" />
     <ClCompile Include="cpp_wrappers\sound_main.cpp" />
     <ClCompile Include="cpp_wrappers\sound_midi.cpp" />
     <ClCompile Include="cpp_wrappers\sound_sequences.cpp" />

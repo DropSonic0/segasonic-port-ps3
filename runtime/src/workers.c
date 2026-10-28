@@ -71,20 +71,31 @@ static struct
 	void *context;
 	int first;
 	int last;
+	int next;                /* the first row nobody has taken yet */
 #ifdef __SWITCH__
 	Thread threads[WORKERS_MOST];
 #endif
 } pool;
 
 /* Band 'band' of 'bands' of rows first..last */
-static void run_band(s32_rows_work work, void *context, int first, int last, int band, int bands)
-{
-	const int rows = last - first + 1;
-	const int from = first + rows * band / bands;
-	const int to = first + rows * (band + 1) / bands - 1;
+#define CHUNK_ROWS 8
 
-	if (from <= to)
-		work(context, from, to);
+/* Takes chunks of rows, one after another, until none are left: a slower thread ends up taking fewer */
+static void run_chunks(s32_rows_work work, void *context, int first, int last)
+{
+	(void)first;
+	for (;;)
+	{
+		int from;
+
+		LOCK(&pool.lock);
+		from = pool.next;
+		pool.next += CHUNK_ROWS;
+		UNLOCK(&pool.lock);
+		if (from > last)
+			return;
+		work(context, from, from + CHUNK_ROWS - 1 < last ? from + CHUNK_ROWS - 1 : last);
+	}
 }
 
 static void worker_loop(int number)
@@ -107,7 +118,7 @@ static void worker_loop(int number)
 		last = pool.last;
 		UNLOCK(&pool.lock);
 
-		run_band(work, context, first, last, number + 1, pool.count + 1);
+		run_chunks(work, context, first, last);
 
 		LOCK(&pool.lock);
 		if (++pool.done == pool.count)
@@ -219,12 +230,13 @@ void s32_workers_rows(s32_rows_work work, void *context, int first, int last)
 	pool.context = context;
 	pool.first = first;
 	pool.last = last;
+	pool.next = first;
 	pool.done = 0;
 	pool.job++;
 	WAKE_ALL(&pool.job_ready);
 	UNLOCK(&pool.lock);
 
-	run_band(work, context, first, last, 0, pool.count + 1);
+	run_chunks(work, context, first, last);
 
 	LOCK(&pool.lock);
 	while (pool.done < pool.count)

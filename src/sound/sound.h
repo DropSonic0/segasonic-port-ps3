@@ -1,14 +1,14 @@
 /**
- *    Name:        sound.h
- *    Description: the sound program's ports, variables, tables, structures and functions
- *    Version:     0.1.0
- *    Created:     13-10-2026
- *    Modified:    23-10-2026
- *    Author:      Sebastian Toyos
- *
- *    SegaSonic The Hedgehog (arcade, Sega System 32): the Z80 sound program decompiled into C by
- *    tools/decompile_sound.py, with the names of sound_symbols.txt.
- */
+*    Name:        sound.h
+*    Description: the sound program's ports, variables, tables, structures and functions
+*    Version:     0.1.0
+*    Created:     13-10-2026
+*    Modified:    23-10-2026
+*    Author:      Sebastian Toyos
+*
+*    SegaSonic The Hedgehog (arcade, Sega System 32): the Z80 sound program decompiled into C by
+*    tools/decompile_sound.py, with the names of sound_symbols.txt.
+*/
 #ifndef SONIC_SOUND_H
 #define SONIC_SOUND_H
 
@@ -20,7 +20,7 @@ extern "C" {
 
 #ifndef _Static_assert
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-/* Built-in in C11 */
+	/* Built-in in C11 */
 #elif defined(__cplusplus) && __cplusplus >= 201103L
 #define _Static_assert(cond, msg) static_assert(cond, msg)
 #elif defined(_MSC_VER) && _MSC_VER >= 1600
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 #endif
 
-/* the board's I/O ports the program uses */
+	/* the board's I/O ports the program uses */
 #define FM1_ADDRESS 0x80u
 #define FM1_DATA 0x81u
 #define FM1_PART2_ADDRESS 0x82u
@@ -53,7 +53,7 @@ extern "C" {
 #define MIDI_USART_DATA 0xF0u
 #define MIDI_USART_CONTROL 0xF1u
 
-/* the sound program's variables, in the RAM it shares with the V60 (E000-FFFF) */
+	/* the sound program's variables, in the RAM it shares with the V60 (E000-FFFF) */
 #define midi_in_message_length_ADDRESS 0xE000u
 #define midi_in_message_length SOUND_RAM8(midi_in_message_length_ADDRESS)
 #define midi_in_bytes_left_ADDRESS 0xE001u
@@ -165,7 +165,7 @@ extern "C" {
 #define sound_cpu_hold_ADDRESS 0xFFFFu
 #define sound_cpu_hold SOUND_RAM8(sound_cpu_hold_ADDRESS)
 
-/* data in the program ROM the code reads */
+	/* data in the program ROM the code reads */
 #define pcm_channel_bits_ADDRESS 0x06F1u
 #define pcm_channel_bits ((const uint8_t *)sound_rom_at(pcm_channel_bits_ADDRESS))
 #define part_templates_ADDRESS 0x1594u
@@ -189,13 +189,13 @@ extern "C" {
 #define pcm_sample_headers_ADDRESS 0x6429u
 #define pcm_sample_headers SOUND_ROM16(pcm_sample_headers_ADDRESS)
 
-/* the sample bank's window and the RF5C68 (read and written through the bus) */
+	/* the sample bank's window and the RF5C68 (read and written through the bus) */
 #define ROM_BANK_WINDOW 0xA000u
 #define PCM_CONTROL 0xC007u
 #define PCM_WAVE_WINDOW 0xD000u
 #define PCM_SILENT_LOOP 0xD2BCu
 
-/* data in the program ROM sound_symbols.txt labels */
+	/* data in the program ROM sound_symbols.txt labels */
 #define unused_fm_fnum_tables_below_ADDRESS 0x1364u
 #define unused_velocity_curve_0_ADDRESS 0x1AFEu
 #define unused_velocity_curve_1_ADDRESS 0x1B7Eu
@@ -469,228 +469,228 @@ extern "C" {
 #define unlisted_sound_61a1_ADDRESS 0x61A1u
 #define unlisted_sound_61c3_ADDRESS 0x61C3u
 
-/* the sound program's structures in the shared RAM */
+	/* the sound program's structures in the shared RAM */
 #pragma pack(push, 1)
-struct fm_voice
-{
-	uint8_t flags;
-	uint8_t chip_channel;
-	uint8_t note;
-	uint8_t midi_channel;
-	uint8_t pad_04[0x1];
-	uint8_t level;
-	uint8_t pad_06[0x1];
-	uint8_t vibrato_delay;
-	uint8_t vibrato_wait;
-	uint8_t vibrato_range;
-	uint8_t vibrato_depth;
-	uint8_t vibrato_rise;
-	uint8_t vibrato_fall;
-	uint8_t vibrato_phase;
-	uint8_t vibrato_rate;
-	union
+	struct fm_voice
 	{
-		uint16_t vibrato_offset;
-		uint8_t vibrato_offset_low;
-		struct
+		uint8_t flags;
+		uint8_t chip_channel;
+		uint8_t note;
+		uint8_t midi_channel;
+		uint8_t pad_04[0x1];
+		uint8_t level;
+		uint8_t pad_06[0x1];
+		uint8_t vibrato_delay;
+		uint8_t vibrato_wait;
+		uint8_t vibrato_range;
+		uint8_t vibrato_depth;
+		uint8_t vibrato_rise;
+		uint8_t vibrato_fall;
+		uint8_t vibrato_phase;
+		uint8_t vibrato_rate;
+		union
 		{
-			uint8_t pad_0F[0x1];
-			uint8_t vibrato_offset_high;
+			u16le vibrato_offset;
+			uint8_t vibrato_offset_low;
+			struct
+			{
+				uint8_t pad_0F[0x1];
+				uint8_t vibrato_offset_high;
+			};
+		};
+		uint8_t vibrato_block;
+	};
+
+	struct midi_part
+	{
+		uint8_t flags;
+		uint8_t midi_channel;
+		uint8_t volume;
+		uint8_t program;
+		int8_t transpose;
+		int8_t fm_detune;
+		uint8_t pad_06[0x2];
+		uint8_t effective_volume;
+	};
+
+	struct sample_voice
+	{
+		uint8_t flags;
+		uint8_t chip_channel;
+		uint8_t note;
+		uint8_t midi_channel;
+		uint8_t pad_04[0x1];
+		uint8_t level;
+		uint8_t allocation_order;
+		uint8_t sample_bank_high;
+		uint8_t sample_bank_low;
+		uint8_t wave_page;
+		uint8_t source_page;
+		uint8_t header_bank_step;
+		uint8_t header_address_low;
+		uint8_t header_address_high;
+		u16le pitch_step;
+		union
+		{
+			u16le stream_position;
+			uint8_t stream_position_low;
+			struct
+			{
+				uint8_t pad_10[0x1];
+				uint8_t stream_position_high;
+			};
 		};
 	};
-	uint8_t vibrato_block;
-};
 
-struct midi_part
-{
-	uint8_t flags;
-	uint8_t midi_channel;
-	uint8_t volume;
-	uint8_t program;
-	int8_t transpose;
-	int8_t fm_detune;
-	uint8_t pad_06[0x2];
-	uint8_t effective_volume;
-};
-
-struct sample_voice
-{
-	uint8_t flags;
-	uint8_t chip_channel;
-	uint8_t note;
-	uint8_t midi_channel;
-	uint8_t pad_04[0x1];
-	uint8_t level;
-	uint8_t allocation_order;
-	uint8_t sample_bank_high;
-	uint8_t sample_bank_low;
-	uint8_t wave_page;
-	uint8_t source_page;
-	uint8_t header_bank_step;
-	uint8_t header_address_low;
-	uint8_t header_address_high;
-	uint16_t pitch_step;
-	union
+	struct sequence_player
 	{
-		uint16_t stream_position;
-		uint8_t stream_position_low;
-		struct
+		uint8_t flags;
+		uint8_t pad_01[0x1];
+		union
 		{
-			uint8_t pad_10[0x1];
-			uint8_t stream_position_high;
+			u16le position;
+			uint8_t position_low;
+			struct
+			{
+				uint8_t pad_02[0x1];
+				uint8_t position_high;
+			};
+		};
+		uint8_t pad_04[0x2];
+		union
+		{
+			u16le delta_time;
+			uint8_t delta_time_low;
+			struct
+			{
+				uint8_t pad_06[0x1];
+				uint8_t delta_time_high;
+			};
+		};
+		uint8_t pad_08[0x2];
+		uint8_t meta_51_value;
+		uint8_t pad_0B[0x9];
+		uint8_t running_status;
+		uint8_t fade_volume;
+		uint8_t pad_16[0x2];
+		uint8_t fade_speed;
+		uint8_t fade_wait;
+		uint8_t fade_channel_volume;
+		uint8_t bank;
+		uint8_t pad_1C[0x4];
+		union
+		{
+			u16le playlist;
+			uint8_t playlist_low;
+			struct
+			{
+				uint8_t pad_20[0x1];
+				uint8_t playlist_high;
+			};
+		};
+		uint8_t pad_22[0xDE];
+	};
+
+	struct instrument
+	{
+		uint8_t flags;
+		uint8_t sample_or_fm_patch;
+		uint8_t pad_02[0x1];
+		uint8_t pan;
+		int8_t detune;
+	};
+
+	struct drum_note
+	{
+		union
+		{
+			uint16_t pitch;
+			uint8_t pitch_low;
+			struct
+			{
+				uint8_t pad_00[0x1];
+				uint8_t pitch_high;
+			};
+		};
+		uint8_t pan;
+		uint8_t sample;
+	};
+
+	struct vibrato_preset
+	{
+		uint8_t delay;
+		uint8_t wait;
+		uint8_t range;
+		uint8_t depth;
+		uint8_t rise;
+		uint8_t fall;
+		uint8_t phase;
+	};
+
+	struct pcm_sample_header
+	{
+		uint8_t bank_high;
+		uint8_t bank_low;
+		uint8_t start_page;
+		uint8_t bank_step;
+		uint8_t address_low;
+		uint8_t address_high;
+	};
+
+	struct register_value_pair
+	{
+		uint8_t register_number;
+		uint8_t value;
+	};
+
+	struct sound_list
+	{
+		uint8_t last_number;
+	};
+
+	struct sound_header
+	{
+		uint8_t flags;
+		uint8_t first_song;
+	};
+
+	struct song_record
+	{
+		uint8_t flags;
+		uint8_t bank;
+		union
+		{
+			u16le sequence;
+			uint8_t sequence_low;
+			struct
+			{
+				uint8_t pad_02[0x1];
+				uint8_t sequence_high;
+			};
 		};
 	};
-};
 
-struct sequence_player
-{
-	uint8_t flags;
-	uint8_t pad_01[0x1];
-	union
+	struct effect_header
 	{
-		uint16_t position;
-		uint8_t position_low;
-		struct
-		{
-			uint8_t pad_02[0x1];
-			uint8_t position_high;
-		};
+		uint8_t flags;
+		uint8_t first_status;
 	};
-	uint8_t pad_04[0x2];
-	union
-	{
-		uint16_t delta_time;
-		uint8_t delta_time_low;
-		struct
-		{
-			uint8_t pad_06[0x1];
-			uint8_t delta_time_high;
-		};
-	};
-	uint8_t pad_08[0x2];
-	uint8_t meta_51_value;
-	uint8_t pad_0B[0x9];
-	uint8_t running_status;
-	uint8_t fade_volume;
-	uint8_t pad_16[0x2];
-	uint8_t fade_speed;
-	uint8_t fade_wait;
-	uint8_t fade_channel_volume;
-	uint8_t bank;
-	uint8_t pad_1C[0x4];
-	union
-	{
-		uint16_t playlist;
-		uint8_t playlist_low;
-		struct
-		{
-			uint8_t pad_20[0x1];
-			uint8_t playlist_high;
-		};
-	};
-	uint8_t pad_22[0xDE];
-};
-
-struct instrument
-{
-	uint8_t flags;
-	uint8_t sample_or_fm_patch;
-	uint8_t pad_02[0x1];
-	uint8_t pan;
-	int8_t detune;
-};
-
-struct drum_note
-{
-	union
-	{
-		uint16_t pitch;
-		uint8_t pitch_low;
-		struct
-		{
-			uint8_t pad_00[0x1];
-			uint8_t pitch_high;
-		};
-	};
-	uint8_t pan;
-	uint8_t sample;
-};
-
-struct vibrato_preset
-{
-	uint8_t delay;
-	uint8_t wait;
-	uint8_t range;
-	uint8_t depth;
-	uint8_t rise;
-	uint8_t fall;
-	uint8_t phase;
-};
-
-struct pcm_sample_header
-{
-	uint8_t bank_high;
-	uint8_t bank_low;
-	uint8_t start_page;
-	uint8_t bank_step;
-	uint8_t address_low;
-	uint8_t address_high;
-};
-
-struct register_value_pair
-{
-	uint8_t register_number;
-	uint8_t value;
-};
-
-struct sound_list
-{
-	uint8_t last_number;
-};
-
-struct sound_header
-{
-	uint8_t flags;
-	uint8_t first_song;
-};
-
-struct song_record
-{
-	uint8_t flags;
-	uint8_t bank;
-	union
-	{
-		uint16_t sequence;
-		uint8_t sequence_low;
-		struct
-		{
-			uint8_t pad_02[0x1];
-			uint8_t sequence_high;
-		};
-	};
-};
-
-struct effect_header
-{
-	uint8_t flags;
-	uint8_t first_status;
-};
 
 #pragma pack(pop)
 
-_Static_assert(sizeof(struct fm_voice) == 0x12, "struct fm_voice has the size of the game's blocks");
-_Static_assert(sizeof(struct midi_part) == 0x9, "struct midi_part has the size of the game's blocks");
-_Static_assert(sizeof(struct sample_voice) == 0x12, "struct sample_voice has the size of the game's blocks");
-_Static_assert(sizeof(struct sequence_player) == 0x100, "struct sequence_player has the size of the game's blocks");
-_Static_assert(sizeof(struct instrument) == 0x5, "struct instrument has the size of the program ROM's records");
-_Static_assert(sizeof(struct drum_note) == 0x4, "struct drum_note has the size of the program ROM's records");
-_Static_assert(sizeof(struct vibrato_preset) == 0x7, "struct vibrato_preset has the size of the program ROM's records");
-_Static_assert(sizeof(struct pcm_sample_header) == 0x6, "struct pcm_sample_header has the size of the program ROM's records");
-_Static_assert(sizeof(struct register_value_pair) == 0x2, "struct register_value_pair has the size of the program ROM's records");
-_Static_assert(sizeof(struct sound_list) == 0x1, "struct sound_list has the size of the program ROM's records");
-_Static_assert(sizeof(struct sound_header) == 0x2, "struct sound_header has the size of the program ROM's records");
-_Static_assert(sizeof(struct song_record) == 0x4, "struct song_record has the size of the program ROM's records");
-_Static_assert(sizeof(struct effect_header) == 0x2, "struct effect_header has the size of the program ROM's records");
+	_Static_assert(sizeof(struct fm_voice) == 0x12, "struct fm_voice has the size of the game's blocks");
+	_Static_assert(sizeof(struct midi_part) == 0x9, "struct midi_part has the size of the game's blocks");
+	_Static_assert(sizeof(struct sample_voice) == 0x12, "struct sample_voice has the size of the game's blocks");
+	_Static_assert(sizeof(struct sequence_player) == 0x100, "struct sequence_player has the size of the game's blocks");
+	_Static_assert(sizeof(struct instrument) == 0x5, "struct instrument has the size of the program ROM's records");
+	_Static_assert(sizeof(struct drum_note) == 0x4, "struct drum_note has the size of the program ROM's records");
+	_Static_assert(sizeof(struct vibrato_preset) == 0x7, "struct vibrato_preset has the size of the program ROM's records");
+	_Static_assert(sizeof(struct pcm_sample_header) == 0x6, "struct pcm_sample_header has the size of the program ROM's records");
+	_Static_assert(sizeof(struct register_value_pair) == 0x2, "struct register_value_pair has the size of the program ROM's records");
+	_Static_assert(sizeof(struct sound_list) == 0x1, "struct sound_list has the size of the program ROM's records");
+	_Static_assert(sizeof(struct sound_header) == 0x2, "struct sound_header has the size of the program ROM's records");
+	_Static_assert(sizeof(struct song_record) == 0x4, "struct song_record has the size of the program ROM's records");
+	_Static_assert(sizeof(struct effect_header) == 0x2, "struct effect_header has the size of the program ROM's records");
 
 #define FM_VOICE(address) ((struct fm_voice *)sound_ram_at(address))
 #define MIDI_PART(address) ((struct midi_part *)sound_ram_at(address))
@@ -703,20 +703,20 @@ _Static_assert(sizeof(struct effect_header) == 0x2, "struct effect_header has th
 #define REGISTER_VALUE_PAIR(address) ((const struct register_value_pair *)sound_rom_at(address))
 #define VOICE_CHIP_CODES(address) ((const uint8_t *)sound_rom_at(address))
 #define NOTE_LEVELS(address) ((const uint8_t *)sound_rom_at(address))
-#define FM_FNUMBERS(address) ((const uint16_t *)sound_rom_at(address))
-#define FM_FNUMBER_RUNS(address) ((const uint16_t *)sound_rom_at(address))
-#define PCM_PITCH_STEPS(address) ((const uint16_t *)sound_rom_at(address))
-#define PCM_PITCH_RUNS(address) ((const uint16_t *)sound_rom_at(address))
+#define FM_FNUMBERS(address) ((const u16le *)sound_rom_at(address))
+#define FM_FNUMBER_RUNS(address) ((const u16le *)sound_rom_at(address))
+#define PCM_PITCH_STEPS(address) ((const u16le *)sound_rom_at(address))
+#define PCM_PITCH_RUNS(address) ((const u16le *)sound_rom_at(address))
 #define FM_REGISTER_NUMBERS(address) ((const uint8_t *)sound_rom_at(address))
 #define FM_PATCH_BYTES(address) ((const uint8_t *)sound_rom_at(address))
 #define PLAYLIST_BYTES(address) ((const uint8_t *)sound_rom_at(address))
-#define TABLE_WORDS(address) ((const uint16_t *)sound_rom_at(address))
+#define TABLE_WORDS(address) ((const u16le *)sound_rom_at(address))
 #define SOUND_LIST(address) ((const struct sound_list *)sound_rom_at(address))
 #define SOUND_HEADER(address) ((const struct sound_header *)sound_rom_at(address))
 #define SONG_RECORD(address) ((const struct song_record *)sound_rom_at(address))
 #define EFFECT_HEADER(address) ((const struct effect_header *)sound_rom_at(address))
 
-/* the program ROM's tables of records, by name: name[i].field */
+	/* the program ROM's tables of records, by name: name[i].field */
 #define fm_global_init_ADDRESS 0x0273u
 #define fm_global_init ((const struct register_value_pair *)sound_rom_at(fm_global_init_ADDRESS))
 #define fm_operator_init_ADDRESS 0x0289u
@@ -730,83 +730,83 @@ _Static_assert(sizeof(struct effect_header) == 0x2, "struct effect_header has th
 #define fm_level_registers_ADDRESS 0x1360u
 #define fm_level_registers ((const uint8_t *)sound_rom_at(fm_level_registers_ADDRESS))
 #define fm_fnum_tables_ADDRESS 0x137Cu
-#define fm_fnum_tables ((const uint16_t *)sound_rom_at(fm_fnum_tables_ADDRESS))
+#define fm_fnum_tables ((const u16le *)sound_rom_at(fm_fnum_tables_ADDRESS))
 #define velocity_levels_ADDRESS 0x1BFEu
 #define velocity_levels ((const uint8_t *)sound_rom_at(velocity_levels_ADDRESS))
 #define pcm_pitch_tables_ADDRESS 0x1E96u
-#define pcm_pitch_tables ((const uint16_t *)sound_rom_at(pcm_pitch_tables_ADDRESS))
+#define pcm_pitch_tables ((const u16le *)sound_rom_at(pcm_pitch_tables_ADDRESS))
 #define FM_VOICE_ADDRESS(n) (0xE490u + (n) * 0x12u)    /* the 12 of them, from 0 */
 #define MIDI_PART_ADDRESS(n) (0xE300u + (n) * 0x9u)    /* the 13 of them, from 0 */
 #define SAMPLE_VOICE_ADDRESS(n) (0xE400u + (n) * 0x12u)    /* the 8 of them, from 0 */
 #define SEQUENCE_PLAYER_ADDRESS(n) (0xE900u + (n) * 0x100u)    /* the 8 of them, from 0 */
 
-/* main.c: the sound program's frame: the reset, the timer interrupt (the players' tick), the main loop and sound_init; the two YM3438 and the RF5C68 set up and written; the tracks' and MIDI parts' start values; read_table_word, multiply_bytes, copy_sample_page */
-void sound_reset(void);
-void sound_irq(void);
-void sound_main_loop(void);
-void sound_init(uint8_t unused_c);
-uint16_t init_fm_chips(void);
-uint8_t write_fm_global(uint8_t fm_register, uint8_t value);
-void write_fm_channel(uint8_t fm_register, uint8_t value);
-void write_fm1(uint8_t fm_register, uint8_t value);
-void write_fm1_part2(uint8_t fm_register, uint8_t value);
-void write_fm2(uint8_t fm_register, uint8_t value);
-void write_fm2_part2(uint8_t fm_register, uint8_t value);
-void init_pcm_chip(uint32_t unused_c);
-void write_pcm_register(uint8_t pcm_register, uint8_t register_value);
-void init_track_channels(uint32_t unused_c);
-void init_pcm_tracks(void);
-void init_midi_parts(void);
-uint16_t read_table_word(uint16_t table, uint8_t index);
-uint16_t multiply_bytes(uint16_t factor, uint16_t value);
-void copy_sample_page(uint16_t *p_wave_address, uint16_t *p_sample_address);
+	/* main.c: the sound program's frame: the reset, the timer interrupt (the players' tick), the main loop and sound_init; the two YM3438 and the RF5C68 set up and written; the tracks' and MIDI parts' start values; read_table_word, multiply_bytes, copy_sample_page */
+	void sound_reset(void);
+	void sound_irq(void);
+	void sound_main_loop(void);
+	void sound_init(uint8_t unused_c);
+	uint16_t init_fm_chips(void);
+	uint8_t write_fm_global(uint8_t fm_register, uint8_t value);
+	void write_fm_channel(uint8_t fm_register, uint8_t value);
+	void write_fm1(uint8_t fm_register, uint8_t value);
+	void write_fm1_part2(uint8_t fm_register, uint8_t value);
+	void write_fm2(uint8_t fm_register, uint8_t value);
+	void write_fm2_part2(uint8_t fm_register, uint8_t value);
+	void init_pcm_chip(uint32_t unused_c);
+	void write_pcm_register(uint8_t pcm_register, uint8_t register_value);
+	void init_track_channels(uint32_t unused_c);
+	void init_pcm_tracks(void);
+	void init_midi_parts(void);
+	uint16_t read_table_word(uint16_t table, uint8_t index);
+	uint16_t multiply_bytes(uint16_t factor, uint16_t value);
+	void copy_sample_page(uint16_t *p_wave_address, uint16_t *p_sample_address);
 
-/* midi.c: the MIDI messages of the queue for each part on their channel: note on and off, pitch bend, control and program changes, picking a sample voice, retuning, FM modulation; the unused MIDI port on an 8251 USART (ports F0 and F1) */
-void handle_midi_message(void);
-void skip_midi_data(uint8_t first_byte);
-void play_midi_message(uint8_t message_byte, uint16_t part);
-void scan_drum_note_voices(uint16_t note_and_velocity, uint16_t part);
-void allocate_sample_voice(uint8_t note_velocity, uint16_t part);
-void note_off(uint16_t part);
-uint16_t retune_voice(uint16_t loop_count, uint16_t part, uint16_t voice);
-void update_fm_modulation(uint16_t *p_loop_count, uint16_t *p_voice);
-void read_midi_byte(uint16_t *p_byte_copy, uint16_t *p_queue_slot, uint8_t *p_byte);
-void receive_midi_byte(void);
-void receive_midi_byte_spare_return_1(void);
-void receive_midi_byte_spare_return_2(void);
-void send_midi_byte(uint8_t midi_byte);
-void reset_midi_errors(void);
-void init_midi_port(void);
+	/* midi.c: the MIDI messages of the queue for each part on their channel: note on and off, pitch bend, control and program changes, picking a sample voice, retuning, FM modulation; the unused MIDI port on an 8251 USART (ports F0 and F1) */
+	void handle_midi_message(void);
+	void skip_midi_data(uint8_t first_byte);
+	void play_midi_message(uint8_t message_byte, uint16_t part);
+	void scan_drum_note_voices(uint16_t note_and_velocity, uint16_t part);
+	void allocate_sample_voice(uint8_t note_velocity, uint16_t part);
+	void note_off(uint16_t part);
+	uint16_t retune_voice(uint16_t loop_count, uint16_t part, uint16_t voice);
+	void update_fm_modulation(uint16_t *p_loop_count, uint16_t *p_voice);
+	void read_midi_byte(uint16_t *p_byte_copy, uint16_t *p_queue_slot, uint8_t *p_byte);
+	void receive_midi_byte(void);
+	void receive_midi_byte_spare_return_1(void);
+	void receive_midi_byte_spare_return_2(void);
+	void send_midi_byte(uint8_t midi_byte);
+	void reset_midi_errors(void);
+	void init_midi_port(void);
 
-/* sequences.c: the sequence players stepped at every tick (their events into the MIDI queue, the playlist commands) and the V60's sound commands (songs and sequences started on players, volume fades) */
-void sequence_tick(void);
-void playlist_command(uint16_t queue_pointer, uint16_t player, uint16_t mailbox_page, uint16_t *p_playlist, uint8_t *p_playlist_byte);
-void step_player_if_playing(uint16_t player_address, uint16_t mailbox_page);
-void step_player(uint16_t player_address, uint16_t mailbox_page);
-uint8_t chain_next_event(uint16_t player, uint8_t data_byte);
-void clear_player_end_flag(uint16_t mailbox_page);
-void poll_sound_command(void);
-void start_song(uint16_t player, uint8_t song_number);
-void start_sequence(uint16_t header, uint16_t player);
-uint16_t find_lowest_player(uint16_t player_field);
-void select_channel_player(uint16_t *p_header, uint16_t *p_player);
-uint16_t clear_player(uint16_t player);
-void fade_music_volume(uint16_t mailbox_page);
-void fade_player_volume(uint16_t queue_pointer, uint16_t player, uint16_t mailbox_page);
-uint16_t next_sequence_byte(uint16_t cursor, uint16_t player);
+	/* sequences.c: the sequence players stepped at every tick (their events into the MIDI queue, the playlist commands) and the V60's sound commands (songs and sequences started on players, volume fades) */
+	void sequence_tick(void);
+	void playlist_command(uint16_t queue_pointer, uint16_t player, uint16_t mailbox_page, uint16_t *p_playlist, uint8_t *p_playlist_byte);
+	void step_player_if_playing(uint16_t player_address, uint16_t mailbox_page);
+	void step_player(uint16_t player_address, uint16_t mailbox_page);
+	uint8_t chain_next_event(uint16_t player, uint8_t data_byte);
+	void clear_player_end_flag(uint16_t mailbox_page);
+	void poll_sound_command(void);
+	void start_song(uint16_t player, uint8_t song_number);
+	void start_sequence(uint16_t header, uint16_t player);
+	uint16_t find_lowest_player(uint16_t player_field);
+	void select_channel_player(uint16_t *p_header, uint16_t *p_player);
+	uint16_t clear_player(uint16_t player);
+	void fade_music_volume(uint16_t mailbox_page);
+	void fade_player_volume(uint16_t queue_pointer, uint16_t player, uint16_t mailbox_page);
+	uint16_t next_sequence_byte(uint16_t cursor, uint16_t player);
 
-/* voices.c: the voices: the RF5C68's sample voices (starting a sample, refilling its pages, stopping it) and the YM3438's FM voices (note off, release with the sustain pedal, volumes, patches, the vibrato) */
-void start_pcm_sample(uint16_t voice);
-void refill_pcm_voice(void);
-void stop_pcm_voice(uint16_t voice);
-void fm_note_off(uint16_t *p_de, uint16_t *p_saved_channel, uint8_t *p_a);
-uint8_t stop_fm_voice(uint16_t voice);
-void release_held_fm_voice(uint16_t voice);
-void apply_fm_music_volume(uint8_t chip_channel, uint16_t level, uint16_t part);
-void apply_fm_channel_volume(uint8_t chip_channel, uint16_t level, uint16_t part);
-void load_fm_patch(uint16_t *p_channel_in_part, uint16_t *p_register_list, uint16_t *p_patch_data);
-void step_fm_vibrato(uint16_t voice);
-uint16_t load_fixed_fm_frequency(void);
+	/* voices.c: the voices: the RF5C68's sample voices (starting a sample, refilling its pages, stopping it) and the YM3438's FM voices (note off, release with the sustain pedal, volumes, patches, the vibrato) */
+	void start_pcm_sample(uint16_t voice);
+	void refill_pcm_voice(void);
+	void stop_pcm_voice(uint16_t voice);
+	void fm_note_off(uint16_t *p_de, uint16_t *p_saved_channel, uint8_t *p_a);
+	uint8_t stop_fm_voice(uint16_t voice);
+	void release_held_fm_voice(uint16_t voice);
+	void apply_fm_music_volume(uint8_t chip_channel, uint16_t level, uint16_t part);
+	void apply_fm_channel_volume(uint8_t chip_channel, uint16_t level, uint16_t part);
+	void load_fm_patch(uint16_t *p_channel_in_part, uint16_t *p_register_list, uint16_t *p_patch_data);
+	void step_fm_vibrato(uint16_t voice);
+	uint16_t load_fixed_fm_frequency(void);
 
 #ifdef __cplusplus
 }
