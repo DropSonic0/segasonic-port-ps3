@@ -1,0 +1,1 @@
+#include "../../runtime/src/game.c"

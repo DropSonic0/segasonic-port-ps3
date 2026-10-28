@@ -110,6 +110,8 @@
     <ClCompile Include="cpp_wrappers\video_shapes.cpp" />
     <ClCompile Include="cpp_wrappers\video_text.cpp" />
     <ClCompile Include="cpp_wrappers\video_video.cpp" />
+    <ClCompile Include="cpp_wrappers\console.cpp" />
+    <ClCompile Include="cpp_wrappers\game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />

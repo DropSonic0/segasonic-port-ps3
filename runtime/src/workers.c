@@ -36,13 +36,16 @@ typedef CondVar pool_signal;
 #define WAKE_ALL(signal) condvarWakeAll(signal)
 #define WAKE(signal) condvarWakeOne(signal)
 #elif defined(__CELLOS_LV2__) || defined(__SNC__)
-typedef int pool_lock;
-typedef int pool_signal;
-#define LOCK(lock) (void)(lock)
-#define UNLOCK(lock) (void)(lock)
-#define WAIT(signal, lock) (void)(signal)
-#define WAKE_ALL(signal) (void)(signal)
-#define WAKE(signal) (void)(signal)
+#include <sys/ppu_thread.h>
+#include <sys/synchronization.h>
+#include <sys/return_code.h>
+typedef sys_lwmutex_t pool_lock;
+typedef sys_lwcond_t pool_signal;
+#define LOCK(lock) sys_lwmutex_lock(lock, 0)
+#define UNLOCK(lock) sys_lwmutex_unlock(lock)
+#define WAIT(signal, lock) sys_lwcond_wait(signal, 0)
+#define WAKE_ALL(signal) sys_lwcond_signal_all(signal)
+#define WAKE(signal) sys_lwcond_signal(signal)
 #else
 #include <pthread.h>
 typedef pthread_mutex_t pool_lock;
@@ -124,6 +127,12 @@ static void worker_entry(void *number)
 {
 	worker_loop((int)(intptr_t)number);
 }
+#elif defined(__CELLOS_LV2__) || defined(__SNC__)
+static void worker_entry(uint64_t number)
+{
+	worker_loop((int)number);
+	sys_ppu_thread_exit(0);
+}
 #else
 static void *worker_entry(void *number)
 {
@@ -134,10 +143,6 @@ static void *worker_entry(void *number)
 
 void s32_workers_start(int count)
 {
-#if defined(__CELLOS_LV2__) || defined(__SNC__)
-	(void)count;
-	return;
-#else
 	if (pool.count > 0 || count <= 0)
 		return;
 	if (count > WORKERS_MOST)
@@ -150,6 +155,19 @@ void s32_workers_start(int count)
 	mutexInit(&pool.lock);
 	condvarInit(&pool.job_ready);
 	condvarInit(&pool.job_done);
+#elif defined(__CELLOS_LV2__) || defined(__SNC__)
+	{
+		sys_lwmutex_attribute_t mutex_attribute;
+		sys_lwcond_attribute_t cond_attribute;
+
+		sys_lwmutex_attribute_initialize(mutex_attribute);
+		if (sys_lwmutex_create(&pool.lock, &mutex_attribute) != CELL_OK)
+			return;
+		sys_lwcond_attribute_initialize(cond_attribute);
+		if (sys_lwcond_create(&pool.job_ready, &pool.lock, &cond_attribute) != CELL_OK
+			|| sys_lwcond_create(&pool.job_done, &pool.lock, &cond_attribute) != CELL_OK)
+			return;
+	}
 #else
 	pthread_mutex_init(&pool.lock, NULL);
 	pthread_cond_init(&pool.job_ready, NULL);
@@ -168,6 +186,11 @@ void s32_workers_start(int count)
 		if (R_FAILED(threadCreate(&pool.threads[number], worker_entry, (void *)(intptr_t)number, NULL, 0x10000,
 			0x2C, 1 + number % 2)) || R_FAILED(threadStart(&pool.threads[number])))
 			break;
+#elif defined(__CELLOS_LV2__) || defined(__SNC__)
+		sys_ppu_thread_t thread;
+
+		if (sys_ppu_thread_create(&thread, worker_entry, (uint64_t)number, 1001, 0x20000, 0, "s32_worker") != CELL_OK)
+			break;
 #else
 		pthread_t thread;
 
@@ -177,7 +200,6 @@ void s32_workers_start(int count)
 #endif
 		pool.count++;
 	}
-#endif
 }
 
 int s32_workers_count(void)

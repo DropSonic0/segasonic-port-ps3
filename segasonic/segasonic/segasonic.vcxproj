@@ -182,9 +182,15 @@
     <ClCompile Include="..\..\src\sound\main.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\src\sound\midi.c" />
-    <ClCompile Include="..\..\src\sound\sequences.c" />
-    <ClCompile Include="..\..\src\sound\voices.c" />
+    <ClCompile Include="..\..\src\sound\midi.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sound\sequences.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sound\voices.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\stage\camera.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
@@ -227,10 +233,12 @@
     <ClCompile Include="..\..\src\video\video.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="cpp_wrappers\console.cpp" />
     <ClCompile Include="cpp_wrappers\engine_contacts.cpp" />
     <ClCompile Include="cpp_wrappers\engine_geometry.cpp" />
     <ClCompile Include="cpp_wrappers\engine_objects.cpp" />
     <ClCompile Include="cpp_wrappers\engine_sprites.cpp" />
+    <ClCompile Include="cpp_wrappers\game.cpp" />
     <ClCompile Include="cpp_wrappers\objects_eggman.cpp" />
     <ClCompile Include="cpp_wrappers\objects_intro.cpp" />
     <ClCompile Include="cpp_wrappers\objects_rings.cpp" />

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C++" {
+#endif
+
 /**
 *    Name:        le.h
 *    Description: the types the game's variables and structure fields are declared with (u16le, s16le,
@@ -78,4 +82,8 @@ typedef le_value<int32_t, uint32_t>  s32le;
 #error "S32_BIG_ENDIAN: the game's files must be compiled as C++ (game/le.h)"
 #endif
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

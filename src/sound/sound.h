@@ -12,6 +12,10 @@
 #ifndef SONIC_SOUND_H
 #define SONIC_SOUND_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "sound/support.h"
 
 #ifndef _Static_assert
@@ -804,4 +808,7 @@ void load_fm_patch(uint16_t *p_channel_in_part, uint16_t *p_register_list, uint1
 void step_fm_vibrato(uint16_t voice);
 uint16_t load_fixed_fm_frequency(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

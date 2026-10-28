@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  *    Name:        support.h
  *    Description: what the decompiled sound program uses besides its own C: its memory, the board's ports,
@@ -116,4 +119,8 @@ static inline uint32_t z80_overflow_sub16(uint32_t a, uint32_t b, uint32_t c)
 	return ((a ^ b) & (a ^ result)) >> 15 & 1u;
 }
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

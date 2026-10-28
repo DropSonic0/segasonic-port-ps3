@@ -9,6 +9,10 @@
 #ifndef SEGASONIC_CONSOLE_H
 #define SEGASONIC_CONSOLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "console_actions.h"
 
 #include <stdbool.h>
@@ -125,6 +129,11 @@ void console_pause_text(bool shown);
 
 /* The pause's choice in yellow from the next console_pause_text(true) */
 void console_pause_choice(int choice);
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

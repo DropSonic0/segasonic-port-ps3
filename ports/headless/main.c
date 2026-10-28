@@ -44,6 +44,8 @@
 #endif
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+#include <ppu_intrinsics.h>
+#include <sys/sys_time.h>
 #include <PSGL/psgl.h>
 #include <PSGL/psglu.h>
 #include <cell/pad.h>
@@ -273,7 +275,12 @@ static void write_levels(void)
 static bool ps3_graphics_initialized = false;
 static PSGLdevice* ps3_device = NULL;
 static PSGLcontext* ps3_context = NULL;
-static GLuint ps3_texture = 0;
+#define PS3_TEX_W 512
+#define PS3_TEX_H 256
+static GLuint ps3_textures[2] = { 0, 0 };
+static GLuint ps3_texture_buffers[2] = { 0, 0 };
+static int ps3_texture_index = 0;
+static bool ps3_picture_skipped = false;
 static uint32_t ps3_audio_port = 0xFFFFFFFF;
 static bool ps3_pad_initialized = false;
 static bool ps3_pause_requested = false;
@@ -467,13 +474,20 @@ static void ps3_graphics_init(void)
 	ps3_context = psglCreateContext();
 	psglMakeCurrent(ps3_context, ps3_device);
 
-	glGenTextures(1, &ps3_texture);
-	glBindTexture(GL_TEXTURE_2D, ps3_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, 512, 256, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, NULL);
+	glGenTextures(2, ps3_textures);
+	glGenBuffers(2, ps3_texture_buffers);
+	for (int i = 0; i < 2; i++)
+	{
+		glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[i]);
+		glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, PS3_TEX_W * PS3_TEX_H * 4, NULL, GL_STREAM_DRAW);
+
+		glBindTexture(GL_TEXTURE_2D, ps3_textures[i]);
+		glTextureReferenceSCE(GL_TEXTURE_2D, 1, PS3_TEX_W, PS3_TEX_H, 0, GL_ARGB_SCE, PS3_TEX_W * 4, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -501,33 +515,37 @@ static void ps3_audio_init(void)
 	ps3_chips[2].step = PS3_PCM_RATE / PS3_OUTPUT_RATE;
 }
 
-static void ps3_graphics_render_frame(void)
+static void ps3_draw_picture(const uint32_t *source, int width)
 {
-	static uint32_t ps3_frame_buffer[256][512];
-	int width = 0;
-	const uint32_t *pixels;
+	static uint64_t ticks_map, ticks_copy, ticks_unmap, ticks_draw;
+	static unsigned picture_frames;
 	GLuint deviceWidth = 1280, deviceHeight = 720;
+	GLint viewX = 0, viewY = 0, viewW, viewH;
+	uint32_t *destination;
+	float u1, v1;
+	uint64_t t0, t1, t2, t3, t4;
 
-	if (!ps3_graphics_initialized) return;
-	pixels = s32_video_frame(&width);
-	if (!pixels || width <= 0) return;
-
-	for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+	t0 = __mftb();
+	ps3_texture_index ^= 1;
+	glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[ps3_texture_index]);
+	destination = (uint32_t *)glMapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, GL_WRITE_ONLY);
+	t1 = __mftb();
+	if (destination)
 	{
-		memcpy(&ps3_frame_buffer[y][0], &pixels[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
+		for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+			memcpy(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
 	}
-
-	glBindTexture(GL_TEXTURE_2D, ps3_texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, ps3_frame_buffer);
+	t2 = __mftb();
+	if (destination)
+		glUnmapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE);
+	t3 = __mftb();
+	glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
 
 	psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
-
-	bool is_wide = (width > 320);
-	GLint viewX = 0, viewY = 0, viewW = (GLint)deviceWidth, viewH = (GLint)deviceHeight;
-
-	if (!is_wide)
+	viewW = (GLint)deviceWidth;
+	viewH = (GLint)deviceHeight;
+	if (width <= 320)
 	{
-		viewH = (GLint)deviceHeight;
 		viewW = (GLint)(viewH * (4.0f / 3.0f));
 		if (viewW > (GLint)deviceWidth)
 		{
@@ -537,7 +555,6 @@ static void ps3_graphics_render_frame(void)
 		viewX = ((GLint)deviceWidth - viewW) / 2;
 		viewY = ((GLint)deviceHeight - viewH) / 2;
 	}
-
 	glViewport(viewX, viewY, viewW, viewH);
 
 	glMatrixMode(GL_PROJECTION);
@@ -550,23 +567,49 @@ static void ps3_graphics_render_frame(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 
-	float u1 = (float)width / 512.0f;
-	float v1 = (float)S32_VIDEO_HEIGHT / 256.0f;
+	u1 = (float)width / (float)PS3_TEX_W;
+	v1 = (float)S32_VIDEO_HEIGHT / (float)PS3_TEX_H;
+	{
+		GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+		GLfloat texcoords[] = { 0.0f, v1, u1, v1, u1, 0.0f, 0.0f, 0.0f };
 
-	GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-	GLfloat texcoords[] = { 0.0f, v1, u1, v1, u1, 0.0f, 0.0f, 0.0f };
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glVertexPointer(2, GL_FLOAT, 0, vertices);
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(2, GL_FLOAT, 0, vertices);
+		glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	}
 	glDisable(GL_TEXTURE_2D);
+	t4 = __mftb();
 
+	ticks_map += t1 - t0;
+	ticks_copy += t2 - t1;
+	ticks_unmap += t3 - t2;
+	ticks_draw += t4 - t3;
+	if (++picture_frames == 60)
+	{
+		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
+
+		printf("[pic] map=%.2f copy=%.2f unmap=%.2f draw=%.2f ms/frame\n", (double)ticks_map * ms,
+			(double)ticks_copy * ms, (double)ticks_unmap * ms, (double)ticks_draw * ms);
+		ticks_map = ticks_copy = ticks_unmap = ticks_draw = 0;
+		picture_frames = 0;
+	}
+}
+
+static void ps3_graphics_render_frame(void)
+{
+	int width = 0;
+	const uint32_t *pixels;
+
+	if (!ps3_graphics_initialized) return;
+	if (ps3_picture_skipped) return;
+	pixels = s32_video_frame(&width);
+	if (!pixels || width <= 0) return;
+
+	ps3_draw_picture(pixels, width);
 	psglSwap();
 }
 
@@ -815,60 +858,7 @@ static void ps3_run_pause(void)
 
 		if (ps3_graphics_initialized)
 		{
-			static uint32_t ps3_pause_buffer[256][512];
-			GLuint deviceWidth = 1280, deviceHeight = 720;
-
-			for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
-			{
-				memcpy(&ps3_pause_buffer[y][0], &ps3_pause_picture[y * S32_VIDEO_MAX_WIDTH], (size_t)width * sizeof(uint32_t));
-			}
-
-			glBindTexture(GL_TEXTURE_2D, ps3_texture);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8, ps3_pause_buffer);
-
-			psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
-
-			GLint viewX = 0, viewY = 0, viewW = (GLint)deviceWidth, viewH = (GLint)deviceHeight;
-			if (width <= 320)
-			{
-				viewH = (GLint)deviceHeight;
-				viewW = (GLint)(viewH * (4.0f / 3.0f));
-				if (viewW > (GLint)deviceWidth)
-				{
-					viewW = (GLint)deviceWidth;
-					viewH = (GLint)(viewW * (3.0f / 4.0f));
-				}
-				viewX = ((GLint)deviceWidth - viewW) / 2;
-				viewY = ((GLint)deviceHeight - viewH) / 2;
-			}
-			glViewport(viewX, viewY, viewW, viewH);
-
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glOrthof(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_TEXTURE_2D);
-
-			float u1 = (float)width / 512.0f;
-			float v1 = (float)S32_VIDEO_HEIGHT / 256.0f;
-			GLfloat vertices[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-			GLfloat texcoords[] = { 0.0f, v1, u1, v1, u1, 0.0f, 0.0f, 0.0f };
-
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glVertexPointer(2, GL_FLOAT, 0, vertices);
-			glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-
-			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisable(GL_TEXTURE_2D);
-
+			ps3_draw_picture(ps3_pause_picture, width);
 			psglSwap();
 		}
 	}
@@ -876,11 +866,47 @@ static void ps3_run_pause(void)
 #endif
 #endif
 
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+static uint64_t prof_gfx, prof_audio, prof_emul, prof_last_end;
+static unsigned prof_frames;
+#endif
+
+#if (defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)) && defined(SEGASONIC_CONSOLE)
+static void ps3_timed_frame_shown(void)
+{
+	static uint64_t last_call;
+	static bool skipped_last;
+	const uint64_t now = __mftb();
+	const uint64_t frame_ticks = (uint64_t)sys_time_get_timebase_frequency() / 60;
+	const bool late = last_call != 0 && now - last_call > frame_ticks + frame_ticks / 8;
+
+	last_call = now;
+	if (late && !skipped_last && console_in_game())
+	{
+		ps3_picture_skipped = true;
+		skipped_last = true;
+		return;
+	}
+	ps3_picture_skipped = false;
+	skipped_last = false;
+	console_draw_frame();
+}
+#endif
+
 static void on_frame_done(void)
 {
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	const uint64_t t0 = __mftb();
+	uint64_t t1, t2;
+
+	if (prof_last_end)
+		prof_emul += t0 - prof_last_end;
 	ps3_graphics_render_frame();
+	t1 = __mftb();
 	ps3_audio_render_frame();
+	t2 = __mftb();
+	prof_gfx += t1 - t0;
+	prof_audio += t2 - t1;
 #ifdef SEGASONIC_CONSOLE
 	if (console_quit_requested())
 		longjmp(finished, 1);
@@ -898,6 +924,16 @@ static void on_frame_done(void)
 #endif
 	if (program_frames() % 600 == 0)
 		ps3_save_eeprom();
+	if (++prof_frames == 60)
+	{
+		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
+
+		printf("[prof] emul+video=%.2f gfx=%.2f audio=%.2f ms/frame\n",
+			(double)prof_emul * ms, (double)prof_gfx * ms, (double)prof_audio * ms);
+		prof_gfx = prof_audio = prof_emul = 0;
+		prof_frames = 0;
+	}
+	prof_last_end = __mftb();
 #endif
 	if (hashes)
 		fprintf(hashes, "%" PRIu64 " %016" PRIx64 "\n", program_frames() - 1, s32_state_hash());
@@ -1253,6 +1289,7 @@ int main(int argc, char **argv)
 #else
 	ps3_graphics_init();
 	ps3_audio_init();
+	s32_workers_start(1);
 	s32_board.sound_rom = game_sound;
 	sound_chips_attach();
 	sound_cpu_attach();
@@ -1260,7 +1297,7 @@ int main(int argc, char **argv)
 	console_jingle_program(0, -1);
 	console_prepare_sprites(game_sprites, GAME_SPRITES_SIZE, game_program);
 	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
-	s32_board.frame_shown = console_draw_frame;
+	s32_board.frame_shown = ps3_timed_frame_shown;
 	ps3_tell_console_settings();
 	ps3_load_eeprom();
 	ps3_load_times();
