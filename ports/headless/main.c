@@ -308,6 +308,13 @@ typedef struct ps3_resampler
 static ps3_resampler ps3_chips[3];
 static float ps3_audio_accum[4096 * 2];
 static size_t ps3_audio_accum_count = 0;
+#define PS3_AUDIO_TARGET_QUEUED 6    /* blocks to keep ahead of the port's read position */
+#define PS3_AUDIO_MAX_QUEUED 8       /* more than this (or 0) means the port overtook us */
+static float *ps3_audio_ring = NULL;
+static volatile uint64_t *ps3_audio_read_index = NULL;
+static uint32_t ps3_audio_blocks = 0;
+static uint32_t ps3_audio_write_block = 0;
+static unsigned ps3_audio_underruns = 0;
 
 static void ps3_get_save_path(const char *filename, char *out_path, size_t size)
 {
@@ -514,19 +521,31 @@ static void ps3_audio_init(void)
 	if (init_res == CELL_OK || init_res == CELL_AUDIO_ERROR_ALREADY_INIT)
 	{
 		CellAudioPortParam portParam;
+		CellAudioPortConfig portConfig;
+
 		memset(&portParam, 0, sizeof(portParam));
+		memset(&portConfig, 0, sizeof(portConfig));
 		portParam.nChannel = CELL_AUDIO_PORT_2CH;
-		portParam.nBlock = 16;
+		portParam.nBlock = CELL_AUDIO_BLOCK_16;
 		portParam.attr = 0;
 		int open_res = cellAudioPortOpen(&portParam, &ps3_audio_port);
 		printf("[ps3_audio] cellAudioPortOpen = %d (0x%x), ps3_audio_port = %u\n", open_res, open_res, ps3_audio_port);
 		if (open_res == CELL_OK)
 		{
-			static float initial_silence[PS3_AUDIO_BLOCK_SAMPLES * 2 * 2] = { 0 };
-			cellAudioAdd2chData(ps3_audio_port, initial_silence, PS3_AUDIO_BLOCK_SAMPLES * 2, 1.0f);
+			int cfg_res = cellAudioGetPortConfig(ps3_audio_port, &portConfig);
+			printf("[ps3_audio] cellAudioGetPortConfig = %d (0x%x) nChannel=%u nBlock=%u\n", cfg_res, cfg_res,
+				(unsigned)portConfig.nChannel, (unsigned)portConfig.nBlock);
+			if (cfg_res == CELL_OK && portConfig.nChannel == 2)
+			{
+				ps3_audio_ring = (float *)(uintptr_t)portConfig.portAddr;
+				ps3_audio_read_index = (volatile uint64_t *)(uintptr_t)portConfig.readIndexAddr;
+				ps3_audio_blocks = portConfig.nBlock;
+				memset(ps3_audio_ring, 0, (size_t)ps3_audio_blocks * PS3_AUDIO_BLOCK_SAMPLES * 2 * sizeof(float));
+			}
 			int start_res = cellAudioPortStart(ps3_audio_port);
 			printf("[ps3_audio] cellAudioPortStart = %d (0x%x)\n", start_res, start_res);
-			cellAudioSetPortLevel(ps3_audio_port, 1.0f);
+			if (ps3_audio_ring)
+				ps3_audio_write_block = ((uint32_t)(*ps3_audio_read_index % ps3_audio_blocks) + 3) % ps3_audio_blocks;
 		}
 	}
 	ps3_chips[0].step = ps3_chips[1].step = PS3_FM_RATE / PS3_OUTPUT_RATE;
@@ -649,8 +668,10 @@ static void ps3_audio_render_frame(void)
 {
 	static uint64_t audio_frames = 0;
 	size_t made = 0;
+	uint32_t queued = 0;
+	unsigned sent_blocks = 0;
 
-	if (ps3_audio_port == 0xFFFFFFFF)
+	if (ps3_audio_port == 0xFFFFFFFF || !ps3_audio_ring)
 	{
 		if (++audio_frames % 300 == 1)
 			printf("[ps3_audio] audio port not initialized!\n");
@@ -667,7 +688,7 @@ static void ps3_audio_render_frame(void)
 		ps3_resampler_keep(&ps3_chips[chip], samples, count);
 	}
 
-	while (made < PS3_OUTPUT_RATE / 60 && ps3_audio_accum_count < 4096)
+	while (made < PS3_OUTPUT_RATE / 60 && ps3_audio_accum_count < (sizeof(ps3_audio_accum) / (2 * sizeof(float)) - 1))
 	{
 		double fm0[2], fm1[2], pcm[2];
 
@@ -703,28 +724,48 @@ static void ps3_audio_render_frame(void)
 	for (int chip = 0; chip < 3; chip++)
 		ps3_resampler_drop_used(&ps3_chips[chip]);
 
-	int last_res = 0;
-	unsigned sent_blocks = 0;
-	while (ps3_audio_accum_count >= PS3_AUDIO_BLOCK_SAMPLES)
+	/* How many blocks are queued between the port's read position and ours */
 	{
-		int res = cellAudioAdd2chData(ps3_audio_port, ps3_audio_accum, PS3_AUDIO_BLOCK_SAMPLES, 1.0f);
-		last_res = res;
-		if (res != CELL_OK)
+		const uint32_t read_block = (uint32_t)(*ps3_audio_read_index % ps3_audio_blocks);
+
+		queued = (ps3_audio_write_block + ps3_audio_blocks - read_block) % ps3_audio_blocks;
+		if (queued == 0 || queued > PS3_AUDIO_MAX_QUEUED)
 		{
-			break;
+			/* the port overtook us (underrun): start again a few blocks ahead of it */
+			ps3_audio_underruns++;
+			ps3_audio_write_block = (read_block + 3) % ps3_audio_blocks;
+			queued = 3;
 		}
-		sent_blocks++;
+	}
+
+	while (queued < PS3_AUDIO_TARGET_QUEUED && ps3_audio_accum_count >= PS3_AUDIO_BLOCK_SAMPLES)
+	{
+		float *destination = ps3_audio_ring + (size_t)ps3_audio_write_block * PS3_AUDIO_BLOCK_SAMPLES * 2;
+
+		memcpy(destination, ps3_audio_accum, PS3_AUDIO_BLOCK_SAMPLES * 2 * sizeof(float));
+		ps3_audio_write_block = (ps3_audio_write_block + 1) % ps3_audio_blocks;
 		ps3_audio_accum_count -= PS3_AUDIO_BLOCK_SAMPLES;
-		if (ps3_audio_accum_count > 0)
-		{
-			memmove(ps3_audio_accum, ps3_audio_accum + PS3_AUDIO_BLOCK_SAMPLES * 2, ps3_audio_accum_count * 2 * sizeof(float));
-		}
+		memmove(ps3_audio_accum, ps3_audio_accum + PS3_AUDIO_BLOCK_SAMPLES * 2,
+			ps3_audio_accum_count * 2 * sizeof(float));
+		queued++;
+		sent_blocks++;
+	}
+	__lwsync();
+
+	/* Running faster than the port plays: drop the oldest samples to keep the latency bounded */
+	if (ps3_audio_accum_count > PS3_AUDIO_BLOCK_SAMPLES * 4)
+	{
+		const size_t keep = PS3_AUDIO_BLOCK_SAMPLES * 2;
+		const size_t drop = ps3_audio_accum_count - keep;
+
+		memmove(ps3_audio_accum, ps3_audio_accum + drop * 2, keep * 2 * sizeof(float));
+		ps3_audio_accum_count = keep;
 	}
 
 	if (++audio_frames % 180 == 0)
 	{
-		printf("[ps3_audio] frame=%" PRIu64 " made=%zu accum=%zu sent_blocks=%u last_add_res=%d sound_reqs=%u\n",
-			audio_frames, made, ps3_audio_accum_count, sent_blocks, last_res, s32_board.sound_requests);
+		printf("[ps3_audio] frame=%" PRIu64 " made=%zu accum=%zu sent_blocks=%u queued=%u underruns=%u sound_reqs=%u\n",
+			audio_frames, made, ps3_audio_accum_count, sent_blocks, queued, ps3_audio_underruns, s32_board.sound_requests);
 	}
 }
 
