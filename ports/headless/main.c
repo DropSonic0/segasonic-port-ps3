@@ -421,7 +421,7 @@ static void ps3_tell_console_settings(void)
 	console_window_settings.crt = false;
 	console_window_settings.wide = wide_video;
 	console_window_settings.volume = 5;
-	console_window_settings.title_music = 0;
+	console_window_settings.title_music = 1;
 	console_window_settings.continues = 3;
 	console_window_settings.changed = false;
 }
@@ -800,10 +800,12 @@ static void ps3_pad_update(void)
 		int rstickY = (int)(last_ps3_pads[p].button[CELL_PAD_BTN_OFFSET_ANALOG_RIGHT_Y] & 0xFF) - 128;
 
 		int roll_x = 0, roll_y = 0;
-		if (abs(stickX) > 20) roll_x -= (stickX > 0) ? (stickX - 20) * 30 / 107 : (stickX + 20) * 30 / 107;
-		if (abs(stickY) > 20) roll_y += (stickY > 0) ? (stickY - 20) * 30 / 107 : (stickY + 20) * 30 / 107;
-		if (abs(rstickX) > 20) roll_x -= (rstickX > 0) ? (rstickX - 20) * 30 / 107 : (rstickX + 20) * 30 / 107;
-		if (abs(rstickY) > 20) roll_y += (rstickY > 0) ? (rstickY - 20) * 30 / 107 : (rstickY + 20) * 30 / 107;
+		const int deadzone = 50;
+		const int range = 127 - deadzone;
+		if (abs(stickX) > deadzone) roll_x -= (stickX > 0) ? (stickX - deadzone) * 30 / range : (stickX + deadzone) * 30 / range;
+		if (abs(stickY) > deadzone) roll_y += (stickY > 0) ? (stickY - deadzone) * 30 / range : (stickY + deadzone) * 30 / range;
+		if (abs(rstickX) > deadzone) roll_x -= (rstickX > 0) ? (rstickX - deadzone) * 30 / range : (rstickX + deadzone) * 30 / range;
+		if (abs(rstickY) > deadzone) roll_y += (rstickY > 0) ? (rstickY - deadzone) * 30 / range : (rstickY + deadzone) * 30 / range;
 
 		if (digital1 & CELL_PAD_CTRL_UP) { held |= ACTION_BIT(ACTION_UP); roll_y -= 30; }
 		if (digital1 & CELL_PAD_CTRL_DOWN) { held |= ACTION_BIT(ACTION_DOWN); roll_y += 30; }
