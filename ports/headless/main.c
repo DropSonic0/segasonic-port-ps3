@@ -276,6 +276,14 @@ static void write_levels(void)
 }
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+#include "../ps3/spu_audio_types.h"
+#ifndef GL_TEXTURE_ALLOCATION_HINT_SCE
+#define GL_TEXTURE_ALLOCATION_HINT_SCE 0x6018
+#endif
+#ifndef GL_TEXTURE_LINEAR_SYSTEM_SCE
+#define GL_TEXTURE_LINEAR_SYSTEM_SCE 0x601C
+#endif
+static bool ps3_hardware_opengl = false;
 static bool ps3_graphics_initialized = false;
 static PSGLdevice* ps3_device = NULL;
 static PSGLcontext* ps3_context = NULL;
@@ -283,6 +291,8 @@ static PSGLcontext* ps3_context = NULL;
 #define PS3_TEX_H 256
 static GLuint ps3_textures[2] = { 0, 0 };
 static GLuint ps3_texture_buffers[2] = { 0, 0 };
+static uint32_t ps3_upload_buffer[S32_VIDEO_MAX_WIDTH * S32_VIDEO_HEIGHT];
+static spu_audio_control_t ps3_spu_audio_ctrl __attribute__((aligned(128)));
 static int ps3_texture_index = 0;
 static bool ps3_picture_skipped = false;
 static uint32_t ps3_audio_port = 0xFFFFFFFF;
@@ -489,18 +499,34 @@ static void ps3_graphics_init(void)
 	psglMakeCurrent(ps3_context, ps3_device);
 
 	glGenTextures(2, ps3_textures);
-	glGenBuffers(2, ps3_texture_buffers);
-	for (int i = 0; i < 2; i++)
+	if (ps3_hardware_opengl)
 	{
-		glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[i]);
-		glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, PS3_TEX_W * PS3_TEX_H * 4, NULL, GL_STREAM_DRAW);
+		for (int i = 0; i < 2; i++)
+		{
+			glBindTexture(GL_TEXTURE_2D, ps3_textures[i]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_ALLOCATION_HINT_SCE, GL_TEXTURE_LINEAR_SYSTEM_SCE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_ARGB_SCE, PS3_TEX_W, PS3_TEX_H, 0, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
+	}
+	else
+	{
+		glGenBuffers(2, ps3_texture_buffers);
+		for (int i = 0; i < 2; i++)
+		{
+			glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[i]);
+			glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, PS3_TEX_W * PS3_TEX_H * 4, NULL, GL_STREAM_DRAW);
 
-		glBindTexture(GL_TEXTURE_2D, ps3_textures[i]);
-		glTextureReferenceSCE(GL_TEXTURE_2D, 1, PS3_TEX_W, PS3_TEX_H, 0, GL_ARGB_SCE, PS3_TEX_W * 4, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glBindTexture(GL_TEXTURE_2D, ps3_textures[i]);
+			glTextureReferenceSCE(GL_TEXTURE_2D, 1, PS3_TEX_W, PS3_TEX_H, 0, GL_ARGB_SCE, PS3_TEX_W * 4, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
 	}
 
 	glDisable(GL_DEPTH_TEST);
@@ -578,19 +604,39 @@ static void ps3_draw_picture(const uint32_t *source, int width)
 
 	t0 = __mftb();
 	ps3_texture_index ^= 1;
-	glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[ps3_texture_index]);
-	destination = (uint32_t *)glMapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, GL_WRITE_ONLY);
-	t1 = __mftb();
-	if (destination)
+	if (ps3_hardware_opengl)
 	{
-		for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
-			ps3_copy_row(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], width);
+		glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
+		t1 = __mftb();
+		if (width == S32_VIDEO_MAX_WIDTH)
+		{
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, source);
+		}
+		else
+		{
+			for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+				ps3_copy_row(&ps3_upload_buffer[y * width], &source[y * S32_VIDEO_MAX_WIDTH], width);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, ps3_upload_buffer);
+		}
+		t2 = __mftb();
+		t3 = t2;
 	}
-	t2 = __mftb();
-	if (destination)
-		glUnmapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE);
-	t3 = __mftb();
-	glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
+	else
+	{
+		glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[ps3_texture_index]);
+		destination = (uint32_t *)glMapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, GL_WRITE_ONLY);
+		t1 = __mftb();
+		if (destination)
+		{
+			for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
+				ps3_copy_row(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], width);
+		}
+		t2 = __mftb();
+		if (destination)
+			glUnmapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE);
+		t3 = __mftb();
+		glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
+	}
 
 	psglGetDeviceDimensions(ps3_device, &deviceWidth, &deviceHeight);
 	viewW = (GLint)deviceWidth;
@@ -664,6 +710,74 @@ static void ps3_graphics_render_frame(void)
 	psglSwap();
 }
 
+static bool ps3_spu_audio_ok = false;
+
+/* Remuestrea y mezcla en el SPU hasta `limit` muestras y las agrega a ps3_audio_accum.
+Devuelve cuántas hizo, o -1 si no pudo (entonces mezcla la PPU, sin haber tocado nada) */
+static int ps3_mix_with_spu(size_t limit)
+{
+	static float spu_out[PS3_OUTPUT_RATE / 60 * 2] __attribute__((aligned(128)));
+	spu_audio_control_t *ctrl = spu_host_audio_ctrl();
+	size_t made = limit;
+	double vol = 1.0;
+
+	if (!ps3_spu_audio_ok)
+		return -1;
+	if (made > PS3_OUTPUT_RATE / 60)
+		made = PS3_OUTPUT_RATE / 60;
+
+	/* cuántas muestras alcanzan las tres tasas sin pasarse de lo que hay (mismo corte que el bucle de la PPU) */
+	for (int chip = 0; chip < 3; chip++)
+	{
+		const ps3_resampler *source = &ps3_chips[chip];
+		const double room = (double)source->count - 1.0 - source->position - 0.001;
+		size_t fits;
+
+		if (room <= 0.0)
+			return 0;
+		fits = (size_t)(room / source->step);
+		if ((double)fits * source->step < room)
+			fits++;
+		if (fits < made)
+			made = fits;
+	}
+	if (made == 0)
+		return 0;
+
+#ifdef SEGASONIC_CONSOLE
+	vol = console_window_settings.volume / 5.0;
+#endif
+	for (int chip = 0; chip < 3; chip++)
+	{
+		const ps3_resampler *source = &ps3_chips[chip];
+		const uint32_t whole = (uint32_t)source->position;
+
+		ctrl->ea_chip[chip] = (uint64_t)(uintptr_t)source->samples;
+		ctrl->count[chip] = (uint32_t)source->count;
+		ctrl->first[chip] = whole;
+		ctrl->frac[chip] = (float)(source->position - (double)whole);
+		ctrl->step[chip] = (float)source->step;
+	}
+	ctrl->ea_out = (uint64_t)(uintptr_t)spu_out;
+	ctrl->volume = (float)vol;
+	ctrl->made = (uint32_t)made;
+
+	if (spu_host_audio_mix_block() != 0)
+	{
+		ps3_spu_audio_ok = false;    /* no responde: de acá en adelante mezcla la PPU */
+		printf("[ps3_audio] el SPU de audio no respondio; sigue la PPU\n");
+		return -1;
+	}
+	if (ctrl->error)
+		return -1;
+
+	memcpy(&ps3_audio_accum[ps3_audio_accum_count * 2], spu_out, made * 2 * sizeof(float));
+	ps3_audio_accum_count += made;
+	for (int chip = 0; chip < 3; chip++)
+		ps3_chips[chip].position += ps3_chips[chip].step * (double)made;
+	return (int)made;
+}
+
 static void ps3_audio_render_frame(void)
 {
 	static uint64_t audio_frames = 0;
@@ -688,37 +802,54 @@ static void ps3_audio_render_frame(void)
 		ps3_resampler_keep(&ps3_chips[chip], samples, count);
 	}
 
-	while (made < PS3_OUTPUT_RATE / 60 && ps3_audio_accum_count < (sizeof(ps3_audio_accum) / (2 * sizeof(float)) - 1))
 	{
-		double fm0[2], fm1[2], pcm[2];
+		const size_t accum_room = sizeof(ps3_audio_accum) / (2 * sizeof(float)) - 1;
+		size_t limit = PS3_OUTPUT_RATE / 60;
+		int spu_made;
 
-		if (ps3_chips[0].position + 1 >= (double)ps3_chips[0].count
-			|| ps3_chips[1].position + 1 >= (double)ps3_chips[1].count
-			|| ps3_chips[2].position + 1 >= (double)ps3_chips[2].count)
-			break;
+		if (ps3_audio_accum_count >= accum_room)
+			limit = 0;
+		else if (accum_room - ps3_audio_accum_count < limit)
+			limit = accum_room - ps3_audio_accum_count;
 
-		ps3_resampler_sample_at(&ps3_chips[0], ps3_chips[0].position, fm0);
-		ps3_resampler_sample_at(&ps3_chips[1], ps3_chips[1].position, fm1);
-		ps3_resampler_sample_at(&ps3_chips[2], ps3_chips[2].position, pcm);
+		spu_made = ps3_mix_with_spu(limit);
+		if (spu_made >= 0)
+			made = (size_t)spu_made;
+		else
+		{
+			while (made < PS3_OUTPUT_RATE / 60 && ps3_audio_accum_count < (sizeof(ps3_audio_accum) / (2 * sizeof(float)) - 1))
+			{
+				double fm0[2], fm1[2], pcm[2];
 
-		double vol = 1.0;
+				if (ps3_chips[0].position + 1 >= (double)ps3_chips[0].count
+					|| ps3_chips[1].position + 1 >= (double)ps3_chips[1].count
+					|| ps3_chips[2].position + 1 >= (double)ps3_chips[2].count)
+					break;
+
+				ps3_resampler_sample_at(&ps3_chips[0], ps3_chips[0].position, fm0);
+				ps3_resampler_sample_at(&ps3_chips[1], ps3_chips[1].position, fm1);
+				ps3_resampler_sample_at(&ps3_chips[2], ps3_chips[2].position, pcm);
+
+				double vol = 1.0;
 #ifdef SEGASONIC_CONSOLE
-		vol = console_window_settings.volume / 5.0;
+				vol = console_window_settings.volume / 5.0;
 #endif
 
-		for (int side = 0; side < 2; side++)
-		{
-			double value = vol * (0.30 * (fm0[side] + fm1[side]) + 0.40 * pcm[side]);
-			float fval = (float)(value / 32768.0);
-			if (fval > 1.0f) fval = 1.0f;
-			if (fval < -1.0f) fval = -1.0f;
-			ps3_audio_accum[ps3_audio_accum_count * 2 + side] = fval;
-		}
+				for (int side = 0; side < 2; side++)
+				{
+					double value = vol * (0.30 * (fm0[side] + fm1[side]) + 0.40 * pcm[side]);
+					float fval = (float)(value / 32768.0);
+					if (fval > 1.0f) fval = 1.0f;
+					if (fval < -1.0f) fval = -1.0f;
+					ps3_audio_accum[ps3_audio_accum_count * 2 + side] = fval;
+				}
 
-		for (int chip = 0; chip < 3; chip++)
-			ps3_chips[chip].position += ps3_chips[chip].step;
-		ps3_audio_accum_count++;
-		made++;
+				for (int chip = 0; chip < 3; chip++)
+					ps3_chips[chip].position += ps3_chips[chip].step;
+				ps3_audio_accum_count++;
+				made++;
+			}
+		}
 	}
 
 	for (int chip = 0; chip < 3; chip++)
@@ -1007,7 +1138,10 @@ static void ps3_timed_frame_shown(void)
 static void ps3_limit_frame(void)
 {
 	static uint64_t next_frame_time;
-	const uint64_t period = (uint64_t)sys_time_get_timebase_frequency() / 60;
+	static uint64_t waited_ticks;
+	static unsigned waited_frames;
+	const uint64_t frequency = (uint64_t)sys_time_get_timebase_frequency();
+	const uint64_t period = frequency / 60;
 	const uint64_t now = __mftb();
 
 	if (next_frame_time == 0 || now > next_frame_time + period * 4)
@@ -1015,6 +1149,14 @@ static void ps3_limit_frame(void)
 	next_frame_time += period;
 	while (__mftb() < next_frame_time)
 	{
+	}
+	waited_ticks += __mftb() - now;
+	if (++waited_frames == 60)
+	{
+		printf("[limit] espera=%.2f ms/frame (margen libre)\n",
+			(double)waited_ticks * 1000.0 / ((double)frequency * 60.0));
+		waited_ticks = 0;
+		waited_frames = 0;
 	}
 }
 #endif
@@ -1249,6 +1391,12 @@ int main(int argc, char **argv)
 			video_dumps[video_dump_count++] = strtoull(argv[++index], NULL, 10);
 		else if (strcmp(argv[index], "--wide") == 0)
 			wide_video = true;
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+		else if (strcmp(argv[index], "--opengl-hw") == 0)
+			ps3_hardware_opengl = true;
+		else if (strcmp(argv[index], "--software-gl") == 0)
+			ps3_hardware_opengl = false;
+#endif
 #ifdef SEGASONIC_CONSOLE
 		else if (strcmp(argv[index], "--actions") == 0 && index + 1 < argc)
 		{
@@ -1421,7 +1569,15 @@ int main(int argc, char **argv)
 #else
 	ps3_graphics_init();
 	ps3_audio_init();
-	s32_workers_start(1);
+	if (spu_host_init() == 0 && spu_host_selftest() == 0)
+	{
+		spu_audio_control_t *audio_ctrl = spu_host_audio_ctrl();
+
+		audio_ctrl->made = 0;    /* trabajo vacío: comprueba que el SPU de audio responde */
+		ps3_spu_audio_ok = (spu_host_audio_mix_block() == 0);
+		printf("[spu] audio SPU: %s\n", ps3_spu_audio_ok ? "listo" : "no responde");
+	}
+	s32_workers_start(2);
 	s32_board.sound_rom = game_sound;
 	sound_chips_attach();
 	sound_cpu_attach();

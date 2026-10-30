@@ -34,6 +34,7 @@
 #include <sys/sys_time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../../ports/ps3/spu_host.h"
 #endif
 
 #define WIDTH   S32_VIDEO_MAX_WIDTH
@@ -123,8 +124,8 @@ static struct
 	bool wide;                              /* s32_video_set_wide */
 	int side;                               /* this frame's: S32_VIDEO_WIDE_SIDE when wide, else 0 */
 	int sprite_side;                        /* the sprite list's: every sprite that much to the right */
-	layer layers[LAYERS];                   /* the sprites' entry is unused: they have their own buffers */
-	uint16_t sprites[2][HEIGHT][WIDTH];     /* frame buffers: one is shown, the list draws into the other */
+	layer layers[LAYERS] __attribute__((aligned(128)));                 /* the sprites' entry is unused: they have their own buffers */
+	uint16_t sprites[2][HEIGHT][WIDTH] __attribute__((aligned(128)));   /* frame buffers: one is shown, the list draws into the other */
 	int shown_sprites;
 	uint32_t frame[HEIGHT][WIDTH] __attribute__((aligned(128)));
 	clip_runs runs;
@@ -1637,6 +1638,93 @@ static void mix_rows(void *context, int first, int last)
 	}
 }
 
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+#define SPU_MIX_CHECK_EVERY 300    /* cada tantos frames compara con la mezcla de la PPU (0: nunca) */
+
+/* Mezcla las filas en los SPU (spu_mix_rows.c). false: no se pudo, que las mezcle la PPU */
+static bool spu_mix_frame(const mix_frame *frame)
+{
+	static unsigned checked;
+	spu_mix_control_t *first = spu_host_mix_ctrl(0);
+	const int spus = spu_host_video_spus();
+	const int rows = video.visible.bottom - video.visible.top + 1;
+	int next_row = video.visible.top;
+
+	if (!spu_host_video_ready() || video.visible.left != 0)
+		return false;
+
+	for (int layer = 0; layer < SPU_MIX_INPUT_LAYERS; layer++)
+	{
+		first->ea_layer_rows[layer] = (uint64_t)(uintptr_t)&video.layers[layer].pixels[0][0];
+		first->ea_layer_empty[layer] = (uint64_t)(uintptr_t)&video.layers[layer].empty[0];
+	}
+	first->ea_backdrop = (uint64_t)(uintptr_t)&video.layers[LAYER_BACKDROP].pixels[0][0];
+	first->ea_sprites = (uint64_t)(uintptr_t)&video.sprites[video.shown_sprites][0][0];
+	first->ea_palette = (uint64_t)(uintptr_t)palette_argb;
+	first->ea_frame = (uint64_t)(uintptr_t)&video.frame[0][0];
+	first->left = video.visible.left;
+	first->right = video.visible.right;
+	first->top = video.visible.top;
+	first->bottom = video.visible.bottom;
+	first->blend_factor = frame->blend_factor;
+	first->grouping_shift = frame->grouping.shift;
+	first->grouping_mask = frame->grouping.mask;
+	first->shadow_mask = frame->shadow_mask;
+	first->sprite_bits = frame->sprite_bits;
+	first->shadow_pen = frame->shadow_pen;
+	first->sprite_flips = frame->sprite_flips;
+	for (int row = 0; row < 3; row++)
+	for (int channel = 0; channel < 3; channel++)
+		first->offsets[row][channel] = frame->offsets[row][channel];
+	for (int group = 0; group < 16; group++)
+	for (int place = 0; place < 8; place++)
+	{
+		const mix_layer *from = &frame->orders[group][place];
+		spu_mix_layer_t *to = &first->orders[group][place];
+
+		to->palette_base = from->palette_base;
+		to->sprite_blend = from->sprite_blend;
+		to->blend = from->blend;
+		to->index = from->index;
+		to->priority = from->priority;
+		to->shift = from->shift;
+		to->offsets = from->offsets;
+	}
+
+	for (int spu = 0; spu < spus; spu++)
+	{
+		const int count = rows / spus + (spu < rows % spus ? 1 : 0);
+		spu_mix_control_t *control = spu_host_mix_ctrl(spu);
+
+		if (spu != 0)
+			memcpy(control, first, sizeof(*control));
+		control->first_row = (uint32_t)next_row;
+		control->row_count = (uint32_t)count;
+		control->job_done = 0;
+		next_row += count;
+	}
+	if (spu_host_video_mix() != 0)
+		return false;
+
+#if SPU_MIX_CHECK_EVERY
+	if (++checked % SPU_MIX_CHECK_EVERY == 0)
+	{
+		static uint32_t from_spu[HEIGHT][WIDTH];
+		unsigned different = 0;
+
+		memcpy(from_spu, video.frame, sizeof(from_spu));
+		mix_rows((void *)frame, video.visible.top, video.visible.bottom);
+		for (int y = video.visible.top; y <= video.visible.bottom; y++)
+		for (int x = video.visible.left; x <= video.visible.right; x++)
+		if (from_spu[y][x] != video.frame[y][x])
+			different++;
+		printf("[spumix] comparacion con la PPU: %u pixeles distintos\n", different);
+	}
+#endif
+	return true;
+}
+#endif
+
 /* The frame from the layers: registers 0x00-0x1E give each sprite group its priority and palette, 0x20-0x2C
 each layer, 0x30-0x3A what each blends with, 0x40-0x4A two color offsets, 0x4C the sprite grouping and
 shadows, 0x4E blending */
@@ -1746,6 +1834,8 @@ static void mix(int drawn)
 			printf("\n");
 		}
 	}
+	if (spu_mix_frame(&frame))
+		return;
 #endif
 	s32_workers_rows(mix_rows, &frame, video.visible.top, video.visible.bottom);
 }
