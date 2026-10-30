@@ -51,6 +51,20 @@
 #include <cell/pad.h>
 #include <cell/audio.h>
 #include <cell/sysmodule.h>
+#include <sysutil/sysutil_sysparam.h>
+#include <sys/process.h>
+
+static bool ps3_exit_requested = false;
+
+static void ps3_sysutil_callback(uint64_t status, uint64_t param, void *userdata)
+{
+	(void)param;
+	(void)userdata;
+	if (status == CELL_SYSUTIL_REQUEST_EXITGAME)
+	{
+		ps3_exit_requested = true;
+	}
+}
 #ifndef CELL_SYSMODULE_AUDIO
 #define CELL_SYSMODULE_AUDIO 0x000a
 #endif
@@ -1164,6 +1178,19 @@ static void ps3_limit_frame(void)
 static void on_frame_done(void)
 {
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	cellSysutilCheckCallback();
+	if (ps3_exit_requested)
+	{
+		ps3_save_eeprom();
+		if (ps3_audio_port != 0xFFFFFFFF)
+		{
+			cellAudioPortStop(ps3_audio_port);
+			cellAudioPortClose(ps3_audio_port);
+			cellAudioQuit();
+		}
+		sys_process_exit(0);
+	}
+
 	const uint64_t t0 = __mftb();
 	uint64_t t1, t2;
 
@@ -1184,7 +1211,7 @@ static void on_frame_done(void)
 		s32_video_set_wide(wide_video);
 		console_window_settings.changed = false;
 	}
-	ps3_tell_console_settings();
+	//ps3_tell_console_settings();
 	if (ps3_pause_requested)
 		ps3_run_pause();
 	if (console_best_times.changed)
@@ -1567,6 +1594,7 @@ int main(int argc, char **argv)
 	if (getenv("SEGASONIC_VIDEO_WORKERS"))
 		s32_workers_start(atoi(getenv("SEGASONIC_VIDEO_WORKERS")));
 #else
+	cellSysutilRegisterCallback(0, ps3_sysutil_callback, NULL);
 	ps3_graphics_init();
 	ps3_audio_init();
 	if (spu_host_init() == 0 && spu_host_selftest() == 0)
@@ -1582,7 +1610,7 @@ int main(int argc, char **argv)
 	sound_chips_attach();
 	sound_cpu_attach();
 #ifdef SEGASONIC_CONSOLE
-	console_jingle_program(0, -1);
+	console_jingle_program(13, 2);
 	console_prepare_sprites(game_sprites, GAME_SPRITES_SIZE, game_program);
 	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
 	s32_board.frame_shown = ps3_timed_frame_shown;

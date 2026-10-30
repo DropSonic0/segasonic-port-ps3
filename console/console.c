@@ -529,13 +529,7 @@ static const char *const option_names[OPTION_COUNT] = {
    (SEGASONIC_HANDHELD) has no VIDEO: its picture is fixed; nor CONTROLS where the device's controls are fixed
    (the Switch), but where they may need putting right (SEGASONIC_CONTROLS_PAGE: a handheld's own buttons) */
 static const int main_options[] = {
-#if defined(SEGASONIC_HANDHELD) && defined(SEGASONIC_CONTROLS_PAGE)
-	OPTION_DIFFICULTY, OPTION_VITALITY, OPTION_CONTINUES, OPTION_CONTROLS, OPTION_VOLUME,
-#elif defined(SEGASONIC_HANDHELD)
-	OPTION_DIFFICULTY, OPTION_VITALITY, OPTION_CONTINUES, OPTION_VOLUME,
-#else
-	OPTION_DIFFICULTY, OPTION_VITALITY, OPTION_CONTINUES, OPTION_VIDEO, OPTION_CONTROLS, OPTION_VOLUME,
-#endif
+	OPTION_DIFFICULTY, OPTION_VITALITY, OPTION_CONTINUES, OPTION_WIDE, OPTION_VOLUME,
 	OPTION_SOUND_TEST, OPTION_STAGE_SELECT, OPTION_BACK
 };
 static const int video_options[] = { OPTION_WINDOW, OPTION_FULL_SCREEN, OPTION_PIXELS, OPTION_WIDE, OPTION_BACK };
@@ -666,8 +660,7 @@ static void draw_options(void)
 static void erase_options(void)
 {
 	uint32_t row;
-
-	for (row = OPTIONS_TITLE_ROW; row < OPTIONS_FIRST_ROW + 2u * (uint32_t)MAIN_OPTIONS; row++)
+	for (row = OPTIONS_TITLE_ROW; row <= OPTIONS_FIRST_ROW + 2u * 9u; row++)
 		erase_line(row);
 }
 
@@ -993,6 +986,8 @@ static void run_options(void)
 		open_video();
 	else if (option == OPTION_CONTROLS)
 		open_controls();
+	else if (option == OPTION_WIDE)
+		change_option(option, 1);
 	else if (option == OPTION_SOUND_TEST)
 	{
 		uint32_t write_index = 0, write_index_address = 0;
