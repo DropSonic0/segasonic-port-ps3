@@ -48,7 +48,11 @@ typedef struct __attribute__((aligned(128))) spu_mix_control
 	spu_mix_layer_t orders[16][8];
 
 	volatile uint32_t job_done;
-	uint32_t pad[3];
+	uint32_t palette_version;
+	uint16_t backdrop_control;
+	uint16_t pad16;
+	uint32_t sprite_rows_mask[8];
+	uint32_t pad[4];
 } spu_mix_control_t;
 
 #endif /* SPU_MIX_TYPES_H */

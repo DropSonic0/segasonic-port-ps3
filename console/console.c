@@ -1920,11 +1920,13 @@ void console_draw_frame(void)
 	bool hide_bitmap = false;
 
 	filled_count = 0;
+	/* COMENTAR ESTOS DOS BUCLES TEMPORALMENTE:
 	for (number = 0; number < MAP_LAYERS && stage_map_shown(); number++)
-		on[number] = map_layer_of(number, &layers[number], on[1] ? &layers[1] : on[0] ? &layers[0] : NULL);
+	on[number] = map_layer_of(number, &layers[number], on[1] ? &layers[1] : on[0] ? &layers[0] : NULL);
 	for (number = 0; number < MAP_LAYERS; number++)
-		if (on[number])
-			fill_sides(&layers[number]);
+	if (on[number])
+	fill_sides(&layers[number]);
+	*/
 	hide_bitmap = stage_drawn() && bitmap_shows_pages();
 	if (hide_bitmap)
 		mem_write16(VIDEO_REGISTERS + 0x02u, (uint16_t)(layers_off | BITMAP_OFF));

@@ -1,5 +1,5 @@
 /* ports\ps3\spu_mix_rows.c
- * Mezclador de video en SPU: port de mix_rows (runtime\src\video.c), una banda de filas por SPU */
+* Mezclador de video en SPU: port exacto de mix_rows (runtime\src\video.c), una banda de filas por SPU */
 
 #include <spu_intrinsics.h>
 #include <cell/dma.h>
@@ -43,15 +43,16 @@ static inline uint16_t palette_color(const spu_mix_layer_t *entry, int pixel)
 	return (uint16_t)(((argb >> 19) & 0x1f) | (((argb >> 11) & 0x1f) << 5) | (((argb >> 3) & 0x1f) << 10));
 }
 
-static const spu_mix_layer_t *top_layer(const spu_mix_layer_t *entry, const uint16_t *const *rows, int x, int sprite_pixel,
+static inline const spu_mix_layer_t *top_layer(const spu_mix_layer_t *entry, const uint16_t *const *rows, int x, int sprite_pixel,
 	int shadow_mask, int sprite_bits, int shadow_pen, int *pixel, int *shadow)
 {
 	for (;; entry++)
 	{
-		if (entry->index != LAYER_SPRITES)
+		const int idx = entry->index;
+		if (idx != LAYER_SPRITES)
 		{
-			*pixel = rows[entry->index][x] & 0x1fff;
-			if (*pixel != 0 || entry->index == LAYER_BACKDROP)
+			*pixel = rows[idx][x] & 0x1fff;
+			if (*pixel != 0 || idx == LAYER_BACKDROP)
 				return entry;
 			continue;
 		}
@@ -73,11 +74,15 @@ static void fetch_row(int b, int y, int width)
 	const int sprite_y = bit(g_ctrl.sprite_flips, 1) ? g_ctrl.bottom - (y - g_ctrl.top) : y;
 
 	for (int layer = 0; layer < SPU_MIX_INPUT_LAYERS; layer++)
+	{
 		if (!g_empty[layer][y])
 			cellDmaGet(g_in[b][layer], g_ctrl.ea_layer_rows[layer] + (uint64_t)y * SPU_MIX_MAX_WIDTH * 2,
-				bytes, TAG_IN + b, 0, 0);
+			bytes, TAG_IN + b, 0, 0);
+	}
+
 	cellDmaGet(g_in[b][LAYER_SPRITES], g_ctrl.ea_sprites + (uint64_t)sprite_y * SPU_MIX_MAX_WIDTH * 2,
 		bytes, TAG_IN + b, 0, 0);
+
 	cellDmaGet(g_in[b][LAYER_BACKDROP], g_ctrl.ea_backdrop + (uint64_t)y * SPU_MIX_MAX_WIDTH * 2,
 		bytes, TAG_IN + b, 0, 0);
 }
@@ -95,15 +100,16 @@ static void mix_row(int b, int y)
 	const int flip_x = bit(g_ctrl.sprite_flips, 0);
 	const int sprite_dx = flip_x ? -1 : 1;
 	int sprite_x = flip_x ? g_ctrl.right : g_ctrl.left;
-	const spu_mix_layer_t *fast_entries[8];
-	const uint16_t *fast_rows[8];
-	int fast_count = 0;
-	int fast = 1;
 
 	for (int index = LAYER_TEXT; index <= LAYER_BITMAP; index++)
 		rows[index] = g_empty[index][y] ? g_transparent : g_in[b][index];
 	rows[LAYER_SPRITES] = g_in[b][LAYER_SPRITES];
 	rows[LAYER_BACKDROP] = g_in[b][LAYER_BACKDROP];
+
+	const spu_mix_layer_t *fast_entries[8];
+	const uint16_t *fast_rows[8];
+	int fast_count = 0;
+	int fast = 1;
 
 	for (const spu_mix_layer_t *entry = g_ctrl.orders[grouping_mask];; entry++)
 	{
@@ -117,7 +123,7 @@ static void mix_row(int b, int y)
 		if (entry->blend != 0 || (offs[0] | offs[1] | offs[2]) != 0)
 			fast = 0;
 		fast_entries[fast_count] = entry;
-		fast_rows[fast_count++] = g_in[b][entry->index];
+		fast_rows[fast_count++] = rows[entry->index];
 		if (entry->index == LAYER_BACKDROP)
 			break;
 	}
@@ -125,21 +131,15 @@ static void mix_row(int b, int y)
 	for (int x = g_ctrl.left; x <= g_ctrl.right; x++, sprite_x += sprite_dx)
 	{
 		const int sprite_pixel = rows[LAYER_SPRITES][sprite_x];
-		int group, shadow, pixel;
-		const spu_mix_layer_t *first_layer;
-		const int *first_offsets;
-		uint16_t color;
-		int red, green, blue;
 
 		if (fast && sprite_pixel == 0xffff)
 		{
 			const spu_mix_layer_t *top = fast_entries[fast_count - 1];
+			int pixel = fast_rows[fast_count - 1][x] & 0x1fff;
 
-			pixel = fast_rows[fast_count - 1][x] & 0x1fff;
 			for (int k = 0; k < fast_count - 1; k++)
 			{
 				const int value = fast_rows[k][x] & 0x1fff;
-
 				if (value)
 				{
 					pixel = value;
@@ -150,12 +150,15 @@ static void mix_row(int b, int y)
 			out[x] = g_palette[(top->palette_base + ((pixel >> top->shift) & 0xfff0) + (pixel & 0x0f)) & 0x3fff];
 			continue;
 		}
-		group = (sprite_pixel >> grouping_shift) & grouping_mask;
-		shadow = 0;
-		first_layer = top_layer(g_ctrl.orders[group], rows, x, sprite_pixel, shadow_mask, sprite_bits, shadow_pen,
-			&pixel, &shadow);
-		color = palette_color(first_layer, pixel);
-		first_offsets = g_ctrl.offsets[first_layer->offsets];
+
+		const int group = (sprite_pixel >> grouping_shift) & grouping_mask;
+		int shadow = 0;
+		int pixel;
+		const spu_mix_layer_t *first_layer = top_layer(g_ctrl.orders[group], rows, x, sprite_pixel, shadow_mask,
+			sprite_bits, shadow_pen, &pixel, &shadow);
+		uint16_t color = palette_color(first_layer, pixel);
+		const int *first_offsets = g_ctrl.offsets[first_layer->offsets];
+		int red, green, blue;
 
 		if (first_layer->blend == 0 && !shadow && (first_offsets[0] | first_offsets[1] | first_offsets[2]) == 0)
 		{
@@ -170,14 +173,13 @@ static void mix_row(int b, int y)
 		if (first_layer->blend != 0)
 		{
 			int below;
-			const spu_mix_layer_t *second = top_layer(first_layer + 1, rows, x, sprite_pixel, shadow_mask, sprite_bits,
-				shadow_pen, &below, &shadow);
+			const spu_mix_layer_t *second = top_layer(first_layer + 1, rows, x, sprite_pixel, shadow_mask,
+				sprite_bits, shadow_pen, &below, &shadow);
 
 			if (bit(first_layer->blend, second->index)
 				&& (second->index != LAYER_SPRITES || bit(first_layer->sprite_blend, group)))
 			{
 				const int *second_offsets = g_ctrl.offsets[second->offsets];
-
 				color = palette_color(second, below);
 				red = shift_down(red * (7 - blend_factor) + ((color & 0x1f) + second_offsets[0]) * (blend_factor + 1), 3);
 				green = shift_down(green * (7 - blend_factor) + (((color >> 5) & 0x1f) + second_offsets[1]) * (blend_factor + 1), 3);
@@ -208,9 +210,15 @@ void spu_mix_job(uint64_t ctrl_ea)
 		const int first = (int)g_ctrl.first_row;
 		const int count = (int)g_ctrl.row_count;
 
-		for (int part = 0; part < 4; part++)
-			cellDmaGet((uint8_t *)g_palette + part * 16384, g_ctrl.ea_palette + (uint64_t)part * 16384, 16384,
+		static uint32_t s_last_palette_version = 0;
+
+		if (g_ctrl.palette_version != s_last_palette_version)
+		{
+			for (int part = 0; part < 4; part++)
+				cellDmaGet((uint8_t *)g_palette + part * 16384, g_ctrl.ea_palette + (uint64_t)part * 16384, 16384,
 				TAG_DATA, 0, 0);
+			s_last_palette_version = g_ctrl.palette_version;
+		}
 		for (int layer = 0; layer < SPU_MIX_INPUT_LAYERS; layer++)
 			cellDmaGet(g_empty[layer], g_ctrl.ea_layer_empty[layer], SPU_MIX_HEIGHT, TAG_DATA, 0, 0);
 		cellDmaWaitTagStatusAll(1 << TAG_DATA);

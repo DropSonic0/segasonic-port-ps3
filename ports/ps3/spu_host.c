@@ -58,7 +58,6 @@ static int spu_host_start_group(const void *elf, int nthreads, const char *name,
 		sys_spu_thread_attribute_name(tattr, name);
 		ret = sys_spu_thread_initialize(&thr[i], *grp, i, &img, &tattr, &targ);
 		if (ret != CELL_OK) { printf("[spu] %s: thread_initialize(%d) = 0x%x\n", name, i, ret); return -1; }
-		printf("[spu] %s: thread %d ctrl_ea=0x%llx\n", name, i, (unsigned long long)ea);
 	}
 	ret = sys_spu_thread_group_start(*grp);
 	if (ret != CELL_OK) { printf("[spu] %s: group_start = 0x%x\n", name, ret); return -1; }
@@ -184,17 +183,13 @@ int spu_host_selftest(void)
 		printf("[spu] selftest: los SPU de video no respondieron en %d ms\n", FIRST_JOB_MS);
 		return -1;
 	}
-	printf("[spu] selftest: primer trabajo %.1f ms (arranque de los hilos)\n", (double)(__mftb() - t0) * 1000.0 / freq);
 
-	t0 = __mftb();
 	for (int i = 0; i < 60; i++)
 	if (spu_run_video_jobs(WAIT_TIMEOUT_MS))
 	{
 		printf("[spu] selftest: timeout en el trabajo %d\n", i);
 		return -1;
 	}
-	t1 = __mftb();
-	printf("[spu] selftest: %.3f ms por trabajo vacio (promedio de 60)\n", (double)(t1 - t0) * 1000.0 / freq / 60.0);
 	g_video_ready = 1;
 	return 0;
 }

@@ -332,8 +332,8 @@ typedef struct ps3_resampler
 static ps3_resampler ps3_chips[3];
 static float ps3_audio_accum[4096 * 2];
 static size_t ps3_audio_accum_count = 0;
-#define PS3_AUDIO_TARGET_QUEUED 6    /* blocks to keep ahead of the port's read position */
-#define PS3_AUDIO_MAX_QUEUED 8       /* more than this (or 0) means the port overtook us */
+#define PS3_AUDIO_TARGET_QUEUED 10   /* 10 bloques (53 ms) de colchón continuo en el hilo de audio */
+#define PS3_AUDIO_MAX_QUEUED 14      /* margen de seguridad sobre los 16 bloques totales */
 static float *ps3_audio_ring = NULL;
 static volatile uint64_t *ps3_audio_read_index = NULL;
 static uint32_t ps3_audio_blocks = 0;
@@ -491,6 +491,7 @@ static void ps3_resampler_drop_used(ps3_resampler *chip)
 
 static void ps3_graphics_init(void)
 {
+	if (ps3_graphics_initialized) return;
 	PSGLinitOptions options;
 	PSGLdeviceParameters params;
 
@@ -546,18 +547,16 @@ static void ps3_graphics_init(void)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
+	glEnable(GL_VSYNC_SCE);
 
 	ps3_graphics_initialized = true;
 }
 
 static void ps3_audio_init(void)
 {
-	int sys_res = cellSysmoduleLoadModule(CELL_SYSMODULE_AUDIO);
-	printf("[ps3_audio] cellSysmoduleLoadModule(CELL_SYSMODULE_AUDIO) = %d (0x%x)\n", sys_res, sys_res);
+	cellSysmoduleLoadModule(CELL_SYSMODULE_AUDIO);
 
 	int init_res = cellAudioInit();
-	printf("[ps3_audio] cellAudioInit = %d (0x%x)\n", init_res, init_res);
-
 	if (init_res == CELL_OK || init_res == CELL_AUDIO_ERROR_ALREADY_INIT)
 	{
 		CellAudioPortParam portParam;
@@ -568,22 +567,16 @@ static void ps3_audio_init(void)
 		portParam.nChannel = CELL_AUDIO_PORT_2CH;
 		portParam.nBlock = CELL_AUDIO_BLOCK_16;
 		portParam.attr = 0;
-		int open_res = cellAudioPortOpen(&portParam, &ps3_audio_port);
-		printf("[ps3_audio] cellAudioPortOpen = %d (0x%x), ps3_audio_port = %u\n", open_res, open_res, ps3_audio_port);
-		if (open_res == CELL_OK)
+		if (cellAudioPortOpen(&portParam, &ps3_audio_port) == CELL_OK)
 		{
-			int cfg_res = cellAudioGetPortConfig(ps3_audio_port, &portConfig);
-			printf("[ps3_audio] cellAudioGetPortConfig = %d (0x%x) nChannel=%u nBlock=%u\n", cfg_res, cfg_res,
-				(unsigned)portConfig.nChannel, (unsigned)portConfig.nBlock);
-			if (cfg_res == CELL_OK && portConfig.nChannel == 2)
+			if (cellAudioGetPortConfig(ps3_audio_port, &portConfig) == CELL_OK && portConfig.nChannel == 2)
 			{
 				ps3_audio_ring = (float *)(uintptr_t)portConfig.portAddr;
 				ps3_audio_read_index = (volatile uint64_t *)(uintptr_t)portConfig.readIndexAddr;
 				ps3_audio_blocks = portConfig.nBlock;
 				memset(ps3_audio_ring, 0, (size_t)ps3_audio_blocks * PS3_AUDIO_BLOCK_SAMPLES * 2 * sizeof(float));
 			}
-			int start_res = cellAudioPortStart(ps3_audio_port);
-			printf("[ps3_audio] cellAudioPortStart = %d (0x%x)\n", start_res, start_res);
+			cellAudioPortStart(ps3_audio_port);
 			if (ps3_audio_ring)
 				ps3_audio_write_block = ((uint32_t)(*ps3_audio_read_index % ps3_audio_blocks) + 3) % ps3_audio_blocks;
 		}
@@ -608,20 +601,15 @@ static void ps3_copy_row(uint32_t *destination, const uint32_t *source, int pixe
 
 static void ps3_draw_picture(const uint32_t *source, int width)
 {
-	static uint64_t ticks_map, ticks_copy, ticks_unmap, ticks_draw;
-	static unsigned picture_frames;
 	GLuint deviceWidth = 1280, deviceHeight = 720;
 	GLint viewX = 0, viewY = 0, viewW, viewH;
 	uint32_t *destination;
 	float u1, v1;
-	uint64_t t0, t1, t2, t3, t4;
 
-	t0 = __mftb();
 	ps3_texture_index ^= 1;
 	if (ps3_hardware_opengl)
 	{
 		glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
-		t1 = __mftb();
 		if (width == S32_VIDEO_MAX_WIDTH)
 		{
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, source);
@@ -632,23 +620,17 @@ static void ps3_draw_picture(const uint32_t *source, int width)
 				ps3_copy_row(&ps3_upload_buffer[y * width], &source[y * S32_VIDEO_MAX_WIDTH], width);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, S32_VIDEO_HEIGHT, GL_ARGB_SCE, GL_UNSIGNED_INT_8_8_8_8_REV, ps3_upload_buffer);
 		}
-		t2 = __mftb();
-		t3 = t2;
 	}
 	else
 	{
 		glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, ps3_texture_buffers[ps3_texture_index]);
 		destination = (uint32_t *)glMapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, GL_WRITE_ONLY);
-		t1 = __mftb();
 		if (destination)
 		{
 			for (int y = 0; y < S32_VIDEO_HEIGHT; y++)
 				ps3_copy_row(&destination[y * PS3_TEX_W], &source[y * S32_VIDEO_MAX_WIDTH], width);
-		}
-		t2 = __mftb();
-		if (destination)
 			glUnmapBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE);
-		t3 = __mftb();
+		}
 		glBindTexture(GL_TEXTURE_2D, ps3_textures[ps3_texture_index]);
 	}
 
@@ -674,8 +656,12 @@ static void ps3_draw_picture(const uint32_t *source, int width)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (width <= 320)
+	{
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 
 	u1 = (float)width / (float)PS3_TEX_W;
@@ -693,21 +679,6 @@ static void ps3_draw_picture(const uint32_t *source, int width)
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 	glDisable(GL_TEXTURE_2D);
-	t4 = __mftb();
-
-	ticks_map += t1 - t0;
-	ticks_copy += t2 - t1;
-	ticks_unmap += t3 - t2;
-	ticks_draw += t4 - t3;
-	if (++picture_frames == 60)
-	{
-		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
-
-		printf("[pic] map=%.2f copy=%.2f unmap=%.2f draw=%.2f ms/frame\n", (double)ticks_map * ms,
-			(double)ticks_copy * ms, (double)ticks_unmap * ms, (double)ticks_draw * ms);
-		ticks_map = ticks_copy = ticks_unmap = ticks_draw = 0;
-		picture_frames = 0;
-	}
 }
 
 static void ps3_graphics_render_frame(void)
@@ -723,6 +694,90 @@ static void ps3_graphics_render_frame(void)
 	ps3_draw_picture(pixels, width);
 	psglSwap();
 }
+
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+#include "font_kenney.h"
+
+static int ps3_text_width(const char *text, int scale)
+{
+	int width = 0;
+	for (; *text; text++)
+	if (*text >= 0x20 && *text <= 0x7E)
+		width += (g_font_widths[*text - 0x20] + 2) * scale;
+	return width > 0 ? width - 2 * scale : 0;
+}
+
+static void ps3_draw_char(uint32_t *frame, int x, int y, char c, int scale, uint32_t color)
+{
+	if (c < 0x20 || c > 0x7E) return;
+	const int idx = c - 0x20;
+	const int w = g_font_widths[idx];
+	const uint16_t *rows = &g_font_glyphs[idx * 16];
+
+	for (int r = 0; r < 16; r++)
+	{
+		const uint16_t row_bits = rows[r];
+		for (int col = 0; col < w; col++)
+		{
+			if (row_bits & (1u << (15 - col)))
+			{
+				for (int dy = 0; dy < scale; dy++)
+				for (int dx = 0; dx < scale; dx++)
+				{
+					const int px = x + col * scale + dx;
+					const int py = y + r * scale + dy;
+					if (px >= 0 && px < S32_VIDEO_MAX_WIDTH && py >= 0 && py < S32_VIDEO_HEIGHT)
+						frame[py * S32_VIDEO_MAX_WIDTH + px] = color;
+				}
+			}
+		}
+	}
+}
+
+static void ps3_draw_text_centered(uint32_t *frame, const char *text, int y, int scale, uint32_t color)
+{
+	const int tw = ps3_text_width(text, scale);
+	int x = (S32_VIDEO_MAX_WIDTH - tw) / 2;
+	for (; *text; text++)
+	{
+		if (*text >= 0x20 && *text <= 0x7E)
+		{
+			ps3_draw_char(frame, x, y, *text, scale, color);
+			x += (g_font_widths[*text - 0x20] + 2) * scale;
+		}
+	}
+}
+
+static void ps3_show_rom_prompt(const char *status)
+{
+	static uint32_t prompt_screen[S32_VIDEO_HEIGHT * S32_VIDEO_MAX_WIDTH];
+	for (int i = 0; i < S32_VIDEO_HEIGHT * S32_VIDEO_MAX_WIDTH; i++)
+		prompt_screen[i] = 0xFF101840; /* Azul marino original de SegaSonic */
+
+	int y = 50;
+	ps3_draw_text_centered(prompt_screen, "SegaSonic The Hedgehog", y, 2, 0xFF78AAFF);
+	y += 16 * 2 + 25;
+
+	if (status)
+	{
+		ps3_draw_text_centered(prompt_screen, status, y, 1, 0xFFFFFFFF);
+	}
+	else
+	{
+		ps3_draw_text_centered(prompt_screen, "Requires the arcade ROM set", y, 1, 0xFFFFFFFF);
+		y += 16 + 8;
+		ps3_draw_text_centered(prompt_screen, "sonic.zip: MAME's set, Japan, rev. C", y, 1, 0xFFE0E0E0);
+		y += 16 + 8;
+		ps3_draw_text_centered(prompt_screen, "Place it in usb000, usb001, or SEGASONIC/USRDIR/", y, 1, 0xFFC0C0C0);
+	}
+
+	if (!ps3_graphics_initialized)
+		ps3_graphics_init();
+
+	ps3_draw_picture(prompt_screen, S32_VIDEO_MAX_WIDTH);
+	psglSwap();
+}
+#endif
 
 static bool ps3_spu_audio_ok = false;
 
@@ -759,7 +814,9 @@ static int ps3_mix_with_spu(size_t limit)
 		return 0;
 
 #ifdef SEGASONIC_CONSOLE
-	vol = console_window_settings.volume / 5.0;
+	vol = (console_window_settings.volume / 5.0) * 0.85;
+#else
+	vol = 0.85;
 #endif
 	for (int chip = 0; chip < 3; chip++)
 	{
@@ -846,7 +903,9 @@ static void ps3_audio_render_frame(void)
 
 				double vol = 1.0;
 #ifdef SEGASONIC_CONSOLE
-				vol = console_window_settings.volume / 5.0;
+				vol = (console_window_settings.volume / 5.0) * 0.85;
+#else
+				vol = 0.85;
 #endif
 
 				for (int side = 0; side < 2; side++)
@@ -869,15 +928,20 @@ static void ps3_audio_render_frame(void)
 	for (int chip = 0; chip < 3; chip++)
 		ps3_resampler_drop_used(&ps3_chips[chip]);
 
-	/* How many blocks are queued between the port's read position and ours */
+	/* Cuántos bloques de colchón tiene el hilo de audio de la PS3 */
 	{
 		const uint32_t read_block = (uint32_t)(*ps3_audio_read_index % ps3_audio_blocks);
 
 		queued = (ps3_audio_write_block + ps3_audio_blocks - read_block) % ps3_audio_blocks;
-		if (queued == 0 || queued > PS3_AUDIO_MAX_QUEUED)
+		if (queued == 0)
 		{
-			/* the port overtook us (underrun): start again a few blocks ahead of it */
+			/* Underrun real: buffer vacío. Limpiar con ceros para que no suene ruido viejo */
 			ps3_audio_underruns++;
+			for (uint32_t b = 0; b < 3; b++)
+			{
+				uint32_t blk = (read_block + b) % ps3_audio_blocks;
+				memset(ps3_audio_ring + (size_t)blk * PS3_AUDIO_BLOCK_SAMPLES * 2, 0, PS3_AUDIO_BLOCK_SAMPLES * 2 * sizeof(float));
+			}
 			ps3_audio_write_block = (read_block + 3) % ps3_audio_blocks;
 			queued = 3;
 		}
@@ -897,21 +961,19 @@ static void ps3_audio_render_frame(void)
 	}
 	__lwsync();
 
-	/* Running faster than the port plays: drop the oldest samples to keep the latency bounded */
-	if (ps3_audio_accum_count > PS3_AUDIO_BLOCK_SAMPLES * 4)
+	/* Solo recortar si el acumulador se desborda por más de 12 bloques (64 ms) */
+	if (ps3_audio_accum_count > PS3_AUDIO_BLOCK_SAMPLES * 12)
 	{
-		const size_t keep = PS3_AUDIO_BLOCK_SAMPLES * 2;
+		const size_t keep = PS3_AUDIO_BLOCK_SAMPLES * 4;
 		const size_t drop = ps3_audio_accum_count - keep;
 
 		memmove(ps3_audio_accum, ps3_audio_accum + drop * 2, keep * 2 * sizeof(float));
 		ps3_audio_accum_count = keep;
 	}
 
-	if (++audio_frames % 180 == 0)
-	{
-		printf("[ps3_audio] frame=%" PRIu64 " made=%zu accum=%zu sent_blocks=%u queued=%u underruns=%u sound_reqs=%u\n",
-			audio_frames, made, ps3_audio_accum_count, sent_blocks, queued, ps3_audio_underruns, s32_board.sound_requests);
-	}
+	(void)audio_frames;
+	(void)sent_blocks;
+	(void)queued;
 }
 
 static void ps3_pad_update(void)
@@ -1119,59 +1181,21 @@ static void ps3_run_pause(void)
 #endif
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-static uint64_t prof_gfx, prof_audio, prof_emul, prof_last_end;
-static unsigned prof_frames, prof_skipped;
-static uint64_t prof_start;
+
 #endif
 
 #if (defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)) && defined(SEGASONIC_CONSOLE)
 static void ps3_timed_frame_shown(void)
 {
-	static uint64_t last_call;
-	static bool skipped_last;
-	const uint64_t now = __mftb();
-	const uint64_t frame_ticks = (uint64_t)sys_time_get_timebase_frequency() / 60;
-	const bool late = last_call != 0 && now - last_call > frame_ticks + frame_ticks / 8;
-
-	last_call = now;
-	if (late && !skipped_last && console_in_game())
-	{
-		ps3_picture_skipped = true;
-		skipped_last = true;
-		prof_skipped++;
-		return;
-	}
 	ps3_picture_skipped = false;
-	skipped_last = false;
 	console_draw_frame();
 }
 #endif
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-/* Espera hasta el próximo tick de 1/60 s: el juego no corre más rápido que eso */
+/* Con GL_VSYNC_SCE activo, psglSwap() sincroniza por hardware con el VBLANK del TV */
 static void ps3_limit_frame(void)
 {
-	static uint64_t next_frame_time;
-	static uint64_t waited_ticks;
-	static unsigned waited_frames;
-	const uint64_t frequency = (uint64_t)sys_time_get_timebase_frequency();
-	const uint64_t period = frequency / 60;
-	const uint64_t now = __mftb();
-
-	if (next_frame_time == 0 || now > next_frame_time + period * 4)
-		next_frame_time = now;      /* primera vez, o muy atrasado: empezar de nuevo */
-	next_frame_time += period;
-	while (__mftb() < next_frame_time)
-	{
-	}
-	waited_ticks += __mftb() - now;
-	if (++waited_frames == 60)
-	{
-		printf("[limit] espera=%.2f ms/frame (margen libre)\n",
-			(double)waited_ticks * 1000.0 / ((double)frequency * 60.0));
-		waited_ticks = 0;
-		waited_frames = 0;
-	}
 }
 #endif
 
@@ -1191,17 +1215,8 @@ static void on_frame_done(void)
 		sys_process_exit(0);
 	}
 
-	const uint64_t t0 = __mftb();
-	uint64_t t1, t2;
-
-	if (prof_last_end)
-		prof_emul += t0 - prof_last_end;
-	ps3_graphics_render_frame();
-	t1 = __mftb();
 	ps3_audio_render_frame();
-	t2 = __mftb();
-	prof_gfx += t1 - t0;
-	prof_audio += t2 - t1;
+	ps3_graphics_render_frame();
 #ifdef SEGASONIC_CONSOLE
 	if (console_quit_requested())
 		longjmp(finished, 1);
@@ -1219,21 +1234,6 @@ static void on_frame_done(void)
 #endif
 	if (program_frames() % 600 == 0)
 		ps3_save_eeprom();
-	if (++prof_frames == 60)
-	{
-		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
-		const uint64_t now = __mftb();
-		const double seconds = prof_start ? (double)(now - prof_start) / (double)sys_time_get_timebase_frequency() : 0.0;
-
-		printf("[prof] emul+video=%.2f gfx=%.2f audio=%.2f ms/frame fps=%.1f skipped=%u/60\n",
-			(double)prof_emul * ms, (double)prof_gfx * ms, (double)prof_audio * ms,
-			seconds > 0.0 ? 60.0 / seconds : 0.0, prof_skipped);
-		prof_start = now;
-		prof_skipped = 0;
-		prof_gfx = prof_audio = prof_emul = 0;
-		prof_frames = 0;
-	}
-	prof_last_end = __mftb();
 	ps3_limit_frame();
 #endif
 	if (hashes)
@@ -1485,34 +1485,120 @@ int main(int argc, char **argv)
 			return 1;
 		}
 	}
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+	{
+		char beside_zip[1024];
+		const char *slash = strrchr(argv[0], '/'), *backslash = strrchr(argv[0], '\\');
+		const char *last = slash > backslash ? slash : backslash;
+		snprintf(beside_zip, sizeof(beside_zip), "%.*ssonic.zip", last ? (int)(last - argv[0] + 1) : 0, argv[0]);
+
+		/* 1. Buscar si ya existe segasonic.assets */
+		const char *const ps3_paths[] = {
+			assets_path,
+			"/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets",
+			"USRDIR/segasonic.assets",
+			"/app_home/segasonic.assets",
+			"/app_home/USRDIR/segasonic.assets",
+			"/dev_usb000/segasonic.assets",
+			"/dev_usb001/segasonic.assets",
+			NULL
+		};
+		int p_idx = 0;
+		while (ps3_paths[p_idx])
+		{
+			if (ps3_paths[p_idx] && game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
+			{
+				assets_path = ps3_paths[p_idx];
+				break;
+			}
+			p_idx++;
+		}
+
+		/* 2. Si no existe segasonic.assets, buscar sonic.zip para extraerlo */
+		if (!ps3_paths[p_idx])
+		{
+			const char *const zip_paths[] = {
+				beside_zip,
+				"/dev_hdd0/game/SEGASONIC/USRDIR/sonic.zip",
+				"/dev_hdd0/game/SEGASONIC/sonic.zip",
+				"USRDIR/sonic.zip",
+				"sonic.zip",
+				"/app_home/USRDIR/sonic.zip",
+				"/app_home/sonic.zip",
+				"/dev_usb000/sonic.zip",
+				"/dev_usb001/sonic.zip",
+				NULL
+			};
+
+			int z_idx = 0;
+			while (zip_paths[z_idx])
+			{
+				FILE *zf = fopen(zip_paths[z_idx], "rb");
+				if (zf) { fclose(zf); break; }
+				z_idx++;
+			}
+
+			/* Bucle interactivo: si no hay sonic.zip, se queda mostrando la pantalla en el TV esperando */
+			while (!ps3_exit_requested)
+			{
+				if (zip_paths[z_idx])
+				{
+					printf("[assets] Encontrado %s! Extrayendo assets...\n", zip_paths[z_idx]);
+					for (int i = 0; i < 4; i++)
+						ps3_show_rom_prompt("Reading the ROM set...");
+
+					/* Intentar escribir al lado del ejecutable (para Target Manager) */
+					const char *problem = game_data_extract(zip_paths[z_idx], assets_path);
+					if (!problem && game_data_load(assets_path) == GAME_DATA_LOADED)
+						break;
+
+					/* Intentar escribir en el disco duro interno de la PS3 */
+					static char hdd_target[1024];
+					snprintf(hdd_target, sizeof(hdd_target), "/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets");
+					problem = game_data_extract(zip_paths[z_idx], hdd_target);
+					if (!problem && game_data_load(hdd_target) == GAME_DATA_LOADED)
+					{
+						assets_path = hdd_target;
+						break;
+					}
+
+					/* Intentar escribir en USRDIR relativo */
+					static char local_target[1024];
+					snprintf(local_target, sizeof(local_target), "USRDIR/segasonic.assets");
+					problem = game_data_extract(zip_paths[z_idx], local_target);
+					if (!problem && game_data_load(local_target) == GAME_DATA_LOADED)
+					{
+						assets_path = local_target;
+						break;
+					}
+					if (problem)
+						printf("[assets] Error de extraccion: %s\n", problem);
+				}
+
+				/* Pantalla azul esperando la ROM */
+				ps3_show_rom_prompt(NULL);
+				cellSysutilCheckCallback();
+
+				/* Comprobar si el usuario conecto un pendrive o copio sonic.zip */
+				z_idx = 0;
+				while (zip_paths[z_idx])
+				{
+					FILE *zf = fopen(zip_paths[z_idx], "rb");
+					if (zf) { fclose(zf); break; }
+					z_idx++;
+				}
+			}
+			if (ps3_exit_requested)
+				return 0;
+		}
+	}
+#endif
+
 	switch (game_data_load(assets_path))
 	{
 	case GAME_DATA_LOADED:
 		break;
 	case GAME_DATA_MISSING:
-#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-	{
-							  static const char *const ps3_paths[] = {
-								  "/app_home/segasonic.assets",
-								  "/app_home/USRDIR/segasonic.assets",
-								  "/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets",
-								  "USRDIR/segasonic.assets",
-								  NULL
-							  };
-							  int p_idx = 0;
-							  while (ps3_paths[p_idx])
-							  {
-								  if (game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
-								  {
-									  assets_path = ps3_paths[p_idx];
-									  break;
-								  }
-								  p_idx++;
-							  }
-							  if (ps3_paths[p_idx])
-								  break;
-	}
-#endif
 		fprintf(stderr, "%s: no game assets\n", assets_path);
 		return 1;
 	default:
@@ -1603,9 +1689,8 @@ int main(int argc, char **argv)
 
 		audio_ctrl->made = 0;    /* trabajo vacío: comprueba que el SPU de audio responde */
 		ps3_spu_audio_ok = (spu_host_audio_mix_block() == 0);
-		printf("[spu] audio SPU: %s\n", ps3_spu_audio_ok ? "listo" : "no responde");
 	}
-	s32_workers_start(2);
+	s32_workers_start(1);
 	s32_board.sound_rom = game_sound;
 	sound_chips_attach();
 	sound_cpu_attach();

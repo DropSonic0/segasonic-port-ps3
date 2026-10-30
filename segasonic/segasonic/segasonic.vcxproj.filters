@@ -113,6 +113,8 @@
     <ClCompile Include="cpp_wrappers\console.cpp" />
     <ClCompile Include="cpp_wrappers\game.cpp" />
     <ClCompile Include="cpp_wrappers\sound_cpu.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_ym3438.cpp" />
+    <ClCompile Include="..\..\ports\ps3\spu_host.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />
@@ -140,5 +142,6 @@
     <ClInclude Include="..\..\src\game.h" />
     <ClInclude Include="..\..\src\ram.h" />
     <ClInclude Include="..\..\src\sound\sound.h" />
+    <ClInclude Include="..\..\ports\ps3\spu_host.h" />
   </ItemGroup>
 </Project>

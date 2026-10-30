@@ -78,7 +78,7 @@ static struct
 } pool;
 
 /* Band 'band' of 'bands' of rows first..last */
-#define CHUNK_ROWS 8
+#define CHUNK_ROWS 112
 
 /* Takes chunks of rows, one after another, until none are left: a slower thread ends up taking fewer */
 static void run_chunks(s32_rows_work work, void *context, int first, int last)

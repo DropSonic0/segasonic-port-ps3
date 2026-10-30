@@ -59,14 +59,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;SEGASONIC_CONSOLE;S32_BIG_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;SEGASONIC_CONSOLE;SEGASONIC_SYSTEM_EXIT;S32_BIG_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OptimizationLevel>Level2</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\src;$(ProjectDir)..\..\runtime\include;$(ProjectDir)..\..\console;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AdditionalOptions>-O3 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libPSGLU.a;libPSGL.a;libgcm_cmd.a;libgcm_sys_stub.a;libresc_stub.a;libsysutil_game_stub.a;libsysutil_stub.a;libio_stub.a;libaudio_stub.a;libpthread.a;libsysmodule_stub.a;libfs_stub.a;libm.a;libnet_stub.a</AdditionalDependencies>
+      <AdditionalDependencies>libPSGLU.a;libPSGL.a;libgcm_cmd.a;libgcm_sys_stub.a;libresc_stub.a;libsysutil_game_stub.a;libsysutil_stub.a;libio_stub.a;libaudio_stub.a;libpthread.a;libsysmodule_stub.a;libfs_stub.a;libm.a;libnet_stub.a;$(OutDir)sound_spu.ppu.o;$(OutDir)renderer_spu.ppu.o</AdditionalDependencies>
     </Link>
     <Link>
       <AdditionalLibraryDirectories>C:\usr\local\cell\target\ppu\lib\PSGL\RSX\ultra-opt</AdditionalLibraryDirectories>
@@ -78,6 +79,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\ports\headless\main.c" />
+    <ClCompile Include="..\..\ports\ps3\spu_host.c" />
     <ClCompile Include="..\..\runtime\src\extract.c" />
     <ClCompile Include="..\..\runtime\src\game.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
@@ -91,14 +93,20 @@
     <ClCompile Include="..\..\runtime\src\rf5c68.c" />
     <ClCompile Include="..\..\runtime\src\rom_set.c" />
     <ClCompile Include="..\..\runtime\src\script.c" />
-    <ClCompile Include="..\..\runtime\src\sound.c" />
-    <ClCompile Include="..\..\runtime\src\sound_chips.c" />
+    <ClCompile Include="..\..\runtime\src\sound.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\runtime\src\sound_chips.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\runtime\src\sound_cpu.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\runtime\src\video.c" />
     <ClCompile Include="..\..\runtime\src\workers.c" />
-    <ClCompile Include="..\..\runtime\src\ym3438.c" />
+    <ClCompile Include="..\..\runtime\src\ym3438.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\engine\contacts.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">true</ExcludedFromBuild>
     </ClCompile>
@@ -269,6 +277,7 @@
     <ClCompile Include="cpp_wrappers\sound_midi.cpp" />
     <ClCompile Include="cpp_wrappers\sound_sequences.cpp" />
     <ClCompile Include="cpp_wrappers\sound_voices.cpp" />
+    <ClCompile Include="cpp_wrappers\sound_ym3438.cpp" />
     <ClCompile Include="cpp_wrappers\stage_camera.cpp" />
     <ClCompile Include="cpp_wrappers\stage_events.cpp" />
     <ClCompile Include="cpp_wrappers\stage_game_modes.cpp" />
@@ -287,6 +296,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\console\console.h" />
     <ClInclude Include="..\..\console\console_actions.h" />
+    <ClInclude Include="..\..\ports\ps3\spu_host.h" />
     <ClInclude Include="..\..\runtime\include\game\data.h" />
     <ClInclude Include="..\..\runtime\include\game\extract.h" />
     <ClInclude Include="..\..\runtime\include\game\support.h" />

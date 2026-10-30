@@ -109,7 +109,7 @@ typedef struct sprite_drawing
 	uint16_t table[16];
 	bool one_to_one;            /* sin zoom: un pen es un pixel */
 	int lut_mid[16];            /* el pixel de cada pen (-1: transparente) lejos de los extremos de la palabra */
-	int lut_end[16];            /* lo mismo para el primer y el último pen de la palabra */
+	int lut_end[16];            /* lo mismo para el primer y el ï¿½ltimo pen de la palabra */
 } sprite_drawing;
 
 static struct
@@ -172,10 +172,10 @@ static int shift_down(int value, int count)
 	return value >= 0 ? value >> count : ~(~value >> count);
 }
 
-static uint16_t video_word(uint32_t index)
+static inline uint16_t video_word(uint32_t index)
 {
 	const uint8_t *at = &s32_board.video_ram[(index & 0xffff) * 2];
-	return (uint16_t)(at[0] | at[1] << 8);
+	return (uint16_t)(at[0] | ((uint16_t)at[1] << 8));
 }
 
 /* A register of the tilemap chip, by its offset from 0x31FF00 */
@@ -260,7 +260,7 @@ static uint16_t cached_page_pixel(tile_cache *cache, int key, int page, int bank
 {
 	static const uint8_t byte_of_column[16] = { 0, 0, 2, 2, 1, 1, 3, 3, 4, 4, 6, 6, 5, 5, 7, 7 };
 
-	if (cache->key != key)
+	if (cache->key != key || !cache->row)
 	{
 		const uint32_t index = (uint32_t)page << 9 | (uint32_t)(y >> 4) << 5 | (uint32_t)(x >> 4);
 		const uint16_t cell = own_cell_marks && own_cell_marks[index] ? own_cell_words[index] : video_word(index);
@@ -500,7 +500,7 @@ static unsigned fill_tile_row(uint16_t *out, int left, int right, const int *pag
 		const int in_cell = column & 15;
 		int count = step > 0 ? 16 - in_cell : in_cell + 1;
 		const uint32_t index = (uint32_t)pages[(column >> 9) & 1] << 9 | cell_row | (uint32_t)((column >> 4) & 31);
-		const uint16_t cell = own_cell_marks && own_cell_marks[index] ? own_cell_words[index] : video_word(index);
+		const uint16_t cell = video_word(index);
 		uint32_t tile = (uint32_t)bank << 13 | (cell & 0x1fff);
 		const int tile_line = (cell & 0x8000) ? 15 - (line & 15) : (line & 15);
 		const unsigned palette = (unsigned)((cell >> 4) & 0x1ff) << 4;
@@ -513,10 +513,48 @@ static unsigned fill_tile_row(uint16_t *out, int left, int right, const int *pag
 		pens = &tile_pens[(size_t)tile * 256 + tile_line * 16];
 		if (count > right - x + 1)
 			count = right - x + 1;
+
+		/* Si toda la lï¿½nea del tile es transparente (ceros), saltar en bloque */
+		if (*(const uint64_t *)pens == 0 && *(const uint64_t *)(pens + 8) == 0)
+		{
+			memset(&out[x], 0, (size_t)count * sizeof(uint16_t));
+			x += count;
+			column = (column + step * count) & 0xfff;
+			continue;
+		}
+
+		/* Desenrollado directo para tiles completos de 16 pï¿½xeles */
+		if (count == 16 && dir == 1 && at == 0)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				const unsigned pen = pens[i];
+				const unsigned val = pen ? (palette | pen) : 0;
+				out[x + i] = (uint16_t)val;
+				seen |= val;
+			}
+			x += 16;
+			column = (column + step * 16) & 0xfff;
+			continue;
+		}
+		if (count == 16 && dir == -1 && at == 15)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				const unsigned pen = pens[15 - i];
+				const unsigned val = pen ? (palette | pen) : 0;
+				out[x + i] = (uint16_t)val;
+				seen |= val;
+			}
+			x += 16;
+			column = (column + step * 16) & 0xfff;
+			continue;
+		}
+
 		for (int i = 0; i < count; i++, at += dir)
 		{
 			const unsigned pen = pens[at];
-			const unsigned value = (palette | pen) & (0u - ((pen + 15) >> 4));   /* pen 0 -> 0 */
+			const unsigned value = pen ? (palette | pen) : 0;
 
 			out[x + i] = (uint16_t)value;
 			seen |= value;
@@ -538,7 +576,7 @@ static bool runs_in_order(const uint16_t *runs)
 	}
 }
 
-/* Borra lo que las ventanas de recorte dejan afuera; dice si borró algo */
+/* Borra lo que las ventanas de recorte dejan afuera; dice si borrï¿½ algo */
 static bool clip_filled_row(uint16_t *pixels, const uint16_t *runs, bool drawn)
 {
 	bool clipped = false;
@@ -638,6 +676,65 @@ typedef struct zoomed_layer
 	uint32_t y_step;
 } zoomed_layer;
 
+static void draw_zoomed_row_fast(layer *out, int y, const uint16_t *runs, bool drawn, const zoomed_row *row)
+{
+	uint16_t *pixels = out->pixels[y];
+	int transparent = 0;
+	int last_key = -1;
+	const uint8_t *pens = NULL;
+	unsigned palette = 0;
+	bool flip_x = false;
+	const int line = row->line;
+	const int bank = row->bank;
+	const int tile_y = line & 15;
+	const uint32_t cell_y_offset = (uint32_t)(line >> 4) << 5;
+
+	for (;; runs++, drawn = !drawn)
+	{
+		const int x0 = runs[0];
+		const int x1 = runs[1] < WIDTH ? runs[1] : WIDTH;
+		if (drawn)
+		{
+			uint32_t col = row->x_start + (uint32_t)(x0 - video.visible.left) * row->x_step;
+			const uint32_t step = row->x_step;
+
+			for (int x = x0; x < x1; x++, col += step)
+			{
+				const int key = (int)((col >> 24) & 0x3f);
+				if (key != last_key)
+				{
+					last_key = key;
+					const int page = row->pages[(col >> 29) & 1];
+					const uint32_t index = (uint32_t)page << 9 | cell_y_offset | (uint32_t)((col >> 24) & 31);
+					const uint16_t cell = own_cell_marks && own_cell_marks[index] ? own_cell_words[index] : video_word(index);
+					uint32_t tile = (uint32_t)bank << 13 | (cell & 0x1fff);
+					const int tile_line = (cell & 0x8000) ? 15 - tile_y : tile_y;
+					if (tile >= video.tile_count)
+						tile %= video.tile_count;
+					pens = &tile_pens[(size_t)tile * 256 + tile_line * 16];
+					palette = (unsigned)(((cell >> 4) & 0x1ff) << 4);
+					flip_x = (cell & 0x4000) != 0;
+				}
+				const int col_in_tile = (int)((col >> 20) & 15);
+				const int c = flip_x ? 15 - col_in_tile : col_in_tile;
+				const unsigned pen = pens[c];
+				const unsigned val = pen ? (palette | pen) : 0;
+				pixels[x] = (uint16_t)val;
+				transparent += (val == 0);
+			}
+		}
+		else
+		{
+			for (int x = x0; x < x1; x++)
+				pixels[x] = 0;
+			transparent += x1 - x0;
+		}
+		if (runs[1] > video.visible.right)
+			break;
+	}
+	out->empty[y] = transparent == video.visible.right + 1 - video.visible.left;
+}
+
 static void draw_zoomed_rows(void *context, int first, int last)
 {
 	const zoomed_layer *zoomed = (const zoomed_layer *)context;
@@ -646,15 +743,18 @@ static void draw_zoomed_rows(void *context, int first, int last)
 	{
 		const uint32_t source_y = zoomed->source_y + (uint32_t)(y - video.visible.top) * zoomed->y_step;
 		const int half = (source_y >> 27) & 2;
-		zoomed_row row = {
+		const zoomed_row row = {
 			{ zoomed->pages[half], zoomed->pages[half + 1] }, zoomed->bank, (source_y >> 20) & 0xff,
-			zoomed->x_start, zoomed->x_step, { -1, NULL, 0, false }
+			zoomed->x_start, zoomed->x_step
 		};
 
 		if (zoomed->x_step == 0x100000u || zoomed->x_step == 0u - 0x100000u)
 			draw_tile_row(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
 			zoomed->first_drawn, row.pages, row.bank, row.line, (int)(row.x_start >> 20),
 			zoomed->x_step == 0x100000u ? 1 : -1, zoomed_pixel, &row);
+		else if (tile_pens != NULL)
+			draw_zoomed_row_fast(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
+			zoomed->first_drawn, &row);
 		else
 			draw_row(&video.layers[LAYER_NBG0 + zoomed->number], y, video.runs.lists[video.runs.list_of_row[y]],
 			zoomed->first_drawn, zoomed_pixel, &row);
@@ -807,6 +907,8 @@ static void draw_text_rows(void *context, int first, int last)
 	const uint32_t cell_page = (uint32_t)((control >> 4) & 0x1f) << 11;
 	const uint32_t character_bank = (uint32_t)(control & 7) << 9;
 	const int limit = video.side ? 320 : video.visible.right + 1;
+	const int left_draw = video.side;
+	const int right_draw = video.side + limit - 1;
 
 	for (int y = first; y <= last; y++)
 	{
@@ -817,18 +919,17 @@ static void draw_text_rows(void *context, int first, int last)
 		const uint8_t *graphics = NULL;
 		uint32_t palette = 0;
 		int cached_cell = -1;
+		unsigned seen = 0;
 
-		for (int x = video.visible.left; x <= video.visible.right; x++)
+		if (left_draw > video.visible.left)
+			memset(&out[video.visible.left], 0, (size_t)(left_draw - video.visible.left) * sizeof(uint16_t));
+		if (video.visible.right > right_draw)
+			memset(&out[right_draw + 1], 0, (size_t)(video.visible.right - right_draw) * sizeof(uint16_t));
+
+		for (int x = left_draw; x <= right_draw; x++)
 		{
 			const int column = x - video.side;
-			int source_x;
-
-			if (column < 0 || column >= limit)
-			{
-				out[x] = 0;
-				continue;
-			}
-			source_x = flip ? 511 - column : column;
+			const int source_x = flip ? 511 - column : column;
 			if ((source_x >> 3) != cached_cell)
 			{
 				const uint16_t cell = video_word(cell_row | (uint32_t)(source_x >> 3));
@@ -840,10 +941,13 @@ static void draw_text_rows(void *context, int first, int last)
 			{
 				const uint8_t value = graphics[(source_x & 7) >> 1];
 				const int pen = (source_x & 1) ? (value & 0x0f) : (value >> 4);
+				const uint16_t px = pen ? (uint16_t)(palette | (uint32_t)pen) : 0;
 
-				out[x] = pen ? (uint16_t)(palette | (uint32_t)pen) : 0;
+				out[x] = px;
+				seen |= px;
 			}
 		}
+		video.layers[LAYER_TEXT].empty[y] = (seen == 0);
 	}
 }
 
@@ -922,13 +1026,28 @@ static void draw_backdrop(void)
 {
 	const uint16_t control = video_register(0x5e);
 	const bool flip = bit(video_register(0x00), 9);
+	static uint16_t last_control = 0xffff;
+	static int last_flip = -1;
+
+	if (control == last_control && (int)flip == last_flip)
+		return;
+	last_control = control;
+	last_flip = (int)flip;
 
 	for (int y = video.visible.top; y <= video.visible.bottom; y++)
 	{
 		const int color = (control & 0x1e00) + (bit(control, 15) ? (control + y) & 0x1ff : 0);
 		uint16_t *row = video.layers[LAYER_BACKDROP].pixels[flip ? video.visible.bottom - y : y];
+		const uint32_t c32 = (uint32_t)(uint16_t)color | ((uint32_t)(uint16_t)color << 16);
+		const int right = video.visible.right;
+		int x = video.visible.left;
 
-		for (int x = video.visible.left; x <= video.visible.right; x++)
+		while (x + 1 <= right)
+		{
+			*(uint32_t *)&row[x] = c32;
+			x += 2;
+		}
+		if (x <= right)
 			row[x] = (uint16_t)color;
 	}
 }
@@ -967,40 +1086,40 @@ static int draw_layers(void)
 	const uint16_t more_off = video_register(0x8e);
 	int drawn = 0;
 
-	if (!bit(off, 0) && !bit(more_off, 1))
+	if (!bit(off, 0) && !bit(more_off, 1) && (mixer_register(0x20 + 2 * LAYER_NBG0) & 0x0f) != 0)
 	{
 		draw_zoomed(0);
 		if (s32_video_tile_observer != NULL)
 			observe_tilemap(0);
 		drawn |= 1 << LAYER_NBG0;
 	}
-	if (!bit(off, 1) && !bit(more_off, 2))
+	if (!bit(off, 1) && !bit(more_off, 2) && (mixer_register(0x20 + 2 * LAYER_NBG1) & 0x0f) != 0)
 	{
 		draw_zoomed(1);
 		if (s32_video_tile_observer != NULL)
 			observe_tilemap(1);
 		drawn |= 1 << LAYER_NBG1;
 	}
-	if (!bit(off, 2) && !bit(more_off, 3) && !bit(control, 12))
+	if (!bit(off, 2) && !bit(more_off, 3) && !bit(control, 12) && (mixer_register(0x20 + 2 * LAYER_NBG2) & 0x0f) != 0)
 	{
 		draw_scrolled(2);
 		if (s32_video_tile_observer != NULL)
 			observe_tilemap(2);
 		drawn |= 1 << LAYER_NBG2;
 	}
-	if (!bit(off, 3) && !bit(more_off, 4) && !bit(control, 13))
+	if (!bit(off, 3) && !bit(more_off, 4) && !bit(control, 13) && (mixer_register(0x20 + 2 * LAYER_NBG3) & 0x0f) != 0)
 	{
 		draw_scrolled(3);
 		if (s32_video_tile_observer != NULL)
 			observe_tilemap(3);
 		drawn |= 1 << LAYER_NBG3;
 	}
-	if (!bit(off, 4) && !bit(more_off, 0))
+	if (!bit(off, 4) && !bit(more_off, 0) && (mixer_register(0x20 + 2 * LAYER_TEXT) & 0x0f) != 0)
 	{
 		draw_text();
 		drawn |= 1 << LAYER_TEXT;
 	}
-	if (!bit(off, 5) && !bit(more_off, 5))
+	if (!bit(off, 5) && !bit(more_off, 5) && (mixer_register(0x20 + 2 * LAYER_BITMAP) & 0x0f) != 0)
 	{
 		draw_bitmap();
 		drawn |= 1 << LAYER_BITMAP;
@@ -1039,17 +1158,18 @@ static void put_sprite_pixel(const sprite_drawing *sprite, int x, int pen, int s
 		sprite->row[x] &= 0x7fff;
 }
 
-/* A 32-bit word of sprite graphics: from the ROM bank, or from sprite RAM itself */
-static uint32_t sprite_graphics(bool from_ram, uint32_t bank, uint32_t index)
+/* A 32-bit word of sprite graphics: lectura directa sin conversiï¿½n innecesaria */
+static inline uint32_t sprite_graphics(bool from_ram, uint32_t bank, uint32_t index)
 {
 	if (from_ram)
-		return big_endian_word(&s32_board.sprite_ram[(index & 0x7fff) * 4]);
-	{
-		const uint32_t word = (bank << 20) | (index & 0xfffff);
+		return *(const uint32_t *)&s32_board.sprite_ram[(index & 0x7fff) * 4];
 
-		return big_endian_word(&video.sprite_rom[(size_t)(word < video.sprite_rom_words ? word : word % video.sprite_rom_words) * 4]);
-	}
+	const uint32_t word = (bank << 20) | (index & 0xfffff);
+	const uint32_t idx = (word < video.sprite_rom_words) ? word : (word % (video.sprite_rom_words ? video.sprite_rom_words : 1));
+	return ((const uint32_t *)video.sprite_rom)[idx];
 }
+
+static unsigned dbg_rows_1to1, dbg_rows_zoom, dbg_words_1to1, dbg_words_zoom;
 
 /* One row of a sprite: words of 8 pens (4 bits) or 4 (8 bits), each pen repeated or skipped by the
 zoom. The first and last pen of a word are transparent at all ones (unless the sprite is opaque),
@@ -1072,11 +1192,13 @@ static void draw_sprite_row(const sprite_drawing *sprite, bool from_ram, uint32_
 	uint16_t *const row = sprite->row;
 	int x_accumulator = 0;
 
+	dbg_rows_zoom++;
 	while (x != x_end)
 	{
 		const uint32_t word = sprite_graphics(from_ram, bank, address++);
 		int pen = 0;
 
+		dbg_words_zoom++;
 		for (int index = 0; index < pens; index++)
 		{
 			const int skipped_pen = (index == 0 || index == pens - 1) ? end_pen : 0;
@@ -1117,7 +1239,6 @@ static void draw_sprite_row(const sprite_drawing *sprite, bool from_ram, uint32_
 			break;
 	}
 }
-
 /* Una fila de sprite sin zoom (4 bits por pen): igual que draw_sprite_row, pero con los colores ya resueltos */
 static void draw_sprite_row_1to1(const sprite_drawing *sprite, bool from_ram, uint32_t bank, uint32_t address,
 	int x, int x_end, int x_delta, int end_pen)
@@ -1129,12 +1250,266 @@ static void draw_sprite_row_1to1(const sprite_drawing *sprite, bool from_ram, ui
 	const int alone_right = sprite->outside->right;
 	const bool shadow = sprite->shadow;
 	uint16_t *const row = sprite->row;
+	int n = (x_end - x) * x_delta;                 /* pï¿½xeles que quedan por recorrer */
+	const int last = x + (n - 1) * x_delta;
+	const int lo = x < last ? x : last;
+	const int hi = x < last ? last : x;
+
+	dbg_rows_1to1++;
+	if (n <= 0)
+		return;
+
+	const bool touches_alone = leave_alone && !(hi < alone_left || lo > alone_right);
+	if (!touches_alone && lo >= clip_left && hi <= clip_right)
+	{
+		const int *lut_mid = sprite->lut_mid;
+		const int *lut_end = sprite->lut_end;
+		const bool skip_zero = lut_end[0] < 0;
+		uint16_t *dst = row + x;
+		const uint32_t *rom_ptr = (const uint32_t *)video.sprite_rom;
+		uint32_t rom_idx = (bank << 20) | (address & 0xfffff);
+		if (rom_idx >= video.sprite_rom_words) rom_idx %= (video.sprite_rom_words ? video.sprite_rom_words : 1);
+
+		/* Fast-path ultra optimizado para sprites normales (no volteados horizontalmente) */
+		if (x_delta == 1 && !shadow)
+		{
+			while (n > 0)
+			{
+				uint32_t word = !from_ram ? rom_ptr[rom_idx++] : sprite_graphics(true, bank, address);
+				if (!from_ram && rom_idx >= video.sprite_rom_words) rom_idx = 0;
+				address++;
+				dbg_words_1to1++;
+
+				if (n >= 8)
+				{
+					if (word == 0 && skip_zero) { dst += 8; n -= 8; continue; }
+					const int p0 = (int)(word >> 28) & 15; const int px0 = lut_end[p0]; if (px0 >= 0) dst[0] = (uint16_t)px0;
+					const int p1 = (int)(word >> 24) & 15; const int px1 = lut_mid[p1]; if (px1 >= 0) dst[1] = (uint16_t)px1;
+					const int p2 = (int)(word >> 20) & 15; const int px2 = lut_mid[p2]; if (px2 >= 0) dst[2] = (uint16_t)px2;
+					const int p3 = (int)(word >> 16) & 15; const int px3 = lut_mid[p3]; if (px3 >= 0) dst[3] = (uint16_t)px3;
+					const int p4 = (int)(word >> 12) & 15; const int px4 = lut_mid[p4]; if (px4 >= 0) dst[4] = (uint16_t)px4;
+					const int p5 = (int)(word >> 8) & 15; const int px5 = lut_mid[p5]; if (px5 >= 0) dst[5] = (uint16_t)px5;
+					const int p6 = (int)(word >> 4) & 15; const int px6 = lut_mid[p6]; if (px6 >= 0) dst[6] = (uint16_t)px6;
+					const int p7 = (int)(word)& 15; const int px7 = lut_end[p7]; if (px7 >= 0) dst[7] = (uint16_t)px7;
+					dst += 8; n -= 8;
+					if (end_pen != 0 && p7 == 15) break;
+				}
+				else
+				{
+					for (int index = 0; index < n; index++) {
+						const int pen = (int)(word >> (28 - 4 * index)) & 15;
+						const int px = (index == 0 ? lut_end : lut_mid)[pen];
+						if (px >= 0) dst[index] = (uint16_t)px;
+					}
+					n = 0;
+				}
+			}
+			return;
+		}
+
+		/* Fast-path para sombras sin voltear */
+		if (x_delta == 1 && shadow)
+		{
+			while (n > 0)
+			{
+				uint32_t word = !from_ram ? rom_ptr[rom_idx++] : sprite_graphics(true, bank, address);
+				if (!from_ram && rom_idx >= video.sprite_rom_words) rom_idx = 0;
+				address++;
+				dbg_words_1to1++;
+
+				if (n >= 8)
+				{
+					if (word == 0 && skip_zero) { dst += 8; n -= 8; continue; }
+					const int p0 = (int)(word >> 28) & 15; if (lut_end[p0] >= 0) dst[0] &= 0x7fff;
+					const int p1 = (int)(word >> 24) & 15; if (lut_mid[p1] >= 0) dst[1] &= 0x7fff;
+					const int p2 = (int)(word >> 20) & 15; if (lut_mid[p2] >= 0) dst[2] &= 0x7fff;
+					const int p3 = (int)(word >> 16) & 15; if (lut_mid[p3] >= 0) dst[3] &= 0x7fff;
+					const int p4 = (int)(word >> 12) & 15; if (lut_mid[p4] >= 0) dst[4] &= 0x7fff;
+					const int p5 = (int)(word >> 8) & 15; if (lut_mid[p5] >= 0) dst[5] &= 0x7fff;
+					const int p6 = (int)(word >> 4) & 15; if (lut_mid[p6] >= 0) dst[6] &= 0x7fff;
+					const int p7 = (int)(word)& 15; if (lut_end[p7] >= 0) dst[7] &= 0x7fff;
+					dst += 8; n -= 8;
+					if (end_pen != 0 && p7 == 15) break;
+				}
+				else
+				{
+					for (int index = 0; index < n; index++) {
+						const int pen = (int)(word >> (28 - 4 * index)) & 15;
+						if ((index == 0 ? lut_end : lut_mid)[pen] >= 0) dst[index] &= 0x7fff;
+					}
+					n = 0;
+				}
+			}
+			return;
+		}
+
+		/* Caso volteado (flip horizontal x_delta == -1) con salto de ceros y desenrollado */
+		while (n > 0)
+		{
+			uint32_t word = !from_ram ? rom_ptr[rom_idx++] : sprite_graphics(true, bank, address);
+			if (!from_ram && rom_idx >= video.sprite_rom_words) rom_idx = 0;
+			address++;
+			dbg_words_1to1++;
+
+			if (n >= 8)
+			{
+				if (word == 0 && skip_zero) { dst -= 8; n -= 8; continue; }
+				const int p0 = (int)(word >> 28) & 15; const int px0 = lut_end[p0]; if (px0 >= 0) { if (!shadow) dst[0] = (uint16_t)px0; else dst[0] &= 0x7fff; }
+				const int p1 = (int)(word >> 24) & 15; const int px1 = lut_mid[p1]; if (px1 >= 0) { if (!shadow) dst[-1] = (uint16_t)px1; else dst[-1] &= 0x7fff; }
+				const int p2 = (int)(word >> 20) & 15; const int px2 = lut_mid[p2]; if (px2 >= 0) { if (!shadow) dst[-2] = (uint16_t)px2; else dst[-2] &= 0x7fff; }
+				const int p3 = (int)(word >> 16) & 15; const int px3 = lut_mid[p3]; if (px3 >= 0) { if (!shadow) dst[-3] = (uint16_t)px3; else dst[-3] &= 0x7fff; }
+				const int p4 = (int)(word >> 12) & 15; const int px4 = lut_mid[p4]; if (px4 >= 0) { if (!shadow) dst[-4] = (uint16_t)px4; else dst[-4] &= 0x7fff; }
+				const int p5 = (int)(word >> 8) & 15; const int px5 = lut_mid[p5]; if (px5 >= 0) { if (!shadow) dst[-5] = (uint16_t)px5; else dst[-5] &= 0x7fff; }
+				const int p6 = (int)(word >> 4) & 15; const int px6 = lut_mid[p6]; if (px6 >= 0) { if (!shadow) dst[-6] = (uint16_t)px6; else dst[-6] &= 0x7fff; }
+				const int p7 = (int)(word)& 15; const int px7 = lut_end[p7]; if (px7 >= 0) { if (!shadow) dst[-7] = (uint16_t)px7; else dst[-7] &= 0x7fff; }
+				dst -= 8; n -= 8;
+				if (end_pen != 0 && p7 == 15) break;
+			}
+			else
+			{
+				for (int index = 0; index < n; index++) {
+					const int pen = (int)(word >> (28 - 4 * index)) & 15;
+					const int px = (index == 0 ? lut_end : lut_mid)[pen];
+					if (px >= 0) {
+						if (!shadow) dst[-index] = (uint16_t)px;
+						else dst[-index] &= 0x7fff;
+					}
+				}
+				n = 0;
+			}
+		}
+		return;
+	}
+
+	/* camino con clip: lectura directa de ROM sin modulo ni funciones intermedias */
+	const bool skip_zero_slow = sprite->lut_end[0] < 0;
+	const uint32_t *rom_ptr = (const uint32_t *)video.sprite_rom;
+	uint32_t rom_idx = (bank << 20) | (address & 0xfffff);
+	if (rom_idx >= video.sprite_rom_words) rom_idx %= (video.sprite_rom_words ? video.sprite_rom_words : 1);
+
+	/* Si empieza a la izquierda de la pantalla, saltar palabras completas de 8 pï¿½xeles fuera de pantalla */
+	if (x_delta == 1 && x < clip_left)
+	{
+		const int skip_words = (clip_left - x) / 8;
+		if (skip_words > 0)
+		{
+			x += skip_words * 8;
+			address += (uint32_t)skip_words;
+			if (!from_ram)
+				rom_idx = (rom_idx + (uint32_t)skip_words) % (video.sprite_rom_words ? video.sprite_rom_words : 1);
+		}
+	}
+	else if (x_delta == -1 && x > clip_right)
+	{
+		const int skip_words = (x - clip_right) / 8;
+		if (skip_words > 0)
+		{
+			x -= skip_words * 8;
+			address += (uint32_t)skip_words;
+			if (!from_ram)
+				rom_idx = (rom_idx + (uint32_t)skip_words) % (video.sprite_rom_words ? video.sprite_rom_words : 1);
+		}
+	}
 
 	while (x != x_end)
 	{
-		const uint32_t word = sprite_graphics(from_ram, bank, address++);
+		const uint32_t word = !from_ram ? rom_ptr[rom_idx++] : sprite_graphics(true, bank, address);
+		if (!from_ram && rom_idx >= video.sprite_rom_words) rom_idx = 0;
+		address++;
 		int pen = 0;
 
+		dbg_words_1to1++;
+
+		/* Si las 8 palabras caen completamente dentro de la presa (enmascaradas), saltarlas de golpe */
+		if (x_delta == 1 && leave_alone && x >= alone_left && x + 7 <= alone_right)
+		{
+			x += 8;
+			continue;
+		}
+		if (x_delta == -1 && leave_alone && x - 7 >= alone_left && x <= alone_right)
+		{
+			x -= 8;
+			continue;
+		}
+
+		/* Si las 8 palabras estï¿½n libres de la presa y dentro de la pantalla, escribir directo a toda velocidad */
+		if (x_delta == 1 && (!leave_alone || (x + 7 < alone_left || x > alone_right)) && x >= clip_left && x + 7 <= clip_right)
+		{
+			uint16_t *dst = row + x;
+			const int *lut_mid = sprite->lut_mid;
+			const int *lut_end = sprite->lut_end;
+			if (word == 0 && skip_zero_slow) { x += 8; continue; }
+			if (!shadow)
+			{
+				const int p0 = (int)(word >> 28) & 15; const int px0 = lut_end[p0]; if (px0 >= 0) dst[0] = (uint16_t)px0;
+				const int p1 = (int)(word >> 24) & 15; const int px1 = lut_mid[p1]; if (px1 >= 0) dst[1] = (uint16_t)px1;
+				const int p2 = (int)(word >> 20) & 15; const int px2 = lut_mid[p2]; if (px2 >= 0) dst[2] = (uint16_t)px2;
+				const int p3 = (int)(word >> 16) & 15; const int px3 = lut_mid[p3]; if (px3 >= 0) dst[3] = (uint16_t)px3;
+				const int p4 = (int)(word >> 12) & 15; const int px4 = lut_mid[p4]; if (px4 >= 0) dst[4] = (uint16_t)px4;
+				const int p5 = (int)(word >> 8) & 15; const int px5 = lut_mid[p5]; if (px5 >= 0) dst[5] = (uint16_t)px5;
+				const int p6 = (int)(word >> 4) & 15; const int px6 = lut_mid[p6]; if (px6 >= 0) dst[6] = (uint16_t)px6;
+				const int p7 = (int)(word)& 15; const int px7 = lut_end[p7]; if (px7 >= 0) dst[7] = (uint16_t)px7;
+				x += 8;
+				if (end_pen != 0 && p7 == 15) break;
+			}
+			else
+			{
+				const int p0 = (int)(word >> 28) & 15; if (lut_end[p0] >= 0) dst[0] &= 0x7fff;
+				const int p1 = (int)(word >> 24) & 15; if (lut_mid[p1] >= 0) dst[1] &= 0x7fff;
+				const int p2 = (int)(word >> 20) & 15; if (lut_mid[p2] >= 0) dst[2] &= 0x7fff;
+				const int p3 = (int)(word >> 16) & 15; if (lut_mid[p3] >= 0) dst[3] &= 0x7fff;
+				const int p4 = (int)(word >> 12) & 15; if (lut_mid[p4] >= 0) dst[4] &= 0x7fff;
+				const int p5 = (int)(word >> 8) & 15; if (lut_mid[p5] >= 0) dst[5] &= 0x7fff;
+				const int p6 = (int)(word >> 4) & 15; if (lut_mid[p6] >= 0) dst[6] &= 0x7fff;
+				const int p7 = (int)(word)& 15; if (lut_end[p7] >= 0) dst[7] &= 0x7fff;
+				x += 8;
+				if (end_pen != 0 && p7 == 15) break;
+			}
+			continue;
+		}
+
+		if (x_delta == -1 && (!leave_alone || (x < alone_left || x - 7 > alone_right)) && x - 7 >= clip_left && x <= clip_right)
+		{
+			uint16_t *dst = row + x;
+			const int *lut_mid = sprite->lut_mid;
+			const int *lut_end = sprite->lut_end;
+			if (word == 0 && skip_zero_slow) { x -= 8; continue; }
+			if (!shadow)
+			{
+				const int p0 = (int)(word >> 28) & 15; const int px0 = lut_end[p0]; if (px0 >= 0) dst[0] = (uint16_t)px0;
+				const int p1 = (int)(word >> 24) & 15; const int px1 = lut_mid[p1]; if (px1 >= 0) dst[-1] = (uint16_t)px1;
+				const int p2 = (int)(word >> 20) & 15; const int px2 = lut_mid[p2]; if (px2 >= 0) dst[-2] = (uint16_t)px2;
+				const int p3 = (int)(word >> 16) & 15; const int px3 = lut_mid[p3]; if (px3 >= 0) dst[-3] = (uint16_t)px3;
+				const int p4 = (int)(word >> 12) & 15; const int px4 = lut_mid[p4]; if (px4 >= 0) dst[-4] = (uint16_t)px4;
+				const int p5 = (int)(word >> 8) & 15; const int px5 = lut_mid[p5]; if (px5 >= 0) dst[-5] = (uint16_t)px5;
+				const int p6 = (int)(word >> 4) & 15; const int px6 = lut_mid[p6]; if (px6 >= 0) dst[-6] = (uint16_t)px6;
+				const int p7 = (int)(word)& 15; const int px7 = lut_end[p7]; if (px7 >= 0) dst[-7] = (uint16_t)px7;
+				x -= 8;
+				if (end_pen != 0 && p7 == 15) break;
+			}
+			else
+			{
+				const int p0 = (int)(word >> 28) & 15; if (lut_end[p0] >= 0) dst[0] &= 0x7fff;
+				const int p1 = (int)(word >> 24) & 15; if (lut_mid[p1] >= 0) dst[-1] &= 0x7fff;
+				const int p2 = (int)(word >> 20) & 15; if (lut_mid[p2] >= 0) dst[-2] &= 0x7fff;
+				const int p3 = (int)(word >> 16) & 15; if (lut_mid[p3] >= 0) dst[-3] &= 0x7fff;
+				const int p4 = (int)(word >> 12) & 15; if (lut_mid[p4] >= 0) dst[-4] &= 0x7fff;
+				const int p5 = (int)(word >> 8) & 15; if (lut_mid[p5] >= 0) dst[-5] &= 0x7fff;
+				const int p6 = (int)(word >> 4) & 15; if (lut_mid[p6] >= 0) dst[-6] &= 0x7fff;
+				const int p7 = (int)(word)& 15; if (lut_end[p7] >= 0) dst[-7] &= 0x7fff;
+				x -= 8;
+				if (end_pen != 0 && p7 == 15) break;
+			}
+			continue;
+		}
+
+		if (word == 0 && skip_zero_slow && (!leave_alone || (x_delta == 1 ? (x + 7 < alone_left || x > alone_right) : (x < alone_left || x - 7 > alone_right))))
+		{
+			int step = (x_end - x) * x_delta;
+			if (step > 8) step = 8;
+			x += step * x_delta;
+			continue;
+		}
 		for (int index = 0; index < 8 && x != x_end; index++, x += x_delta)
 		{
 			const int *lut = (index == 0 || index == 7) ? sprite->lut_end : sprite->lut_mid;
@@ -1155,6 +1530,8 @@ static void draw_sprite_row_1to1(const sprite_drawing *sprite, bool from_ram, ui
 			break;
 	}
 }
+
+static uint32_t sprite_rows_mask[8];
 
 /* A sprite entry (8 words): flags, source height and width, screen height (and bank bits), screen
 width, y, x, the graphics' offset in the bank, and the color. Hands back how many more entries it
@@ -1289,23 +1666,27 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 	right edge instead of its left one, so the sprite runs on to the left edge reading whatever follows
 	it in the ROM: an opaque one, which ignores end codes, leaves copies of the next frames there. The
 	reference, tools/reference/mame/sega/segas32_v.cpp, has the same line fixed.) */
-	if (x_delta > 0 && x_end > inside->right)
-	{
-		x_end = inside->right + 1;
-		if (x >= x_end)
-			return taken;
-	}
-	if (x_delta < 0 && x_end < inside->left)
-	{
-		x_end = inside->left - 1;
-		if (x <= x_end)
-			return taken;
-	}
+	/* Descarte inmediato si el sprite cae completamente fuera de la pantalla */
+	const int min_x = x_delta > 0 ? x : x_end + 1;
+	const int max_x = x_delta > 0 ? x_end - 1 : x;
+	if (max_x < inside->left || min_x > inside->right)
+		return taken;
 
-	for (int row = y; row != y_end; row += y_delta)
+	const int min_y = y_delta > 0 ? y : y_end + 1;
+	const int max_y = y_delta > 0 ? y_end - 1 : y;
+	if (max_y < inside->top || min_y > inside->bottom)
+		return taken;
+
+	if (x_delta > 0 && x_end > inside->right)
+		x_end = inside->right + 1;
+	if (x_delta < 0 && x_end < inside->left)
+		x_end = inside->left - 1;
+
+	for (int row = y; (y_delta > 0 ? row < y_end : row > y_end); row += y_delta)
 	{
 		if (row >= inside->top && row <= inside->bottom)
 		{
+			sprite_rows_mask[row >> 5] |= (1u << (row & 31));
 			sprite.row = video.sprites[video.shown_sprites ^ 1][row];
 			sprite.outside_row = row >= outside->top && row <= outside->bottom;
 			if (sprite.one_to_one)
@@ -1324,6 +1705,8 @@ static int draw_sprite(uint32_t entry, int x_offset, int y_offset, const area *i
 /* The list in sprite RAM, 16 bytes an entry, its command in the top two bits of the first word: draw a
 sprite, set the clips (bit 12 the one to draw in, bit 13 the one to leave alone), jump (and with
 bit 13, set the offset sprites can add), or end. */
+static unsigned dbg_sprites_drawn;    /* sprites dibujados desde el ï¿½ltimo informe */
+
 static void draw_sprite_list(void)
 {
 	const bool wide = video.wide && !bit(s32_board.sprite_control_latched[6], 0);
@@ -1345,6 +1728,7 @@ static void draw_sprite_list(void)
 		switch (command >> 14)
 		{
 		case 0:
+			dbg_sprites_drawn++;
 			number += 1 + draw_sprite(entry, x_offset, y_offset, &inside, &outside);
 			break;
 		case 1:
@@ -1389,31 +1773,30 @@ static void draw_sprite_list(void)
 void s32_video_sprites(bool erase, bool draw)
 {
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-	static uint64_t sprite_ticks, report_frame;
+	static uint64_t sprite_ticks, erase_ticks, report_frame;
 	const uint64_t t0 = __mftb();
+	uint64_t t_erase = t0;
 #endif
 	if (erase)
 	{
-		uint16_t *shown = &video.sprites[video.shown_sprites][0][0];
-
-		for (size_t index = 0; index < (size_t)HEIGHT * WIDTH; index++)
-			shown[index] = 0xffff;
+		/* 0xffff en cada uint16_t = todos los bytes en 0xff */
+		memset(&video.sprites[video.shown_sprites][0][0], 0xff, sizeof(video.sprites[0]));
+#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
+		t_erase = __mftb();
+#endif
 	}
 	if (draw)
 	{
+		memset(sprite_rows_mask, 0, sizeof(sprite_rows_mask));
 		video.shown_sprites ^= 1;
 		draw_sprite_list();
 	}
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-	sprite_ticks += __mftb() - t0;
-	if ((uint64_t)s32_board.frame - report_frame >= 60)
-	{
-		const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * (double)((uint64_t)s32_board.frame - report_frame));
-
-		printf("[spr] s32_video_sprites=%.2f ms/frame\n", (double)sprite_ticks * ms);
-		sprite_ticks = 0;
-		report_frame = (uint64_t)s32_board.frame;
-	}
+	(void)t0;
+	(void)t_erase;
+	(void)sprite_ticks;
+	(void)erase_ticks;
+	(void)report_frame;
 #endif
 }
 
@@ -1639,7 +2022,9 @@ static void mix_rows(void *context, int first, int last)
 }
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-#define SPU_MIX_CHECK_EVERY 300    /* cada tantos frames compara con la mezcla de la PPU (0: nunca) */
+#define SPU_MIX_CHECK_EVERY 0 /* cada tantos frames compara con la mezcla de la PPU (0: nunca) */
+
+static uint32_t s_palette_version = 1;
 
 /* Mezcla las filas en los SPU (spu_mix_rows.c). false: no se pudo, que las mezcle la PPU */
 static bool spu_mix_frame(const mix_frame *frame)
@@ -1673,6 +2058,10 @@ static bool spu_mix_frame(const mix_frame *frame)
 	first->sprite_bits = frame->sprite_bits;
 	first->shadow_pen = frame->shadow_pen;
 	first->sprite_flips = frame->sprite_flips;
+	first->palette_version = s_palette_version;
+	first->backdrop_control = video_register(0x5e);
+	for (int i = 0; i < 8; i++)
+		first->sprite_rows_mask[i] = sprite_rows_mask[i];
 	for (int row = 0; row < 3; row++)
 	for (int channel = 0; channel < 3; channel++)
 		first->offsets[row][channel] = frame->offsets[row][channel];
@@ -1812,28 +2201,34 @@ static void mix(int drawn)
 		sprites->sprite_blend = 0;
 		sprites->offsets = color_offsets(bit(mixer_register(0x3e), 6), bit(sprite_control, 15));
 	}
-	for (int i = 0; i < 0x4000; i++)
-	{
-		const uint16_t c = s32_board.palette[i];
+	static bool palette_cache_init = false;
+	static uint16_t last_palette[0x4000];
 
-		palette_argb[i] = 0xFF000000u | (uint32_t)(c & 0x1f) << 19 | (uint32_t)((c >> 5) & 0x1f) << 11
-			| (uint32_t)((c >> 10) & 0x1f) << 3;
+	if (!palette_cache_init)
+	{
+		for (int i = 0; i < 0x4000; i++)
+		{
+			const uint16_t c = s32_board.palette[i];
+			palette_argb[i] = 0xFF000000u | (uint32_t)(c & 0x1f) << 19 | (uint32_t)((c >> 5) & 0x1f) << 11 | (uint32_t)((c >> 10) & 0x1f) << 3;
+			last_palette[i] = c;
+		}
+		palette_cache_init = true;
+		s_palette_version++;
+	}
+	else if (memcmp(last_palette, s32_board.palette, sizeof(last_palette)) != 0)
+	{
+		for (int i = 0; i < 0x4000; i++)
+		{
+			const uint16_t c = s32_board.palette[i];
+			if (c != last_palette[i])
+			{
+				palette_argb[i] = 0xFF000000u | (uint32_t)(c & 0x1f) << 19 | (uint32_t)((c >> 5) & 0x1f) << 11 | (uint32_t)((c >> 10) & 0x1f) << 3;
+				last_palette[i] = c;
+			}
+		}
+		s_palette_version++;
 	}
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-	{
-		static unsigned mix_debug;
-
-		if (++mix_debug % 120 == 0)
-		{
-			const mix_layer *shown = orders[grouping.mask];
-
-			printf("[mixdbg] blending=%d factor=%d shadow=%d off0=%d,%d,%d off1=%d,%d,%d |", blending, frame.blend_factor,
-				frame.shadow_mask != 0, offsets[0][0], offsets[0][1], offsets[0][2], offsets[1][0], offsets[1][1], offsets[1][2]);
-			for (int i = 0; i <= count; i++)
-				printf(" L%d(b%02x,o%d)", shown[i].index, shown[i].blend, shown[i].offsets);
-			printf("\n");
-		}
-	}
 	if (spu_mix_frame(&frame))
 		return;
 #endif
@@ -1860,29 +2255,7 @@ void s32_video_draw_frame(void)
 			memset(video.frame[y], 0, (size_t)width * sizeof(video.frame[y][0]));
 		return;
 	}
-#if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
-	{
-		static uint64_t layers_ticks, mix_ticks;
-		static unsigned frames;
-		const uint64_t t0 = __mftb();
-		const int drawn = draw_layers();
-		const uint64_t t1 = __mftb();
-
-		mix(drawn);
-		layers_ticks += t1 - t0;
-		mix_ticks += __mftb() - t1;
-		if (++frames == 60)
-		{
-			const double ms = 1000.0 / ((double)sys_time_get_timebase_frequency() * 60.0);
-
-			printf("[video] layers=%.2f mix=%.2f ms/frame\n", (double)layers_ticks * ms, (double)mix_ticks * ms);
-			layers_ticks = mix_ticks = 0;
-			frames = 0;
-		}
-	}
-#else
 	mix(draw_layers());
-#endif
 }
 
 #define BLANK_TILES_MOST 0x8000    /* 4 banks of 8192 tiles */
