@@ -1,4 +1,4 @@
-# SegaSonic The Hedgehog — native port
+# SegaSonic The Hedgehog — native port PS3
 
 Sega's 1993 arcade game *SegaSonic The Hedgehog* (Sega System 32) as a native game for Windows, Linux and
 macOS, and, with its assets made on your computer, for the Nintendo Switch, Android and Anbernic's handhelds:
@@ -26,18 +26,12 @@ executable carries the ROM or anything from it.
 
 ### Download
 
-The [latest release](https://github.com/cheviman/segasonic-port/releases/latest) has a package for
-**Windows** (x64), **Linux** (x64) and **macOS** (Apple silicon and Intel, one app), and one for **Anbernic's
-H700 handhelds**; every change to the
-code is built the same way by [GitHub Actions](https://github.com/cheviman/segasonic-port/actions), whose
-runs keep the packages as artifacts. Unpack it anywhere:
+The [latest release](https://github.com/DropSonic0/segasonic-port-ps3/releases/) has a package for
+**PS3**
 
 | Package | What is in it |
 |---|---|
-| Windows `segasonic-windows-x64.zip` | `SegaSonic.exe` (the console version), `SegaSonic Arcade.exe` (the arcade one), and the pictures the window draws its letters and controls with; `SegaSonic NSP.exe` and `SegaSonic APK.exe`, which make the Switch's and Android's games, with the game's Switch and Android builds beside them (`switch/`, `android/`) |
-| Linux `segasonic-linux-x64.tar.gz` | `SegaSonic`, `SegaSonic Arcade`, the same pictures, and `SegaSonic NSP` and `SegaSonic APK` with `switch/` and `android/` |
-| macOS `segasonic-macos-universal.zip` | `SegaSonic.app` and `SegaSonic Arcade.app`, and `SegaSonic NSP` and `SegaSonic APK` with `switch/` and `android/` |
-| Anbernic `segasonic-anbernic.zip` | `PORTS/`, the folder for the handheld's `Roms/`: `SegaSonic.sh` and the game in `segasonic/`, where your `segasonic.assets` goes (below) |
+| Playstation 3 `SEGASONIC.pkg` |
 
 Each has a `README.txt` that says which game is which, and the licenses of what the executables contain
 (`LICENSE.txt`, `licenses/`). SDL2 and the C runtime
@@ -267,16 +261,7 @@ ports/sdl2/             the window: the picture, sound and controls on SDL2, the
                         the pictures of Kenney's (prompts/, font/), the executables' icon (icon/,
                         tools/make_icon.py)
 ports/headless/         the game without a window, for checks and screenshots
-ports/switch/           the Nintendo Switch: its build (switch.cmake) and SegaSonic NSP, the tool that
-                        makes the .nsp on the player's computer (nsp/; tools/check_nsp.py checks one)
-ports/android/          Android: its build with the NDK, without Gradle (android.cmake), the touch
-                        controls (ports/sdl2/touch.c) and SegaSonic APK, the tool that makes the APK on the
-                        player's computer (apk/)
-ports/anbernic/         Anbernic's H700 handhelds: the build with Zig (zig_aarch64.cmake), the launcher
-runtime/src/workers.c   the video's rows on several threads, as the game devices draw it
-tools/make_screenshots.py  the screenshots above
-.github/workflows/      the builds and packages for Windows, Linux and macOS, with the Switch's and
-                        Android's builds in them, and Anbernic's package
+
 ```
 
 ## Credits
@@ -288,6 +273,7 @@ tools/make_screenshots.py  the screenshots above
 - [MAME](https://www.mamedev.org): the reference the game is checked against (its V60 and Z80 cores, its
   System 32 video and RF5C68), and [ymfm](https://github.com/aaronsgiles/ymfm), the YM3438's.
 - [SDL](https://www.libsdl.org) (zlib license), built into the executables.
+- [PS3 Port] by DropSonic
 
 ## Legal
 
