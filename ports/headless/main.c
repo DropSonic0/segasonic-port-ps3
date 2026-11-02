@@ -339,9 +339,33 @@ static volatile uint64_t *ps3_audio_read_index = NULL;
 static uint32_t ps3_audio_blocks = 0;
 static uint32_t ps3_audio_write_block = 0;
 static unsigned ps3_audio_underruns = 0;
+static char ps3_save_dir[1024] = "";
+
+static void ps3_set_save_dir_from_assets(const char *assets_path)
+{
+	if (!assets_path || !assets_path[0])
+		return;
+	const char *slash = strrchr(assets_path, '/');
+	const char *backslash = strrchr(assets_path, '\\');
+	const char *last = slash > backslash ? slash : backslash;
+	if (last)
+	{
+		size_t len = (size_t)(last - assets_path);
+		if (len < sizeof(ps3_save_dir))
+		{
+			memcpy(ps3_save_dir, assets_path, len);
+			ps3_save_dir[len] = '\0';
+		}
+	}
+}
 
 static void ps3_get_save_path(const char *filename, char *out_path, size_t size)
 {
+	if (ps3_save_dir[0] != '\0')
+	{
+		snprintf(out_path, size, "%s/%s", ps3_save_dir, filename);
+		return;
+	}
 	FILE *f = fopen("/dev_hdd0/game/SEGASONIC/USRDIR/segasonic.assets", "rb");
 	if (f)
 	{
@@ -436,8 +460,42 @@ static void ps3_save_times(void)
 	fclose(output);
 }
 
-static void ps3_tell_console_settings(void)
+static void ps3_save_config(void)
 {
+	char path[1024];
+	FILE *output;
+
+	ps3_get_save_path("segasonic.ini", path, sizeof(path));
+	output = fopen(path, "w");
+	if (!output)
+		return;
+
+	fputs("; SegaSonic The Hedgehog configuration\n\n", output);
+	fputs("[video]\n", output);
+	fprintf(output, "scale = %d\n", console_window_settings.window_scale);
+	fprintf(output, "full_screen = %s\n", console_window_settings.full_screen ? "yes" : "no");
+	fprintf(output, "smooth = %s\n", console_window_settings.smooth ? "yes" : "no");
+	fprintf(output, "bilinear = %s\n", console_window_settings.bilinear ? "yes" : "no");
+	fprintf(output, "crt = %s\n", console_window_settings.crt ? "yes" : "no");
+	fprintf(output, "wide = %s\n\n", console_window_settings.wide ? "yes" : "no");
+
+	fputs("[sound]\n", output);
+	fprintf(output, "volume = %.4g\n", console_window_settings.volume / 5.0);
+	fprintf(output, "title_music = %d\n\n", console_window_settings.title_music);
+
+	fputs("[game]\n", output);
+	fprintf(output, "continues = %d\n", console_window_settings.continues);
+
+	fclose(output);
+}
+
+static void ps3_load_config(void)
+{
+	char path[1024];
+	FILE *input;
+	char line[256];
+
+	/* Valores por defecto */
 	console_window_settings.window_scale = 2;
 	console_window_settings.full_screen = true;
 	console_window_settings.smooth = true;
@@ -447,6 +505,69 @@ static void ps3_tell_console_settings(void)
 	console_window_settings.volume = 5;
 	console_window_settings.title_music = 1;
 	console_window_settings.continues = 3;
+	console_window_settings.changed = false;
+
+	ps3_get_save_path("segasonic.ini", path, sizeof(path));
+	input = fopen(path, "r");
+	if (!input)
+	{
+		/* Si no existe, crear segasonic.ini con los valores por defecto */
+		ps3_save_config();
+		return;
+	}
+
+	while (fgets(line, sizeof(line), input))
+	{
+		char key[64], val[64];
+		if (sscanf(line, " %63[^= \t] = %63s", key, val) == 2)
+		{
+			if (strcmp(key, "scale") == 0)
+			{
+				int s = atoi(val);
+				if (s >= 1 && s <= 6) console_window_settings.window_scale = s;
+			}
+			else if (strcmp(key, "full_screen") == 0)
+			{
+				console_window_settings.full_screen = (strcmp(val, "yes") == 0 || strcmp(val, "1") == 0 || strcmp(val, "true") == 0);
+			}
+			else if (strcmp(key, "smooth") == 0)
+			{
+				console_window_settings.smooth = (strcmp(val, "yes") == 0 || strcmp(val, "1") == 0 || strcmp(val, "true") == 0);
+			}
+			else if (strcmp(key, "bilinear") == 0)
+			{
+				console_window_settings.bilinear = (strcmp(val, "yes") == 0 || strcmp(val, "1") == 0 || strcmp(val, "true") == 0);
+			}
+			else if (strcmp(key, "crt") == 0)
+			{
+				console_window_settings.crt = (strcmp(val, "yes") == 0 || strcmp(val, "1") == 0 || strcmp(val, "true") == 0);
+			}
+			else if (strcmp(key, "wide") == 0)
+			{
+				bool w = (strcmp(val, "yes") == 0 || strcmp(val, "1") == 0 || strcmp(val, "true") == 0);
+				console_window_settings.wide = w;
+				wide_video = w;
+			}
+			else if (strcmp(key, "volume") == 0)
+			{
+				double v = atof(val);
+				int vol = (int)(v * 5.0 + 0.5);
+				if (vol < 0) vol = 0;
+				if (vol > 10) vol = 10;
+				console_window_settings.volume = vol;
+			}
+			else if (strcmp(key, "title_music") == 0)
+			{
+				console_window_settings.title_music = atoi(val);
+			}
+			else if (strcmp(key, "continues") == 0)
+			{
+				int c = atoi(val);
+				if (c >= -1 && c <= 9) console_window_settings.continues = c;
+			}
+		}
+	}
+	fclose(input);
 	console_window_settings.changed = false;
 }
 #endif
@@ -1205,6 +1326,11 @@ static void on_frame_done(void)
 	cellSysutilCheckCallback();
 	if (ps3_exit_requested)
 	{
+#ifdef SEGASONIC_CONSOLE
+		ps3_save_config();
+		if (console_best_times.changed)
+			ps3_save_times();
+#endif
 		ps3_save_eeprom();
 		if (ps3_audio_port != 0xFFFFFFFF)
 		{
@@ -1219,14 +1345,18 @@ static void on_frame_done(void)
 	ps3_graphics_render_frame();
 #ifdef SEGASONIC_CONSOLE
 	if (console_quit_requested())
+	{
+		ps3_save_config();
+		ps3_save_eeprom();
 		longjmp(finished, 1);
+	}
 	if (console_window_settings.changed)
 	{
 		wide_video = console_window_settings.wide;
 		s32_video_set_wide(wide_video);
 		console_window_settings.changed = false;
+		ps3_save_config();
 	}
-	//ps3_tell_console_settings();
 	if (ps3_pause_requested)
 		ps3_run_pause();
 	if (console_best_times.changed)
@@ -1509,6 +1639,7 @@ int main(int argc, char **argv)
 			if (ps3_paths[p_idx] && game_data_load(ps3_paths[p_idx]) == GAME_DATA_LOADED)
 			{
 				assets_path = ps3_paths[p_idx];
+				ps3_set_save_dir_from_assets(assets_path);
 				break;
 			}
 			p_idx++;
@@ -1550,7 +1681,10 @@ int main(int argc, char **argv)
 					/* Intentar escribir al lado del ejecutable (para Target Manager) */
 					const char *problem = game_data_extract(zip_paths[z_idx], assets_path);
 					if (!problem && game_data_load(assets_path) == GAME_DATA_LOADED)
+					{
+						ps3_set_save_dir_from_assets(assets_path);
 						break;
+					}
 
 					/* Intentar escribir en el disco duro interno de la PS3 */
 					static char hdd_target[1024];
@@ -1559,6 +1693,7 @@ int main(int argc, char **argv)
 					if (!problem && game_data_load(hdd_target) == GAME_DATA_LOADED)
 					{
 						assets_path = hdd_target;
+						ps3_set_save_dir_from_assets(assets_path);
 						break;
 					}
 
@@ -1569,6 +1704,7 @@ int main(int argc, char **argv)
 					if (!problem && game_data_load(local_target) == GAME_DATA_LOADED)
 					{
 						assets_path = local_target;
+						ps3_set_save_dir_from_assets(assets_path);
 						break;
 					}
 					if (problem)
@@ -1699,7 +1835,7 @@ int main(int argc, char **argv)
 	console_prepare_sprites(game_sprites, GAME_SPRITES_SIZE, game_program);
 	s32_video_init(game_tiles, GAME_TILES_SIZE, game_sprites, GAME_SPRITES_SIZE);
 	s32_board.frame_shown = ps3_timed_frame_shown;
-	ps3_tell_console_settings();
+	ps3_load_config();
 	ps3_load_eeprom();
 	ps3_load_times();
 #else

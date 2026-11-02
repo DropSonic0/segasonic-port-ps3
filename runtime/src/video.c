@@ -27,6 +27,7 @@
 #include "s32/workers.h"
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
@@ -2021,10 +2022,10 @@ static void mix_rows(void *context, int first, int last)
 	}
 }
 
+static uint32_t s_palette_version = 1;
+
 #if defined(__CELLOS_LV2__) || defined(__SNC__) || defined(__PS3__)
 #define SPU_MIX_CHECK_EVERY 0 /* cada tantos frames compara con la mezcla de la PPU (0: nunca) */
-
-static uint32_t s_palette_version = 1;
 
 /* Mezcla las filas en los SPU (spu_mix_rows.c). false: no se pudo, que las mezcle la PPU */
 static bool spu_mix_frame(const mix_frame *frame)
